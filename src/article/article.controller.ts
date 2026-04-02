@@ -1,13 +1,10 @@
-import { UserService } from './../user/user.service';
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseEnumPipe,
   ParseUUIDPipe,
@@ -17,7 +14,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { Article, ArticleStatus } from './interfaces/article.interface';
+import { Article, ArticleStatus } from './article.interface';
 import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   UpdateArticleDto,
@@ -27,15 +24,10 @@ import {
   CreateArticleDto,
   createArticleSchema,
 } from './dtos/createArticle.dto';
-import { CategoryService } from 'src/category/categoty.service';
 
 @Controller('article')
 export class ArticleController {
-  constructor(
-    private articleService: ArticleService,
-    private categoryService: CategoryService,
-    private userService: UserService,
-  ) {}
+  constructor(private articleService: ArticleService) {}
 
   @Get()
   getAll(
@@ -49,37 +41,12 @@ export class ArticleController {
   @Post()
   @UsePipes(new ZodValidationPipe(createArticleSchema))
   create(@Body() createArticleDto: CreateArticleDto): Article {
-    const createdAt = Date.now();
-
-    const category = this.categoryService.getById(createArticleDto.categoryId);
-
-    if (!category) {
-      throw new BadRequestException();
-    }
-
-    this.userService.validateUserExistWithException(createArticleDto.authorId);
-
-    const article: Article = {
-      id: crypto.randomUUID(),
-      ...createArticleDto,
-      createdAt,
-      updatedAt: createdAt,
-    };
-
-    this.articleService.create(article);
-
-    return article;
+    return this.articleService.create(createArticleDto);
   }
 
   @Get(':id')
   getById(@Param('id', ParseUUIDPipe) id: string): Article {
-    const article = this.articleService.getById(id);
-
-    if (!article) {
-      throw new NotFoundException();
-    }
-
-    return article;
+    return this.articleService.getById(id);
   }
 
   @Put(':id')
@@ -88,37 +55,12 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateArticleDto: UpdateArticleDto,
   ): Article {
-    const article = this.articleService.getById(id);
-
-    if (!article) {
-      throw new NotFoundException();
-    }
-
-    const category = this.categoryService.getById(updateArticleDto.categoryId);
-
-    if (!category) {
-      throw new BadRequestException();
-    }
-
-    const updatedArticle: Article = {
-      ...article,
-      ...updateArticleDto,
-    };
-
-    this.articleService.update(id, updatedArticle);
-
-    return updatedArticle;
+    return this.articleService.update(id, updateArticleDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param('id', ParseUUIDPipe) id: string) {
-    const article = this.articleService.getById(id);
-
-    if (!article) {
-      throw new NotFoundException();
-    }
-
-    this.articleService.delete(id);
+    return this.articleService.delete(id);
   }
 }

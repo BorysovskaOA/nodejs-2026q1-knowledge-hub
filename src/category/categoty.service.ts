@@ -1,10 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './dtos/createCategory.dto';
+import { ArticleService } from 'src/article/article.service';
 
 @Injectable()
 export class CategoryService {
-  constructor(private categoryRepository: CategoryRepository) {}
+  constructor(
+    private categoryRepository: CategoryRepository,
+    @Inject(forwardRef(() => ArticleService))
+    private articleService: ArticleService,
+  ) {}
 
   create(data: CreateCategoryDto) {
     return this.categoryRepository.create(data);
@@ -41,6 +52,24 @@ export class CategoryService {
       throw new NotFoundException();
     }
 
-    return this.categoryRepository.delete(id);
+    const result = this.categoryRepository.delete(id);
+
+    this.articleService.unsetArticleCategoryId(id);
+
+    return result;
+  }
+
+  validateCategoryExist(id: string) {
+    const user = this.categoryRepository.findOne(id);
+
+    return !!user;
+  }
+
+  validateCategoryExistWithException(id: string) {
+    const exist = this.validateCategoryExist(id);
+
+    if (!exist) {
+      throw new BadRequestException();
+    }
   }
 }

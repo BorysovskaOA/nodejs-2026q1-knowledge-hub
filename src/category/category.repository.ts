@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Category } from './category.interface';
-import { CreateCategoryDto } from './dtos/createCategory.dto';
 
 @Injectable()
 export class CategoryRepository {
@@ -14,7 +13,7 @@ export class CategoryRepository {
     return this.categories.find((c) => c.id === id);
   }
 
-  create(caregoryData: CreateCategoryDto): Category {
+  create(caregoryData: Omit<Category, 'id'>): Category {
     const category: Category = {
       id: crypto.randomUUID(),
       ...caregoryData,
@@ -25,7 +24,7 @@ export class CategoryRepository {
     return category;
   }
 
-  update(id: string, categoryData: CreateCategoryDto): Category {
+  update(id: string, categoryData: Partial<Category>): Category {
     const index = this.categories.findIndex((c) => c.id === id);
     if (index === -1) return undefined;
 
