@@ -1,27 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { Category } from './interfaces/category.interface';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CategoryRepository } from './category.repository';
+import { CreateCategoryDto } from './dtos/createCategory.dto';
 
 @Injectable()
 export class CategoryService {
-  private categories: Category[] = [];
+  constructor(private categoryRepository: CategoryRepository) {}
 
-  create(category: Category) {
-    this.categories.push(category);
+  create(data: CreateCategoryDto) {
+    return this.categoryRepository.create(data);
   }
 
   getAll() {
-    return this.categories;
+    return this.categoryRepository.findAll();
   }
 
   getById(id: string) {
-    return this.categories.find((c) => c.id === id);
+    const category = this.categoryRepository.findOne(id);
+
+    if (!category) {
+      throw new NotFoundException();
+    }
+
+    return category;
   }
 
-  update(id: string, category: Category) {
-    this.categories = this.categories.map((c) => (c.id === id ? category : c));
+  update(id: string, data: CreateCategoryDto) {
+    const category = this.categoryRepository.findOne(id);
+
+    if (!category) {
+      throw new NotFoundException();
+    }
+
+    return this.categoryRepository.update(id, data);
   }
 
   delete(id: string) {
-    this.categories = this.categories.filter((c) => c.id !== id);
+    const category = this.categoryRepository.findOne(id);
+
+    if (!category) {
+      throw new NotFoundException();
+    }
+
+    return this.categoryRepository.delete(id);
   }
 }

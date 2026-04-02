@@ -5,15 +5,13 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
-  UsePipes,
 } from '@nestjs/common';
 import { CategoryService } from './categoty.service';
-import { Category } from './interfaces/category.interface';
+import { Category } from './category.interface';
 import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   CreateCategoryDto,
@@ -30,60 +28,30 @@ export class CategoryController {
   }
 
   @Post()
-  @UsePipes(new ZodValidationPipe(createCategorySchema))
-  create(@Body() createCategoryDto: CreateCategoryDto): Category {
-    const category: Category = {
-      id: crypto.randomUUID(),
-      ...createCategoryDto,
-    };
-
-    this.categoryService.create(category);
-
-    return category;
+  create(
+    @Body(new ZodValidationPipe(createCategorySchema))
+    createCategoryDto: CreateCategoryDto,
+  ): Category {
+    return this.categoryService.create(createCategoryDto);
   }
 
   @Get(':id')
   getById(@Param('id', ParseUUIDPipe) id: string): Category {
-    const category = this.categoryService.getById(id);
-
-    if (!category) {
-      throw new NotFoundException();
-    }
-
-    return category;
+    return this.categoryService.getById(id);
   }
 
   @Put(':id')
-  @UsePipes(new ZodValidationPipe(createCategorySchema))
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateCategoryDto: CreateCategoryDto,
+    @Body(new ZodValidationPipe(createCategorySchema))
+    updateCategoryDto: CreateCategoryDto,
   ): Category {
-    const category = this.categoryService.getById(id);
-
-    if (!category) {
-      throw new NotFoundException();
-    }
-
-    const updatedCategory: Category = {
-      ...category,
-      ...updateCategoryDto,
-    };
-
-    this.categoryService.update(id, updatedCategory);
-
-    return updatedCategory;
+    return this.categoryService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param('id', ParseUUIDPipe) id: string) {
-    const category = this.categoryService.getById(id);
-
-    if (!category) {
-      throw new NotFoundException();
-    }
-
-    this.categoryService.delete(id);
+    return this.categoryService.delete(id);
   }
 }
