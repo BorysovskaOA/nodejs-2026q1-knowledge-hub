@@ -6,6 +6,14 @@ import { CreateUserDto } from './dtos/createUser.dto';
 export class UserRepository {
   private users: User[] = [];
 
+  findAll(): User[] {
+    return this.users;
+  }
+
+  findOne(id: string): User {
+    return this.users.find((u) => u.id === id);
+  }
+
   create(userData: CreateUserDto): User {
     const createdAt = Date.now();
     const user: User = {
@@ -20,16 +28,8 @@ export class UserRepository {
     return user;
   }
 
-  findAll(): User[] {
-    return this.users;
-  }
-
-  findOne(id: string): User {
-    return this.users.find((u) => u.id === id);
-  }
-
   update(id: string, userData: Partial<User>): User {
-    const index = this.users.findIndex((user) => user.id === id);
+    const index = this.users.findIndex((u) => u.id === id);
     if (index === -1) return undefined;
 
     this.users[index] = {
