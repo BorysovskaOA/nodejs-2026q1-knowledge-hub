@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { User } from './user.interface';
-import { CreateUserDto } from './dtos/createUser.dto';
 
 @Injectable()
 export class UserRepository {
@@ -14,7 +13,7 @@ export class UserRepository {
     return this.users.find((u) => u.id === id);
   }
 
-  create(userData: CreateUserDto): User {
+  create(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): User {
     const createdAt = Date.now();
     const user: User = {
       id: crypto.randomUUID(),

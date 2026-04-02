@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ArticleStatus } from '../interfaces/article.interface';
+import { ArticleStatus } from '../article.interface';
 
 export const updateArticleSchema = z.object({
   title: z.string(),
