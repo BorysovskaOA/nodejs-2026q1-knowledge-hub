@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { CategoryService } from './categoty.service';
 import { Category } from './interfaces/category.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidationPipe';
+import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   CreateCategoryDto,
   createCategorySchema,

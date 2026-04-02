@@ -1,4 +1,7 @@
-import { UpdatePasswordDto } from './dtos/updatePassword.dto';
+import {
+  UpdatePasswordDto,
+  updatePassworSchema,
+} from './dtos/updatePassword.dto';
 import {
   Body,
   Controller,
@@ -6,7 +9,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -15,78 +17,48 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto, createUserSchema } from './dtos/createUser.dto';
 import { UserService } from './user.service';
-import { User } from './interfaces/user.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidationPipe';
+import { User } from './user.interface';
+import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
+import { UseResponseMapper } from 'src/utils/useResponseMapper.decorator';
+import { UserMapper } from './user.mapper';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
+  @UseResponseMapper(UserMapper)
   getAll(): User[] {
     return this.userService.getAll();
   }
 
   @Post()
   @UsePipes(new ZodValidationPipe(createUserSchema))
-  create(@Body() createUserDto: CreateUserDto): User {
-    // TODO: Add password encryption
-    const createdAt = Date.now();
-    const user: User = {
-      id: crypto.randomUUID(),
-      ...createUserDto,
-      createdAt,
-      updatedAt: createdAt,
-    };
-
-    this.userService.create(user);
-
-    return user;
+  @UseResponseMapper(UserMapper)
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.userService.create(createUserDto);
   }
 
   @Get(':id')
+  @UseResponseMapper(UserMapper)
   getById(@Param('id', ParseUUIDPipe) id: string): User {
-    const user = this.userService.getById(id);
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-
-    return user;
+    return this.userService.getById(id);
   }
 
   @Put(':id')
-  @UsePipes(new ZodValidationPipe(createUserSchema))
-  updatePassword(
+  @UseResponseMapper(UserMapper)
+  async updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updatePasswordDto: UpdatePasswordDto,
-  ): User {
-    // TODO: Add password verification and encryption
-    const user = this.userService.getById(id);
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-
-    const updatedUser: User = {
-      ...user,
-      password: updatePasswordDto.newPassword,
-    };
-
-    this.userService.update(id, updatedUser);
-
-    return updatedUser;
+    @Body(new ZodValidationPipe(updatePassworSchema))
+    updatePasswordDto: UpdatePasswordDto,
+  ): Promise<User> {
+    return this.userService.update(id, updatePasswordDto);
   }
 
   @Delete(':id')
+  @UseResponseMapper(UserMapper)
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param('id', ParseUUIDPipe) id: string) {
-    const user = this.userService.getById(id);
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-
-    this.userService.delete(id);
+    return this.userService.delete(id);
   }
 }

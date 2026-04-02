@@ -18,7 +18,7 @@ import { CommentService } from './comment.service';
 import { ArticleService } from 'src/article/article.service';
 import { UserService } from 'src/user/user.service';
 import { Comment } from './interfaces/comment.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidationPipe';
+import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   CreateCommentDto,
   createCommentSchema,

@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { Article, ArticleStatus } from './interfaces/article.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidationPipe';
+import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   UpdateArticleDto,
   updateArticleSchema,
@@ -57,11 +57,7 @@ export class ArticleController {
       throw new BadRequestException();
     }
 
-    const author = this.userService.getById(createArticleDto.authorId);
-
-    if (!author) {
-      throw new BadRequestException();
-    }
+    this.userService.validateUserExistWithException(createArticleDto.authorId);
 
     const article: Article = {
       id: crypto.randomUUID(),
