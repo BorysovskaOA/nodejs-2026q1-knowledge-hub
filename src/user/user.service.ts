@@ -1,7 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { User } from './user.interface';
@@ -9,10 +12,18 @@ import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dtos/createUser.dto';
 import { hashPassword, verifyPassword } from './utils/passwordHashing';
 import { UpdatePasswordDto } from './dtos/updatePassword.dto';
+import { ArticleService } from 'src/article/article.service';
+import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    @Inject(forwardRef(() => ArticleService))
+    private articleService: ArticleService,
+    @Inject(forwardRef(() => CommentService))
+    private commentService: CommentService,
+  ) {}
 
   async create(data: CreateUserDto): Promise<User> {
     const hashedPassword = await hashPassword(data.password);
@@ -55,7 +66,14 @@ export class UserService {
 
     const newHashedPassword = await hashPassword(data.newPassword);
 
-    return this.userRepository.update(id, { password: newHashedPassword });
+    const updatedUser = this.userRepository.update(id, {
+      password: newHashedPassword,
+    });
+    if (!updatedUser) {
+      throw new InternalServerErrorException();
+    }
+
+    return updatedUser;
   }
 
   delete(id: string) {
@@ -65,7 +83,12 @@ export class UserService {
       throw new NotFoundException();
     }
 
-    this.userRepository.delete(id);
+    const result = this.userRepository.delete(id);
+
+    this.articleService.unsetArticleAuthor(id);
+    this.commentService.deleteAllAuthorComments(id);
+
+    return result;
   }
 
   validateUserExist(id: string) {

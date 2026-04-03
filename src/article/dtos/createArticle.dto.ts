@@ -5,8 +5,8 @@ export const createArticleSchema = z.object({
   title: z.string(),
   content: z.string(),
   status: z.enum(ArticleStatus),
-  authorId: z.string(),
-  categoryId: z.string(),
+  authorId: z.string().nullable(),
+  categoryId: z.string().nullable(),
   tags: z.array(z.string()),
 });
 

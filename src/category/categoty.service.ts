@@ -3,6 +3,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
@@ -42,7 +43,12 @@ export class CategoryService {
       throw new NotFoundException();
     }
 
-    return this.categoryRepository.update(id, data);
+    const updatedCategory = this.categoryRepository.update(id, data);
+    if (!updatedCategory) {
+      throw new InternalServerErrorException();
+    }
+
+    return updatedCategory;
   }
 
   delete(id: string) {
@@ -54,7 +60,7 @@ export class CategoryService {
 
     const result = this.categoryRepository.delete(id);
 
-    this.articleService.unsetArticleCategoryId(id);
+    this.articleService.unsetArticleCategory(id);
 
     return result;
   }

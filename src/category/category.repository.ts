@@ -9,7 +9,7 @@ export class CategoryRepository {
     return this.categories;
   }
 
-  findOne(id: string): Category {
+  findOne(id: string): Category | undefined {
     return this.categories.find((c) => c.id === id);
   }
 
@@ -24,9 +24,9 @@ export class CategoryRepository {
     return category;
   }
 
-  update(id: string, categoryData: Partial<Category>): Category {
+  update(id: string, categoryData: Partial<Category>): Category | undefined {
     const index = this.categories.findIndex((c) => c.id === id);
-    if (index === -1) return undefined;
+    if (index === -1) return;
 
     this.categories[index] = {
       ...this.categories[index],

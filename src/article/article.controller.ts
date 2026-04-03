@@ -6,15 +6,13 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseEnumPipe,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
-  UsePipes,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { Article, ArticleStatus } from './article.interface';
+import { Article } from './article.interface';
 import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import {
   UpdateArticleDto,
@@ -24,6 +22,10 @@ import {
   CreateArticleDto,
   createArticleSchema,
 } from './dtos/createArticle.dto';
+import {
+  ArticleListFiltersDto,
+  articleListFiltersSchema,
+} from './dtos/listFilters.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -31,16 +33,17 @@ export class ArticleController {
 
   @Get()
   getAll(
-    @Query('status', new ParseEnumPipe(ArticleStatus)) status: ArticleStatus,
-    @Query('categoryId', ParseUUIDPipe) categoryId: string,
-    @Query('tag', ParseUUIDPipe) tag: string,
+    @Query(new ZodValidationPipe(articleListFiltersSchema))
+    filter: ArticleListFiltersDto,
   ): Article[] {
-    return this.articleService.getAll({ status, categoryId, tag });
+    return this.articleService.getAll(filter);
   }
 
   @Post()
-  @UsePipes(new ZodValidationPipe(createArticleSchema))
-  create(@Body() createArticleDto: CreateArticleDto): Article {
+  create(
+    @Body(new ZodValidationPipe(createArticleSchema))
+    createArticleDto: CreateArticleDto,
+  ): Article {
     return this.articleService.create(createArticleDto);
   }
 
@@ -50,11 +53,11 @@ export class ArticleController {
   }
 
   @Put(':id')
-  @UsePipes(new ZodValidationPipe(updateArticleSchema))
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateArticleDto: UpdateArticleDto,
-  ): Article {
+    @Body(new ZodValidationPipe(updateArticleSchema))
+    updateArticleDto: UpdateArticleDto,
+  ): Article | undefined {
     return this.articleService.update(id, updateArticleDto);
   }
 

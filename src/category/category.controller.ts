@@ -45,7 +45,7 @@ export class CategoryController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(createCategorySchema))
     updateCategoryDto: CreateCategoryDto,
-  ): Category {
+  ): Category | undefined {
     return this.categoryService.update(id, updateCategoryDto);
   }
 

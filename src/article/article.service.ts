@@ -1,16 +1,18 @@
 import { ArticleRepository } from './article.repository';
 import {
-  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ArticleStatus } from './article.interface';
 import { CreateArticleDto } from './dtos/createArticle.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
 import { UpdateArticleDto } from './dtos/updateArticle.dto';
+import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()
 export class ArticleService {
@@ -18,17 +20,26 @@ export class ArticleService {
     private articleRepository: ArticleRepository,
     @Inject(forwardRef(() => CategoryService))
     private categoryService: CategoryService,
+    @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    @Inject(forwardRef(() => CommentService))
+    private commentService: CommentService,
   ) {}
 
   create(data: CreateArticleDto) {
-    this.categoryService.validateCategoryExistWithException(data.categoryId);
-    this.userService.validateUserExistWithException(data.authorId);
+    if (data.categoryId)
+      this.categoryService.validateCategoryExistWithException(data.categoryId);
+    if (data.authorId)
+      this.userService.validateUserExistWithException(data.authorId);
 
     return this.articleRepository.create(data);
   }
 
-  getAll(filters: { status: ArticleStatus; categoryId: string; tag: string }) {
+  getAll(filters?: {
+    status?: ArticleStatus;
+    categoryId?: string | null;
+    tag?: string;
+  }) {
     return this.articleRepository.findAll(filters);
   }
 
@@ -49,9 +60,15 @@ export class ArticleService {
       throw new NotFoundException();
     }
 
-    this.categoryService.validateCategoryExistWithException(data.categoryId);
+    if (data.categoryId)
+      this.categoryService.validateCategoryExistWithException(data.categoryId);
 
-    return this.articleRepository.update(id, data);
+    const updatedArticel = this.articleRepository.update(id, data);
+    if (!updatedArticel) {
+      throw new InternalServerErrorException();
+    }
+
+    return updatedArticel;
   }
 
   delete(id: string) {
@@ -61,7 +78,11 @@ export class ArticleService {
       throw new NotFoundException();
     }
 
-    return this.articleRepository.delete(id);
+    const result = this.articleRepository.delete(id);
+
+    this.commentService.deleteAllArticleComments(id);
+
+    return result;
   }
 
   validateArticleExist(id: string) {
@@ -74,11 +95,11 @@ export class ArticleService {
     const exist = this.validateArticleExist(id);
 
     if (!exist) {
-      throw new BadRequestException();
+      throw new UnprocessableEntityException();
     }
   }
 
-  unsetArticleCategoryId(id: string) {
+  unsetArticleCategory(id: string) {
     const updatedArticlesData = this.articleRepository
       .findAll({ categoryId: id })
       .map((a) => ({
@@ -89,7 +110,7 @@ export class ArticleService {
     return this.articleRepository.updateBatch(updatedArticlesData);
   }
 
-  unsetArticleAuthorId(id: string) {
+  unsetArticleAuthor(id: string) {
     const updatedArticlesData = this.articleRepository
       .findAll({ authorId: id })
       .map((a) => ({

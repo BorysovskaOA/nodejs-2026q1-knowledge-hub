@@ -9,7 +9,7 @@ export class UserRepository {
     return this.users;
   }
 
-  findOne(id: string): User {
+  findOne(id: string): User | undefined {
     return this.users.find((u) => u.id === id);
   }
 
@@ -27,9 +27,9 @@ export class UserRepository {
     return user;
   }
 
-  update(id: string, userData: Partial<User>): User {
+  update(id: string, userData: Partial<User>): User | undefined {
     const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) return undefined;
+    if (index === -1) return;
 
     this.users[index] = {
       ...this.users[index],
