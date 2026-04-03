@@ -1,4 +1,4 @@
-import { UpdatePasswordDto } from './dtos/updatePassword.dto';
+import { UpdatePasswordDto } from './dtos/update-password.dto';
 import {
   Body,
   Controller,
@@ -7,15 +7,15 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
 } from '@nestjs/common';
-import { CreateUserDto } from './dtos/createUser.dto';
+import { CreateUserDto } from './dtos/create-user.dto';
 import { UserService } from './user.service';
 import { User } from './user.interface';
-import { UseResponseMapper } from 'src/utils/useResponseMapper.decorator';
+import { UseResponseMapper } from 'src/core/decorators/use-response-mapper.decorator';
 import { UserMapper } from './user.mapper';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
 
 @Controller('user')
 export class UserController {
@@ -35,14 +35,14 @@ export class UserController {
 
   @Get(':id')
   @UseResponseMapper(UserMapper)
-  getById(@Param('id', ParseUUIDPipe) id: string): User {
+  getById(@Param() { id }: IdParamDto): User {
     return this.userService.getById(id);
   }
 
   @Put(':id')
   @UseResponseMapper(UserMapper)
   async updatePassword(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() { id }: IdParamDto,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ): Promise<User> {
     return this.userService.update(id, updatePasswordDto);
@@ -51,7 +51,7 @@ export class UserController {
   @Delete(':id')
   @UseResponseMapper(UserMapper)
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id', ParseUUIDPipe) id: string) {
+  delete(@Param() { id }: IdParamDto) {
     return this.userService.delete(id);
   }
 }

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { map } from 'rxjs/operators';
-import { UseResponseMapper } from './useResponseMapper.decorator';
+import { UseResponseMapper } from '../decorators/use-response-mapper.decorator';
 
 @Injectable()
 export class GlobalResponseTransformInterceptor implements NestInterceptor {

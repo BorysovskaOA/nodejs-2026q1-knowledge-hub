@@ -8,10 +8,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ArticleStatus } from './article.interface';
-import { CreateArticleDto } from './dtos/createArticle.dto';
+import { CreateArticleDto } from './dtos/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
-import { UpdateArticleDto } from './dtos/updateArticle.dto';
+import { UpdateArticleDto } from './dtos/update-article.dto';
 import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()

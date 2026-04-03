@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { User } from './user.interface';
 import { UserRepository } from './user.repository';
-import { CreateUserDto } from './dtos/createUser.dto';
-import { hashPassword, verifyPassword } from './utils/passwordHashing';
-import { UpdatePasswordDto } from './dtos/updatePassword.dto';
+import { CreateUserDto } from './dtos/create-user.dto';
+import { hashPassword, verifyPassword } from './utils/password-hashing.util';
+import { UpdatePasswordDto } from './dtos/update-password.dto';
 import { ArticleService } from 'src/article/article.service';
 import { CommentService } from 'src/comment/comment.service';
 

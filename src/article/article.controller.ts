@@ -6,16 +6,16 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { Article } from './article.interface';
-import { UpdateArticleDto } from './dtos/updateArticle.dto';
-import { CreateArticleDto } from './dtos/createArticle.dto';
-import { ArticleListFiltersDto } from './dtos/listFilters.dto';
+import { UpdateArticleDto } from './dtos/update-article.dto';
+import { CreateArticleDto } from './dtos/create-article.dto';
+import { ArticleListFiltersDto } from './dtos/article-list-filter.dto';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -32,13 +32,13 @@ export class ArticleController {
   }
 
   @Get(':id')
-  getById(@Param('id', ParseUUIDPipe) id: string): Article {
+  getById(@Param() { id }: IdParamDto): Article {
     return this.articleService.getById(id);
   }
 
   @Put(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() { id }: IdParamDto,
     @Body() updateArticleDto: UpdateArticleDto,
   ): Article | undefined {
     return this.articleService.update(id, updateArticleDto);
@@ -46,7 +46,7 @@ export class ArticleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id', ParseUUIDPipe) id: string) {
+  delete(@Param() { id }: IdParamDto) {
     return this.articleService.delete(id);
   }
 }

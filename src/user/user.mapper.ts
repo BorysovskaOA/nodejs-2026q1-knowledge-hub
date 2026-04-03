@@ -1,4 +1,4 @@
-import { ResponseMapper } from 'src/utils/useResponseMapper.decorator';
+import { ResponseMapper } from 'src/core/decorators/use-response-mapper.decorator';
 import { User } from './user.interface';
 
 type UserResponse = Omit<User, 'password'>;
