@@ -1,7 +1,4 @@
-import {
-  UpdatePasswordDto,
-  updatePassworSchema,
-} from './dtos/updatePassword.dto';
+import { UpdatePasswordDto } from './dtos/updatePassword.dto';
 import {
   Body,
   Controller,
@@ -13,12 +10,10 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
-  UsePipes,
 } from '@nestjs/common';
-import { CreateUserDto, createUserSchema } from './dtos/createUser.dto';
+import { CreateUserDto } from './dtos/createUser.dto';
 import { UserService } from './user.service';
 import { User } from './user.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
 import { UseResponseMapper } from 'src/utils/useResponseMapper.decorator';
 import { UserMapper } from './user.mapper';
 
@@ -33,7 +28,6 @@ export class UserController {
   }
 
   @Post()
-  @UsePipes(new ZodValidationPipe(createUserSchema))
   @UseResponseMapper(UserMapper)
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.create(createUserDto);
@@ -49,8 +43,7 @@ export class UserController {
   @UseResponseMapper(UserMapper)
   async updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(new ZodValidationPipe(updatePassworSchema))
-    updatePasswordDto: UpdatePasswordDto,
+    @Body() updatePasswordDto: UpdatePasswordDto,
   ): Promise<User> {
     return this.userService.update(id, updatePasswordDto);
   }

@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import { IsString, IsNotEmpty } from 'class-validator';
 
-export const updateCommentSchema = z.object({
-  content: z.string(),
-});
-
-export type UpdateCommentDto = z.infer<typeof updateCommentSchema>;
+export class UpdateCommentDto {
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+}

@@ -22,8 +22,7 @@ export class CommentService {
   ) {}
 
   create(data: CreateCommentDto) {
-    if (data.articleId)
-      this.articleService.validateArticleExistWithException(data.articleId);
+    this.articleService.validateArticleExistWithException(data.articleId);
     if (data.authorId)
       this.userService.validateUserExistWithException(data.authorId);
 

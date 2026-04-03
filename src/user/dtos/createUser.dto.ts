@@ -1,10 +1,16 @@
-import { UserRole } from '../user.interface';
-import { z } from 'zod';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { UserRole } from '../user.interface'; // переконайтеся, що шлях правильний
 
-export const createUserSchema = z.object({
-  login: z.string(),
-  password: z.string(),
-  role: z.enum(UserRole).default(UserRole.VIEWER),
-});
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  login: string;
 
-export type CreateUserDto = z.infer<typeof createUserSchema>;
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  role: UserRole = UserRole.VIEWER;
+}

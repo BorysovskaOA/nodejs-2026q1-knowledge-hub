@@ -1,8 +1,11 @@
-import { z } from 'zod';
+import { IsString, IsNotEmpty } from 'class-validator';
 
-export const updatePassworSchema = z.object({
-  oldPassword: z.string(),
-  newPassword: z.string(),
-});
+export class UpdatePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  oldPassword: string;
 
-export type UpdatePasswordDto = z.infer<typeof updatePassworSchema>;
+  @IsString()
+  @IsNotEmpty()
+  newPassword: string;
+}

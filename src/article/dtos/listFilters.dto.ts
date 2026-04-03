@@ -1,13 +1,23 @@
-import { z } from 'zod';
+import {
+  IsOptional,
+  IsEnum,
+  IsString,
+  IsUUID,
+  IsNotEmpty,
+} from 'class-validator';
 import { ArticleStatus } from '../article.interface';
 
-export const articleListFiltersSchema = z
-  .object({
-    status: z.enum(ArticleStatus).optional(),
-    categoryId: z.string().nullish(),
-    tag: z.string().optional(),
-  })
-  .optional()
-  .default({});
+export class ArticleListFiltersDto {
+  @IsOptional()
+  @IsEnum(ArticleStatus)
+  status?: ArticleStatus;
 
-export type ArticleListFiltersDto = z.infer<typeof articleListFiltersSchema>;
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  tag?: string;
+}

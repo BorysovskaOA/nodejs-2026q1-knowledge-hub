@@ -1,8 +1,11 @@
-import { z } from 'zod';
+import { IsString, IsNotEmpty } from 'class-validator';
 
-export const createCategorySchema = z.object({
-  name: z.string(),
-  description: z.string(),
-});
+export class CreateCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-export type CreateCategoryDto = z.infer<typeof createCategorySchema>;
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+}

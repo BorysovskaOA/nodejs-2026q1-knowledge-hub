@@ -1,12 +1,37 @@
-import { z } from 'zod';
 import { ArticleStatus } from '../article.interface';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 
-export const updateArticleSchema = z.object({
-  title: z.string().optional(),
-  content: z.string().optional(),
-  status: z.enum(ArticleStatus).optional(),
-  categoryId: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
-});
+export class UpdateArticleDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  title?: string;
 
-export type UpdateArticleDto = z.infer<typeof updateArticleSchema>;
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  content?: string;
+
+  @IsOptional()
+  @IsEnum(ArticleStatus)
+  status?: ArticleStatus;
+
+  @IsOptional()
+  @IsUUID()
+  @ValidateIf((_, value) => value !== null)
+  categoryId?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  tags?: string[];
+}
