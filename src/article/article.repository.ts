@@ -12,13 +12,14 @@ export class ArticleRepository {
     tag,
   }: {
     status?: ArticleStatus;
-    categoryId?: string;
+    categoryId?: string | null;
     authorId?: string;
     tag?: string;
   } = {}) {
+    console.log({ status, categoryId, authorId, tag });
     return this.articles.filter((a) => {
       if (status && a.status !== status) return false;
-      if (categoryId && a.categoryId !== categoryId) return false;
+      if (categoryId !== undefined && a.categoryId !== categoryId) return false;
       if (tag && !a.tags.includes(tag)) return false;
       if (authorId && a.authorId !== authorId) return false;
 
@@ -46,7 +47,7 @@ export class ArticleRepository {
 
   update(id: string, articleData: Partial<Article>) {
     const index = this.articles.findIndex((c) => c.id === id);
-    if (index === -1) return undefined;
+    if (index === -1) return;
 
     this.articles[index] = {
       ...this.articles[index],
@@ -57,11 +58,11 @@ export class ArticleRepository {
     return this.articles[index];
   }
 
-  updateBatch(articles: Partial<Article>[]) {
+  updateBatch(articles: (Partial<Article> & Pick<Article, 'id'>)[]) {
     return articles.map((a) => {
       const updatedArticle = this.update(a.id, a);
 
-      return updatedArticle.id;
+      return updatedArticle?.id;
     });
   }
 
