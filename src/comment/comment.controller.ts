@@ -13,15 +13,8 @@ import {
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { Comment } from './comment.interface';
-import { ZodValidationPipe } from 'src/utils/zodValidation.pipe';
-import {
-  CreateCommentDto,
-  createCommentSchema,
-} from './dtos/createComment.dto';
-import {
-  UpdateCommentDto,
-  updateCommentSchema,
-} from './dtos/updateComment.dto';
+import { CreateCommentDto } from './dtos/createComment.dto';
+import { UpdateCommentDto } from './dtos/updateComment.dto';
 
 @Controller('comment')
 export class CommentController {
@@ -36,10 +29,7 @@ export class CommentController {
   }
 
   @Post()
-  create(
-    @Body(new ZodValidationPipe(createCommentSchema))
-    createCommentDto: CreateCommentDto,
-  ): Comment {
+  create(@Body() createCommentDto: CreateCommentDto): Comment {
     return this.commentService.create(createCommentDto);
   }
 
@@ -51,8 +41,7 @@ export class CommentController {
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(new ZodValidationPipe(updateCommentSchema))
-    updateCommentDto: UpdateCommentDto,
+    @Body() updateCommentDto: UpdateCommentDto,
   ): Comment {
     return this.commentService.update(id, updateCommentDto);
   }

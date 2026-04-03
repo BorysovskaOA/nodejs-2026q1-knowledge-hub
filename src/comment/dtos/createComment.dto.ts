@@ -1,9 +1,14 @@
-import { z } from 'zod';
+import { IsString, IsUUID, IsNotEmpty, ValidateIf } from 'class-validator';
 
-export const createCommentSchema = z.object({
-  content: z.string(),
-  articleId: z.uuid(),
-  authorId: z.uuid().nullable(),
-});
+export class CreateCommentDto {
+  @IsString()
+  @IsNotEmpty()
+  content: string;
 
-export type CreateCommentDto = z.infer<typeof createCommentSchema>;
+  @IsUUID()
+  articleId: string;
+
+  @IsUUID()
+  @ValidateIf((_, value) => value !== null)
+  authorId: string | null;
+}
