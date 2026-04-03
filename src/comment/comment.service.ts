@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
-import { CreateCommentDto } from './dtos/createComment.dto';
-import { UpdateArticleDto } from 'src/article/dtos/updateArticle.dto';
+import { CreateCommentDto } from './dtos/create-comment.dto';
+import { UpdateArticleDto } from 'src/article/dtos/update-article.dto';
 
 @Injectable()
 export class CommentService {

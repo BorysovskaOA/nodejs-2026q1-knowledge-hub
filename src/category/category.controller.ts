@@ -6,13 +6,13 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
 } from '@nestjs/common';
 import { CategoryService } from './categoty.service';
 import { Category } from './category.interface';
-import { CreateCategoryDto } from './dtos/createCategory.dto';
+import { CreateCategoryDto } from './dtos/create-category.dto';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -29,13 +29,13 @@ export class CategoryController {
   }
 
   @Get(':id')
-  getById(@Param('id', ParseUUIDPipe) id: string): Category {
+  getById(@Param() { id }: IdParamDto): Category {
     return this.categoryService.getById(id);
   }
 
   @Put(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: CreateCategoryDto,
   ): Category | undefined {
     return this.categoryService.update(id, updateCategoryDto);
@@ -43,7 +43,7 @@ export class CategoryController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id', ParseUUIDPipe) id: string) {
+  delete(@Param() { id }: IdParamDto) {
     return this.categoryService.delete(id);
   }
 }

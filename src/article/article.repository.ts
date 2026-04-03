@@ -16,7 +16,6 @@ export class ArticleRepository {
     authorId?: string;
     tag?: string;
   } = {}) {
-    console.log({ status, categoryId, authorId, tag });
     return this.articles.filter((a) => {
       if (status && a.status !== status) return false;
       if (categoryId !== undefined && a.categoryId !== categoryId) return false;

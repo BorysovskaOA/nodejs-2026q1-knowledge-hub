@@ -25,8 +25,8 @@ export class UpdateArticleDto {
   status?: ArticleStatus;
 
   @IsOptional()
-  @IsUUID()
   @ValidateIf((_, value) => value !== null)
+  @IsUUID()
   categoryId?: string | null;
 
   @IsOptional()

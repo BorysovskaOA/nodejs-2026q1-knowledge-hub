@@ -3,6 +3,7 @@ import {
   IsArray,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   ValidateIf,
@@ -17,19 +18,23 @@ export class CreateArticleDto {
   @IsNotEmpty()
   content: string;
 
+  @IsOptional()
   @IsEnum(ArticleStatus)
-  status: ArticleStatus;
+  status: ArticleStatus = ArticleStatus.DRAFT;
 
-  @IsUUID()
+  @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  authorId: string | null;
-
   @IsUUID()
-  @ValidateIf((_, value) => value !== null)
-  categoryId: string | null;
+  authorId: string | null = null;
 
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsUUID()
+  categoryId: string | null = null;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  tags: string[];
+  tags: string[] = [];
 }

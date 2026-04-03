@@ -6,26 +6,24 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { Comment } from './comment.interface';
-import { CreateCommentDto } from './dtos/createComment.dto';
-import { UpdateCommentDto } from './dtos/updateComment.dto';
+import { CreateCommentDto } from './dtos/create-comment.dto';
+import { UpdateCommentDto } from './dtos/update-comment.dto';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
+import { CommentListFiltersDto } from './dtos/comment-list-filter.dto';
 
 @Controller('comment')
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
   @Get()
-  getAll(
-    @Query('articleId', ParseUUIDPipe)
-    articleId: string,
-  ): Comment[] {
-    return this.commentService.getAll({ articleId });
+  getAll(@Query() filter: CommentListFiltersDto): Comment[] {
+    return this.commentService.getAll(filter);
   }
 
   @Post()
@@ -34,13 +32,13 @@ export class CommentController {
   }
 
   @Get(':id')
-  getById(@Param('id', ParseUUIDPipe) id: string): Comment {
+  getById(@Param() { id }: IdParamDto): Comment {
     return this.commentService.getById(id);
   }
 
   @Put(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() { id }: IdParamDto,
     @Body() updateCommentDto: UpdateCommentDto,
   ): Comment {
     return this.commentService.update(id, updateCommentDto);
@@ -48,7 +46,7 @@ export class CommentController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id', ParseUUIDPipe) id: string) {
+  delete(@Param() { id }: IdParamDto) {
     return this.commentService.delete(id);
   }
 }
