@@ -30,7 +30,7 @@ export class UserController {
     return this.userService.getAll();
   }
 
-  @Get()
+  @Get('paginated')
   @UseResponseMapper(UserMapper)
   getAllPaginated(
     @Query() filter: UserListFiltersPaginatedDto,
