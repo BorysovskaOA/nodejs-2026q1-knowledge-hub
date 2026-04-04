@@ -10,7 +10,7 @@ export class LoggerMiddleware implements NestMiddleware {
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
 
-      console.log(
+      console.info(
         `[${endTime.toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`,
       );
     });

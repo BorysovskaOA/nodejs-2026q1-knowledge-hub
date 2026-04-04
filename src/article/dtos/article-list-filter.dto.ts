@@ -8,7 +8,7 @@ import {
 import { Article, ArticleStatus } from '../article.interface';
 import { PaginationDto } from 'src/core/dtos/pagination.dto';
 import { IntersectionType } from '@nestjs/mapped-types';
-import { WithSortingDto } from 'src/core/dtos/sorting.dto';
+import { SortOrder, WithSortingDto } from 'src/core/dtos/sorting.dto';
 
 export class ArticleListFiltersDto {
   @IsOptional()
@@ -31,5 +31,6 @@ export class ArticleListFiltersPaginatdDto extends IntersectionType(
   WithSortingDto<Article>(
     ['createdAt', 'updatedAt', 'status', 'authorId', 'categoryId'],
     'updatedAt',
+    SortOrder.DESC,
   ),
 ) {}

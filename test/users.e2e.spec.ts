@@ -144,6 +144,90 @@ describe('Users (e2e)', () => {
     });
   });
 
+  describe('GET /paginated)', () => {
+    it('should correctly get paginated response', async () => {
+      const users = Array.from({ length: 25 }, () => ({
+        login: `TEST_LOGIN${randomUUID}`,
+        password: 'TEST_PASSWORD',
+      }));
+
+      const createdUserResponses = await Promise.all(
+        users.map((c) =>
+          unauthorizedRequest
+            .post(usersRoutes.create)
+            .set(commonHeaders)
+            .send(c),
+        ),
+      );
+
+      createdUserResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(usersRoutes.getAllPaginated)
+        .set(commonHeaders);
+      expect(response.status).toBe(StatusCodes.OK);
+      expect(response.body.data).toHaveLength(20);
+      expect(response.body.page).toEqual(1);
+      expect(response.body.limit).toEqual(20);
+      expect(response.body.total).toBeGreaterThan(20);
+
+      // Cleanup
+      await Promise.all(
+        createdUserResponses.map((res) =>
+          unauthorizedRequest
+            .delete(usersRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+
+    it('should correctly sort response', async () => {
+      const users = Array.from({ length: 25 }, (_, i) => ({
+        login: `TEST_LOGIN${randomUUID}`,
+        password: 'TEST_PASSWORD',
+        role: i % 2 ? 'admin' : 'viewer',
+      }));
+
+      const createdUserResponses = await Promise.all(
+        users.map((a) =>
+          unauthorizedRequest
+            .post(usersRoutes.create)
+            .set(commonHeaders)
+            .send(a),
+        ),
+      );
+
+      createdUserResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(`${usersRoutes.getAllPaginated}?sortKey=role&sortOrder=desc`)
+        .set(commonHeaders);
+      expect(response.status).toBe(StatusCodes.OK);
+
+      const responseData = response.body.data;
+      expect(responseData[0].role).toEqual('viewer');
+
+      const sortedData = structuredClone(responseData).sort((a, b) => {
+        b.role - a.role;
+      });
+
+      expect(responseData).toEqual(sortedData);
+
+      // Cleanup
+      await Promise.all(
+        createdUserResponses.map((res) =>
+          unauthorizedRequest
+            .delete(usersRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+  });
+
   describe('PUT', () => {
     it('should correctly update user password match', async () => {
       const creationResponse = await unauthorizedRequest

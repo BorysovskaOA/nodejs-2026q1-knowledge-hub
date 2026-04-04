@@ -25,7 +25,19 @@ export class GlobalResponseTransformInterceptor implements NestInterceptor {
           return mapper.map(item);
         };
 
-        return Array.isArray(data) ? data.map(transform) : transform(data);
+        if (Array.isArray(data)) {
+          return data.map(transform);
+        }
+
+        // For paginated response
+        if ('data' in data && Array.isArray(data.data)) {
+          return {
+            ...data,
+            data: data.data.map(transform),
+          };
+        }
+
+        return transform(data);
       }),
     );
   }

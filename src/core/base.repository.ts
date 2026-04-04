@@ -31,6 +31,7 @@ export class BaseRepository<T extends { id: string }> {
     ...restFilter
   }: S): PaginatedResponse<T> {
     let items = this.findAll(restFilter);
+    const total = items.length;
 
     if (sortKey) {
       items = sort(items, sortKey as string, sortOrder);
@@ -41,7 +42,7 @@ export class BaseRepository<T extends { id: string }> {
       data: items,
       page,
       limit,
-      total: this.items.length,
+      total,
     };
   }
 
