@@ -1,49 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { User } from './user.interface';
+import { BaseRepository } from 'src/core/base.repository';
 
 @Injectable()
-export class UserRepository {
-  private users: User[] = [];
-
-  findAll(): User[] {
-    return this.users;
-  }
-
-  findOne(id: string): User | undefined {
-    return this.users.find((u) => u.id === id);
-  }
-
-  create(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): User {
+export class UserRepository extends BaseRepository<User> {
+  create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): User {
     const createdAt = Date.now();
-    const user: User = {
-      id: crypto.randomUUID(),
-      ...userData,
+    const userData: Omit<User, 'id'> = {
+      ...data,
       createdAt,
       updatedAt: createdAt,
     };
 
-    this.users.push(user);
-
-    return user;
+    return super.create(userData);
   }
 
-  update(id: string, userData: Partial<User>): User | undefined {
-    const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) return;
-
-    this.users[index] = {
-      ...this.users[index],
-      ...userData,
+  update(id: string, data: Partial<User>): User | undefined {
+    const userData: Omit<Partial<User>, 'id'> = {
+      ...data,
       updatedAt: Date.now(),
     };
 
-    return this.users[index];
-  }
-
-  delete(id: string): boolean {
-    const updatedUsers = this.users.filter((u) => u.id !== id);
-    const updated = this.users.length !== updatedUsers.length;
-    this.users = updatedUsers;
-    return updated;
+    return super.update(id, userData);
   }
 }

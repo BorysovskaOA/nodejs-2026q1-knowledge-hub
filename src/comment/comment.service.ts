@@ -10,6 +10,10 @@ import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
 import { CreateCommentDto } from './dtos/create-comment.dto';
 import { UpdateArticleDto } from 'src/article/dtos/update-article.dto';
+import {
+  CommentListFiltersDto,
+  CommentListFiltersPaginatedDto,
+} from './dtos/comment-list-filter.dto';
 
 @Injectable()
 export class CommentService {
@@ -29,8 +33,12 @@ export class CommentService {
     return this.commentRepository.create(data);
   }
 
-  getAll({ articleId }: { articleId?: string }) {
-    return this.commentRepository.findAll({ articleId });
+  getAll(filter: CommentListFiltersDto) {
+    return this.commentRepository.findAll(filter);
+  }
+
+  getAllPaginated(filter: CommentListFiltersPaginatedDto) {
+    return this.commentRepository.findAllPaginated(filter);
   }
 
   getById(id: string) {
@@ -71,9 +79,7 @@ export class CommentService {
 
   deleteAllArticleComments(id: string) {
     const deleteCommentIds = this.commentRepository
-      .findAll({
-        articleId: id,
-      })
+      .findAllRelated('articleId', id)
       .map((c) => c.id);
 
     return this.commentRepository.deleteBatch(deleteCommentIds);
@@ -81,9 +87,7 @@ export class CommentService {
 
   deleteAllAuthorComments(id: string) {
     const deleteCommentIds = this.commentRepository
-      .findAll({
-        authorId: id,
-      })
+      .findAllRelated('authorId', id)
       .map((c) => c.id);
 
     return this.commentRepository.deleteBatch(deleteCommentIds);

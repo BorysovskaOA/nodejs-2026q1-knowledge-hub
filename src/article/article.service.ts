@@ -7,12 +7,15 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { ArticleStatus } from './article.interface';
 import { CreateArticleDto } from './dtos/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
 import { UpdateArticleDto } from './dtos/update-article.dto';
 import { CommentService } from 'src/comment/comment.service';
+import {
+  ArticleListFiltersDto,
+  ArticleListFiltersPaginatdDto,
+} from './dtos/article-list-filter.dto';
 
 @Injectable()
 export class ArticleService {
@@ -35,12 +38,12 @@ export class ArticleService {
     return this.articleRepository.create(data);
   }
 
-  getAll(filters?: {
-    status?: ArticleStatus;
-    categoryId?: string | null;
-    tag?: string;
-  }) {
-    return this.articleRepository.findAll(filters);
+  getAll(filter: ArticleListFiltersDto) {
+    return this.articleRepository.findAll(filter);
+  }
+
+  getAllPaginated(filter: ArticleListFiltersPaginatdDto) {
+    return this.articleRepository.findAllPaginated(filter);
   }
 
   getById(id: string) {
@@ -101,7 +104,7 @@ export class ArticleService {
 
   unsetArticleCategory(id: string) {
     const updatedArticlesData = this.articleRepository
-      .findAll({ categoryId: id })
+      .findAllRelated('categoryId', id)
       .map((a) => ({
         id: a.id,
         categoryId: null,
@@ -112,7 +115,7 @@ export class ArticleService {
 
   unsetArticleAuthor(id: string) {
     const updatedArticlesData = this.articleRepository
-      .findAll({ authorId: id })
+      .findAllRelated('authorId', id)
       .map((a) => ({
         id: a.id,
         authorId: null,

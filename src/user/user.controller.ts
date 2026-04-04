@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserService } from './user.service';
@@ -16,6 +17,8 @@ import { User } from './user.interface';
 import { UseResponseMapper } from 'src/core/decorators/use-response-mapper.decorator';
 import { UserMapper } from './user.mapper';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
+import { UserListFiltersPaginatedDto } from './dtos/user-list-filter.dto';
+import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
 
 @Controller('user')
 export class UserController {
@@ -25,6 +28,14 @@ export class UserController {
   @UseResponseMapper(UserMapper)
   getAll(): User[] {
     return this.userService.getAll();
+  }
+
+  @Get()
+  @UseResponseMapper(UserMapper)
+  getAllPaginated(
+    @Query() filter: UserListFiltersPaginatedDto,
+  ): PaginatedResponse<User> {
+    return this.userService.getAllPaginated(filter);
   }
 
   @Post()
@@ -52,6 +63,6 @@ export class UserController {
   @UseResponseMapper(UserMapper)
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param() { id }: IdParamDto) {
-    return this.userService.delete(id);
+    this.userService.delete(id);
   }
 }
