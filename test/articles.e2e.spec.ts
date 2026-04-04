@@ -314,6 +314,91 @@ describe('Article (e2e)', () => {
     });
   });
 
+  describe('GET /paginated)', () => {
+    it('should correctly get paginated response', async () => {
+      const articles = Array.from({ length: 25 }, (_, i) => ({
+        ...createArticleDto,
+        title: `${createArticleDto.title}${i}`,
+      }));
+
+      const createdArticleResponses = await Promise.all(
+        articles.map((a) =>
+          unauthorizedRequest
+            .post(articlesRoutes.create)
+            .set(commonHeaders)
+            .send(a),
+        ),
+      );
+
+      createdArticleResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(articlesRoutes.getAllPaginated)
+        .set(commonHeaders);
+      expect(response.status).toBe(StatusCodes.OK);
+      expect(response.body.data).toHaveLength(20);
+      expect(response.body.page).toEqual(1);
+      expect(response.body.limit).toEqual(20);
+      expect(response.body.total).toBeGreaterThan(20);
+
+      // Cleanup
+      await Promise.all(
+        createdArticleResponses.map((res) =>
+          unauthorizedRequest
+            .delete(articlesRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+
+    it('should correctly sort response', async () => {
+      const articles = Array.from({ length: 3 }, (_, i) => ({
+        ...createArticleDto,
+        title: `${createArticleDto.title}${randomUUID}`,
+        status: i === 0 ? 'draft' : i === 1 ? 'archived' : 'published',
+      }));
+
+      const createdArticleResponses = await Promise.all(
+        articles.map((a) =>
+          unauthorizedRequest
+            .post(articlesRoutes.create)
+            .set(commonHeaders)
+            .send(a),
+        ),
+      );
+
+      createdArticleResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(`${articlesRoutes.getAllPaginated}?sortKey=status&sortOrder=desc`)
+        .set(commonHeaders);
+
+      expect(response.status).toBe(StatusCodes.OK);
+
+      const responseData = response.body.data;
+      expect(responseData[0].status).toEqual('published');
+
+      const sortedData = structuredClone(responseData).sort((a, b) => {
+        b.status - a.status;
+      });
+
+      expect(responseData).toEqual(sortedData);
+
+      // Cleanup
+      await Promise.all(
+        createdArticleResponses.map((res) =>
+          unauthorizedRequest
+            .delete(articlesRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+  });
+
   describe('PUT', () => {
     it('should correctly update article', async () => {
       // Create category for assignment

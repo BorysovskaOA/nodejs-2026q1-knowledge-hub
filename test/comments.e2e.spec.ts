@@ -267,6 +267,91 @@ describe('Comments (e2e)', () => {
     });
   });
 
+  describe('GET /paginated)', () => {
+    it('should correctly get paginated response', async () => {
+      const comments = Array.from({ length: 25 }, (_, i) => ({
+        content: `Test comment ${i}`,
+        articleId: testArticleId,
+        authorId: null,
+      }));
+
+      const createdCommentResponses = await Promise.all(
+        comments.map((c) =>
+          unauthorizedRequest
+            .post(commentsRoutes.create)
+            .set(commonHeaders)
+            .send(c),
+        ),
+      );
+
+      createdCommentResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(commentsRoutes.getAllPaginatedByArticle(testArticleId))
+        .set(commonHeaders);
+      expect(response.status).toBe(StatusCodes.OK);
+      expect(response.body.data).toHaveLength(20);
+      expect(response.body.page).toEqual(1);
+      expect(response.body.limit).toEqual(20);
+      expect(response.body.total).toBeGreaterThan(20);
+
+      // Cleanup
+      await Promise.all(
+        createdCommentResponses.map((res) =>
+          unauthorizedRequest
+            .delete(commentsRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+
+    it('should correctly sort response', async () => {
+      const comments = Array.from({ length: 2 }, () => ({
+        content: `Test comment ${randomUUID}`,
+        articleId: testArticleId,
+        authorId: null,
+      }));
+
+      const createdCommentResponses = await Promise.all(
+        comments.map((a) =>
+          unauthorizedRequest
+            .post(commentsRoutes.create)
+            .set(commonHeaders)
+            .send(a),
+        ),
+      );
+
+      createdCommentResponses.forEach((res) => {
+        expect(res.status).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(
+          `${commentsRoutes.getAllPaginatedByArticle(testArticleId)}&sortOrder=desc`,
+        )
+        .set(commonHeaders);
+      expect(response.status).toBe(StatusCodes.OK);
+
+      const responseData = response.body.data;
+      const sortedData = structuredClone(responseData).sort((a, b) => {
+        b.createdAt - a.createdAt;
+      });
+
+      expect(responseData).toEqual(sortedData);
+
+      // Cleanup
+      await Promise.all(
+        createdCommentResponses.map((res) =>
+          unauthorizedRequest
+            .delete(commentsRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+  });
+
   describe('DELETE', () => {
     it('should correctly delete comment', async () => {
       const createCommentDto = {

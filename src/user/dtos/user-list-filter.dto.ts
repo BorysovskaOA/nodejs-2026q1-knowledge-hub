@@ -5,8 +5,5 @@ import { User } from '../user.interface';
 
 export class UserListFiltersPaginatedDto extends IntersectionType(
   PaginationDto,
-  WithSortingDto<User>(
-    ['createdAt', 'updatedAt', 'role', 'login'],
-    'updatedAt',
-  ),
+  WithSortingDto<User>(['createdAt', 'updatedAt', 'role', 'login'], 'login'),
 ) {}

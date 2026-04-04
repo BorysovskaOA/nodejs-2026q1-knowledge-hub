@@ -13,17 +13,18 @@ export type SortType<T> = {
 
 export function WithSortingDto<T>(
   allowedFields: (keyof T)[],
-  defaultSort?: keyof T,
+  defaultSortKey?: keyof T,
+  defaultSortOrder: SortOrder = SortOrder.ASC,
 ) {
   class SortingDto {
     @IsOptional()
     @IsString()
     @IsIn(allowedFields as string[])
-    sortKey?: keyof T = defaultSort;
+    sortKey?: keyof T = defaultSortKey;
 
     @IsOptional()
     @IsEnum(SortOrder)
-    sortOrder: SortOrder = SortOrder.ASC;
+    sortOrder: SortOrder = defaultSortOrder;
   }
   return SortingDto;
 }

@@ -74,6 +74,48 @@ describe('Category (e2e)', () => {
       expect(cleanupResponse.statusCode).toBe(StatusCodes.NO_CONTENT);
     });
 
+    it('should should return categories sorted', async () => {
+      const categories = Array.from({ length: 2 }, () => ({
+        ...createCategoryDto,
+        name: randomUUID,
+      }));
+
+      const createCategoriesResponse = await Promise.all(
+        categories.map((c) =>
+          unauthorizedRequest
+            .post(categoriesRoutes.create)
+            .set(commonHeaders)
+            .send(c),
+        ),
+      );
+
+      createCategoriesResponse.map((res) => {
+        expect(res.statusCode).toBe(StatusCodes.CREATED);
+      });
+
+      const response = await unauthorizedRequest
+        .get(categoriesRoutes.getAll)
+        .set(commonHeaders);
+
+      expect(response.statusCode).toBe(StatusCodes.OK);
+      expect(response.body).toBeInstanceOf(Array);
+
+      const sortedData = structuredClone(response.body).sort(
+        (a, b) => b.name - a.name,
+      );
+
+      expect(response.body).toEqual(sortedData);
+
+      // Cleanup
+      await Promise.all(
+        createCategoriesResponse.map((res) =>
+          unauthorizedRequest
+            .delete(categoriesRoutes.delete(res.body.id))
+            .set(commonHeaders),
+        ),
+      );
+    });
+
     it('should respond with BAD_REQUEST status code in case of invalid id', async () => {
       const response = await unauthorizedRequest
         .get(categoriesRoutes.getById('some-invalid-id'))
