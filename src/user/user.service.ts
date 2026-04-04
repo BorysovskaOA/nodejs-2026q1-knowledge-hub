@@ -7,13 +7,13 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from './user.interface';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { hashPassword, verifyPassword } from './utils/password-hashing.util';
 import { UpdatePasswordDto } from './dtos/update-password.dto';
 import { ArticleService } from 'src/article/article.service';
 import { CommentService } from 'src/comment/comment.service';
+import { UserListFiltersPaginatedDto } from './dtos/user-list-filter.dto';
 
 @Injectable()
 export class UserService {
@@ -25,7 +25,7 @@ export class UserService {
     private commentService: CommentService,
   ) {}
 
-  async create(data: CreateUserDto): Promise<User> {
+  async create(data: CreateUserDto) {
     const hashedPassword = await hashPassword(data.password);
     const userData = {
       ...data,
@@ -36,6 +36,10 @@ export class UserService {
 
   getAll() {
     return this.userRepository.findAll();
+  }
+
+  getAllPaginated(filter: UserListFiltersPaginatedDto) {
+    return this.userRepository.findAllPaginated(filter);
   }
 
   getById(id: string) {

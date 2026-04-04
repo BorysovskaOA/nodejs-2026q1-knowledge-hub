@@ -5,7 +5,10 @@ import {
   IsUUID,
   IsNotEmpty,
 } from 'class-validator';
-import { ArticleStatus } from '../article.interface';
+import { Article, ArticleStatus } from '../article.interface';
+import { PaginationDto } from 'src/core/dtos/pagination.dto';
+import { IntersectionType } from '@nestjs/mapped-types';
+import { WithSortingDto } from 'src/core/dtos/sorting.dto';
 
 export class ArticleListFiltersDto {
   @IsOptional()
@@ -21,3 +24,12 @@ export class ArticleListFiltersDto {
   @IsNotEmpty()
   tag?: string;
 }
+
+export class ArticleListFiltersPaginatdDto extends IntersectionType(
+  ArticleListFiltersDto,
+  PaginationDto,
+  WithSortingDto<Article>(
+    ['createdAt', 'updatedAt', 'status', 'authorId', 'categoryId'],
+    'updatedAt',
+  ),
+) {}

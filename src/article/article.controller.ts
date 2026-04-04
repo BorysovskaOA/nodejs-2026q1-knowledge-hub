@@ -14,8 +14,12 @@ import { ArticleService } from './article.service';
 import { Article } from './article.interface';
 import { UpdateArticleDto } from './dtos/update-article.dto';
 import { CreateArticleDto } from './dtos/create-article.dto';
-import { ArticleListFiltersDto } from './dtos/article-list-filter.dto';
+import {
+  ArticleListFiltersDto,
+  ArticleListFiltersPaginatdDto,
+} from './dtos/article-list-filter.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
+import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
 
 @Controller('article')
 export class ArticleController {
@@ -24,6 +28,13 @@ export class ArticleController {
   @Get()
   getAll(@Query() filter: ArticleListFiltersDto): Article[] {
     return this.articleService.getAll(filter);
+  }
+
+  @Get('paginated')
+  getAllPaginated(
+    @Query() filter: ArticleListFiltersPaginatdDto,
+  ): PaginatedResponse<Article> {
+    return this.articleService.getAllPaginated(filter);
   }
 
   @Post()
@@ -47,6 +58,6 @@ export class ArticleController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param() { id }: IdParamDto) {
-    return this.articleService.delete(id);
+    this.articleService.delete(id);
   }
 }

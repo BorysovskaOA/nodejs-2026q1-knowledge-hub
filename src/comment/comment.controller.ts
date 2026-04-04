@@ -15,7 +15,11 @@ import { Comment } from './comment.interface';
 import { CreateCommentDto } from './dtos/create-comment.dto';
 import { UpdateCommentDto } from './dtos/update-comment.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
-import { CommentListFiltersDto } from './dtos/comment-list-filter.dto';
+import {
+  CommentListFiltersDto,
+  CommentListFiltersPaginatedDto,
+} from './dtos/comment-list-filter.dto';
+import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
 
 @Controller('comment')
 export class CommentController {
@@ -24,6 +28,13 @@ export class CommentController {
   @Get()
   getAll(@Query() filter: CommentListFiltersDto): Comment[] {
     return this.commentService.getAll(filter);
+  }
+
+  @Get('paginated')
+  getAllPaginated(
+    @Query() filter: CommentListFiltersPaginatedDto,
+  ): PaginatedResponse<Comment> {
+    return this.commentService.getAllPaginated(filter);
   }
 
   @Post()
