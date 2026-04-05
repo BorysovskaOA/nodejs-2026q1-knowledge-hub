@@ -10,40 +10,51 @@ import {
   Put,
 } from '@nestjs/common';
 import { CategoryService } from './categoty.service';
-import { Category } from './category.interface';
-import { CreateCategoryDto } from './dtos/create-category.dto';
+import { CreateCategoryDto } from './models/create-category.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { CategoryEntity } from './models/category.entity';
+import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
 @Controller('category')
+@ApiBadRequestResponse({ type: ValidationResponseDto })
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
   @Get()
-  getAll(): Category[] {
+  @ApiOkResponse({ type: [CategoryEntity] })
+  getAll(): CategoryEntity[] {
     return this.categoryService.getAll();
   }
 
   @Post()
-  create(@Body() createCategoryDto: CreateCategoryDto): Category {
+  @ApiCreatedResponse({ type: CategoryEntity })
+  create(@Body() createCategoryDto: CreateCategoryDto): CategoryEntity {
     return this.categoryService.create(createCategoryDto);
   }
 
   @Get(':id')
-  getById(@Param() { id }: IdParamDto): Category {
+  @ApiOkResponse({ type: CategoryEntity })
+  getById(@Param() { id }: IdParamDto): CategoryEntity {
     return this.categoryService.getById(id);
   }
 
   @Put(':id')
+  @ApiOkResponse({ type: CategoryEntity })
   update(
     @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: CreateCategoryDto,
-  ): Category | undefined {
+  ): CategoryEntity {
     return this.categoryService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param() { id }: IdParamDto) {
-    return this.categoryService.delete(id);
+    this.categoryService.delete(id);
   }
 }

@@ -7,15 +7,15 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { CreateArticleDto } from './dtos/create-article.dto';
+import { CreateArticleDto } from './models/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
-import { UpdateArticleDto } from './dtos/update-article.dto';
+import { UpdateArticleDto } from './models/update-article.dto';
 import { CommentService } from 'src/comment/comment.service';
 import {
   ArticleListFiltersDto,
   ArticleListFiltersPaginatdDto,
-} from './dtos/article-list-filter.dto';
+} from './models/article-list-filter.dto';
 
 @Injectable()
 export class ArticleService {
@@ -98,7 +98,9 @@ export class ArticleService {
     const exist = this.validateArticleExist(id);
 
     if (!exist) {
-      throw new UnprocessableEntityException();
+      throw new UnprocessableEntityException(
+        `Article with given articleId doesn't exist`,
+      );
     }
   }
 

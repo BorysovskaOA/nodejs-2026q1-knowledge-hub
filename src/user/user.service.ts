@@ -8,12 +8,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './models/create-user.dto';
 import { hashPassword, verifyPassword } from './utils/password-hashing.util';
-import { UpdatePasswordDto } from './dtos/update-password.dto';
+import { UpdatePasswordDto } from './models/update-password.dto';
 import { ArticleService } from 'src/article/article.service';
 import { CommentService } from 'src/comment/comment.service';
-import { UserListFiltersPaginatedDto } from './dtos/user-list-filter.dto';
+import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
 
 @Injectable()
 export class UserService {

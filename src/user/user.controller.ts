@@ -1,4 +1,4 @@
-import { UpdatePasswordDto } from './dtos/update-password.dto';
+import { UpdatePasswordDto } from './models/update-password.dto';
 import {
   Body,
   Controller,
@@ -11,56 +11,61 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './models/create-user.dto';
 import { UserService } from './user.service';
-import { User } from './user.interface';
-import { UseResponseMapper } from 'src/core/decorators/use-response-mapper.decorator';
-import { UserMapper } from './user.mapper';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
-import { UserListFiltersPaginatedDto } from './dtos/user-list-filter.dto';
-import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
+import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { UserEntity } from './models/user.entity';
+import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
+import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
+import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
 @Controller('user')
+@ApiBadRequestResponse({ type: ValidationResponseDto })
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  @UseResponseMapper(UserMapper)
-  getAll(): User[] {
+  @ApiOkResponse({ type: [UserEntity] })
+  getAll(): UserEntity[] {
     return this.userService.getAll();
   }
 
   @Get('paginated')
-  @UseResponseMapper(UserMapper)
+  @ApiPaginatedResponse(UserEntity)
   getAllPaginated(
     @Query() filter: UserListFiltersPaginatedDto,
-  ): PaginatedResponse<User> {
+  ): PaginatedResponseDto<UserEntity> {
     return this.userService.getAllPaginated(filter);
   }
 
   @Post()
-  @UseResponseMapper(UserMapper)
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  @ApiCreatedResponse({ type: UserEntity })
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
     return this.userService.create(createUserDto);
   }
 
   @Get(':id')
-  @UseResponseMapper(UserMapper)
-  getById(@Param() { id }: IdParamDto): User {
+  @ApiOkResponse({ type: UserEntity })
+  getById(@Param() { id }: IdParamDto): UserEntity {
     return this.userService.getById(id);
   }
 
   @Put(':id')
-  @UseResponseMapper(UserMapper)
+  @ApiOkResponse({ type: UserEntity })
   async updatePassword(
     @Param() { id }: IdParamDto,
     @Body() updatePasswordDto: UpdatePasswordDto,
-  ): Promise<User> {
+  ): Promise<UserEntity> {
     return this.userService.update(id, updatePasswordDto);
   }
 
   @Delete(':id')
-  @UseResponseMapper(UserMapper)
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param() { id }: IdParamDto) {
     this.userService.delete(id);

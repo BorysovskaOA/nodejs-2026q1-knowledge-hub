@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Article } from './article.interface';
-import { ArticleListFiltersDto } from './dtos/article-list-filter.dto';
+import { ArticleListFiltersDto } from './models/article-list-filter.dto';
 import { BaseRepository } from 'src/core/base.repository';
+import { ArticleEntity } from './models/article.entity';
 
 @Injectable()
-export class ArticleRepository extends BaseRepository<Article> {
-  findAll({ status, categoryId, tag }: ArticleListFiltersDto): Article[] {
+export class ArticleRepository extends BaseRepository<ArticleEntity> {
+  constructor() {
+    super(ArticleEntity);
+  }
+
+  findAll({ status, categoryId, tag }: ArticleListFiltersDto): ArticleEntity[] {
     return this.items.filter((a) => {
       if (status && a.status !== status) return false;
       if (categoryId !== undefined && a.categoryId !== categoryId) return false;
@@ -13,25 +17,5 @@ export class ArticleRepository extends BaseRepository<Article> {
 
       return true;
     });
-  }
-
-  create(data: Omit<Article, 'id' | 'createdAt' | 'updatedAt'>): Article {
-    const createdAt = Date.now();
-    const articleData: Omit<Article, 'id'> = {
-      ...data,
-      createdAt,
-      updatedAt: createdAt,
-    };
-
-    return super.create(articleData);
-  }
-
-  update(id: string, data: Partial<Article>): Article | undefined {
-    const articleData: Omit<Partial<Article>, 'id'> = {
-      ...data,
-      updatedAt: Date.now(),
-    };
-
-    return super.update(id, articleData);
   }
 }

@@ -8,12 +8,12 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
-import { CreateCommentDto } from './dtos/create-comment.dto';
-import { UpdateArticleDto } from 'src/article/dtos/update-article.dto';
+import { CreateCommentDto } from './models/create-comment.dto';
+import { UpdateArticleDto } from 'src/article/models/update-article.dto';
 import {
   CommentListFiltersDto,
   CommentListFiltersPaginatedDto,
-} from './dtos/comment-list-filter.dto';
+} from './models/comment-list-filter.dto';
 
 @Injectable()
 export class CommentService {

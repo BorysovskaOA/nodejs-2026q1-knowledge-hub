@@ -1,6 +1,8 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
-import { UserRole } from '../user.interface'; // переконайтеся, що шлях правильний
+import { UserRole } from './user.constants';
+import { ApiSchema } from '@nestjs/swagger';
 
+@ApiSchema({ name: 'CreateUserBody' })
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
