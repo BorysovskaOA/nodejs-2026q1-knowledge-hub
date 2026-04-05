@@ -1,8 +1,8 @@
-import { IntersectionType } from '@nestjs/mapped-types';
+import { IntersectionType } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import { PaginationDto } from 'src/core/dtos/pagination.dto';
 import { WithSortingDto } from 'src/core/dtos/sorting.dto';
-import { Comment } from '../comment.interface';
+import { CommentEntity } from './comment.entity';
 
 export class CommentListFiltersDto {
   @IsOptional()
@@ -13,5 +13,5 @@ export class CommentListFiltersDto {
 export class CommentListFiltersPaginatedDto extends IntersectionType(
   CommentListFiltersDto,
   PaginationDto,
-  WithSortingDto<Comment>(['createdAt'], 'createdAt'),
+  WithSortingDto<CommentEntity>(['createdAt'], 'createdAt'),
 ) {}

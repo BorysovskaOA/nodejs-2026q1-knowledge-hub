@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
-import { CreateCategoryDto } from './dtos/create-category.dto';
+import { CreateCategoryDto } from './models/create-category.dto';
 import { ArticleService } from 'src/article/article.service';
 
 @Injectable()

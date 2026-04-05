@@ -2,12 +2,17 @@ import { SortType } from './dtos/sorting.dto';
 import { Injectable } from '@nestjs/common';
 import { paginate } from './utils/paginate.util';
 import { sort } from './utils/sort.util';
-import { PaginatedResponse } from './interfaces/paginated-response.interface';
 import { PaginationDto } from './dtos/pagination.dto';
+import { BaseEntity } from './base.entity';
+import { PaginatedResponseDto } from './dtos/paginated-response.dto';
+
+type EntityConstructor<T> = new (data: Partial<T>) => T;
 
 @Injectable()
-export class BaseRepository<T extends { id: string }> {
+export class BaseRepository<T extends BaseEntity<T>> {
   protected items: T[] = [];
+
+  constructor(private readonly entityConstructor: EntityConstructor<T>) {}
 
   findAll(filter: Record<string, any> = {}): T[] {
     const filterKeys = Object.keys(filter);
@@ -29,7 +34,7 @@ export class BaseRepository<T extends { id: string }> {
     sortKey,
     sortOrder,
     ...restFilter
-  }: S): PaginatedResponse<T> {
+  }: S): PaginatedResponseDto<T> {
     let items = this.findAll(restFilter);
     const total = items.length;
 
@@ -38,12 +43,7 @@ export class BaseRepository<T extends { id: string }> {
     }
     items = paginate(items, page, limit);
 
-    return {
-      data: items,
-      page,
-      limit,
-      total,
-    };
+    return new PaginatedResponseDto(items, total, page, limit);
   }
 
   findAllRelated(proName: keyof T, value: any): T[] {
@@ -54,11 +54,8 @@ export class BaseRepository<T extends { id: string }> {
     return this.items.find((c) => c.id === id);
   }
 
-  create(data: Omit<T, 'id'>): T {
-    const item = {
-      id: crypto.randomUUID() as string,
-      ...data,
-    } as T;
+  create(data: Partial<T>): T {
+    const item = new this.entityConstructor(data);
 
     this.items.push(item);
 
@@ -66,15 +63,12 @@ export class BaseRepository<T extends { id: string }> {
   }
 
   update(id: string, data: Partial<T>): T | undefined {
-    const index = this.items.findIndex((c) => c.id === id);
-    if (index === -1) return;
+    const entity = this.findOne(id);
+    if (!entity) return undefined;
 
-    this.items[index] = {
-      ...this.items[index],
-      ...data,
-    };
+    (entity as any).update(data);
 
-    return this.items[index];
+    return entity;
   }
 
   updateBatch(items: (Partial<T> & Pick<T, 'id'>)[]): (string | undefined)[] {

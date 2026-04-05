@@ -1,3 +1,4 @@
+import { ApiSchema } from '@nestjs/swagger';
 import {
   IsString,
   IsUUID,
@@ -6,6 +7,7 @@ import {
   IsOptional,
 } from 'class-validator';
 
+@ApiSchema({ name: 'CreateCommentBody' })
 export class CreateCommentDto {
   @IsString()
   @IsNotEmpty()

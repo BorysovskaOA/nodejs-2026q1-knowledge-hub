@@ -11,47 +11,60 @@ import {
   Query,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { Article } from './article.interface';
-import { UpdateArticleDto } from './dtos/update-article.dto';
-import { CreateArticleDto } from './dtos/create-article.dto';
+import { UpdateArticleDto } from './models/update-article.dto';
+import { CreateArticleDto } from './models/create-article.dto';
 import {
   ArticleListFiltersDto,
   ArticleListFiltersPaginatdDto,
-} from './dtos/article-list-filter.dto';
+} from './models/article-list-filter.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
-import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
+import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
+import { ArticleEntity } from './models/article.entity';
+import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
 @Controller('article')
+@ApiBadRequestResponse({ type: ValidationResponseDto })
 export class ArticleController {
   constructor(private articleService: ArticleService) {}
 
   @Get()
-  getAll(@Query() filter: ArticleListFiltersDto): Article[] {
+  @ApiOkResponse({ type: [ArticleEntity] })
+  getAll(@Query() filter: ArticleListFiltersDto): ArticleEntity[] {
     return this.articleService.getAll(filter);
   }
 
   @Get('paginated')
+  @ApiPaginatedResponse(ArticleEntity)
   getAllPaginated(
     @Query() filter: ArticleListFiltersPaginatdDto,
-  ): PaginatedResponse<Article> {
+  ): PaginatedResponseDto<ArticleEntity> {
     return this.articleService.getAllPaginated(filter);
   }
 
   @Post()
-  create(@Body() createArticleDto: CreateArticleDto): Article {
+  @ApiCreatedResponse({ type: ArticleEntity })
+  create(@Body() createArticleDto: CreateArticleDto): ArticleEntity {
     return this.articleService.create(createArticleDto);
   }
 
   @Get(':id')
-  getById(@Param() { id }: IdParamDto): Article {
+  @ApiOkResponse({ type: ArticleEntity })
+  getById(@Param() { id }: IdParamDto): ArticleEntity {
     return this.articleService.getById(id);
   }
 
   @Put(':id')
+  @ApiOkResponse({ type: ArticleEntity })
   update(
     @Param() { id }: IdParamDto,
     @Body() updateArticleDto: UpdateArticleDto,
-  ): Article | undefined {
+  ): ArticleEntity {
     return this.articleService.update(id, updateArticleDto);
   }
 

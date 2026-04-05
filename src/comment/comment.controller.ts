@@ -11,53 +11,69 @@ import {
   Query,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
-import { Comment } from './comment.interface';
-import { CreateCommentDto } from './dtos/create-comment.dto';
-import { UpdateCommentDto } from './dtos/update-comment.dto';
+import { CreateCommentDto } from './models/create-comment.dto';
+import { UpdateCommentDto } from './models/update-comment.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
 import {
   CommentListFiltersDto,
   CommentListFiltersPaginatedDto,
-} from './dtos/comment-list-filter.dto';
-import { PaginatedResponse } from 'src/core/interfaces/paginated-response.interface';
+} from './models/comment-list-filter.dto';
+import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
+import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
+import { CommentEntity } from './models/comment.entity';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiUnprocessableEntityResponse,
+} from '@nestjs/swagger';
+import { UnprocessableEntityResponseDto } from 'src/core/dtos/unprocessable-entity-response.dto';
+import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
 @Controller('comment')
+@ApiBadRequestResponse({ type: ValidationResponseDto })
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
   @Get()
-  getAll(@Query() filter: CommentListFiltersDto): Comment[] {
+  @ApiOkResponse({ type: [CommentEntity] })
+  getAll(@Query() filter: CommentListFiltersDto): CommentEntity[] {
     return this.commentService.getAll(filter);
   }
 
   @Get('paginated')
+  @ApiPaginatedResponse(CommentEntity)
   getAllPaginated(
     @Query() filter: CommentListFiltersPaginatedDto,
-  ): PaginatedResponse<Comment> {
+  ): PaginatedResponseDto<CommentEntity> {
     return this.commentService.getAllPaginated(filter);
   }
 
   @Post()
-  create(@Body() createCommentDto: CreateCommentDto): Comment {
+  @ApiCreatedResponse({ type: CommentEntity })
+  @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
+  create(@Body() createCommentDto: CreateCommentDto): CommentEntity {
     return this.commentService.create(createCommentDto);
   }
 
   @Get(':id')
-  getById(@Param() { id }: IdParamDto): Comment {
+  @ApiOkResponse({ type: CommentEntity })
+  getById(@Param() { id }: IdParamDto): CommentEntity {
     return this.commentService.getById(id);
   }
 
   @Put(':id')
+  @ApiOkResponse({ type: CommentEntity })
   update(
     @Param() { id }: IdParamDto,
     @Body() updateCommentDto: UpdateCommentDto,
-  ): Comment {
+  ): CommentEntity {
     return this.commentService.update(id, updateCommentDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param() { id }: IdParamDto) {
-    return this.commentService.delete(id);
+    this.commentService.delete(id);
   }
 }

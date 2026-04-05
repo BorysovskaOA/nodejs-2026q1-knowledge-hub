@@ -1,4 +1,3 @@
-import { ArticleStatus } from '../article.interface';
 import {
   IsArray,
   IsEnum,
@@ -8,7 +7,10 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
+import { ArticleStatus } from './article.constants';
+import { ApiSchema } from '@nestjs/swagger';
 
+@ApiSchema({ name: 'CreateArticleBody' })
 export class CreateArticleDto {
   @IsString()
   @IsNotEmpty()
