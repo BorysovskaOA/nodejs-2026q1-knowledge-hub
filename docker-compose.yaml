@@ -12,7 +12,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npx prisma migrate dev --skip-generate
+    command: npx prisma migrate dev
   app:
     container_name: knowledge_hub_prod
     build:
