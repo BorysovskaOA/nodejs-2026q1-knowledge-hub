@@ -32,15 +32,15 @@ export class UserController {
 
   @Get()
   @ApiOkResponse({ type: [UserEntity] })
-  getAll(): UserEntity[] {
+  async getAll(): Promise<UserEntity[]> {
     return this.userService.getAll();
   }
 
   @Get('paginated')
   @ApiPaginatedResponse(UserEntity)
-  getAllPaginated(
+  async getAllPaginated(
     @Query() filter: UserListFiltersPaginatedDto,
-  ): PaginatedResponseDto<UserEntity> {
+  ): Promise<PaginatedResponseDto<UserEntity>> {
     return this.userService.getAllPaginated(filter);
   }
 
@@ -52,7 +52,7 @@ export class UserController {
 
   @Get(':id')
   @ApiOkResponse({ type: UserEntity })
-  getById(@Param() { id }: IdParamDto): UserEntity {
+  async getById(@Param() { id }: IdParamDto): Promise<UserEntity> {
     return this.userService.getById(id);
   }
 
@@ -67,7 +67,7 @@ export class UserController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param() { id }: IdParamDto) {
-    this.userService.delete(id);
+  async delete(@Param() { id }: IdParamDto) {
+    await this.userService.delete(id);
   }
 }

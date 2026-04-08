@@ -1,12 +1,26 @@
 # Knowledge Hub
 
-## Installing NPM modules
+## Env variables
+
+Define env variables on based on .env.example
+
+## Run in docker
+
+### Development
+
+```
+docker compose -f docker-compose.dev.yaml up -d --build
+```
+
+## Local install
+
+### Installing NPM modules
 
 ```
 npm install
 ```
 
-## Running application
+### Running application
 
 ```
 npm start

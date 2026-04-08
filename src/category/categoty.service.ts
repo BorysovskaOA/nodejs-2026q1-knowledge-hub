@@ -1,81 +1,56 @@
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './models/create-category.dto';
-import { ArticleService } from 'src/article/article.service';
 
 @Injectable()
 export class CategoryService {
-  constructor(
-    private categoryRepository: CategoryRepository,
-    @Inject(forwardRef(() => ArticleService))
-    private articleService: ArticleService,
-  ) {}
+  constructor(private categoryRepository: CategoryRepository) {}
 
-  create(data: CreateCategoryDto) {
+  async create(data: CreateCategoryDto) {
     return this.categoryRepository.create(data);
   }
 
-  getAll() {
+  async getAll() {
     return this.categoryRepository.findAll();
   }
 
-  getById(id: string) {
-    const category = this.categoryRepository.findOne(id);
+  async getById(id: string) {
+    const category = await this.categoryRepository.findOne(id);
 
-    if (!category) {
-      throw new NotFoundException();
-    }
+    if (!category) throw new NotFoundException();
 
     return category;
   }
 
-  update(id: string, data: CreateCategoryDto) {
-    const category = this.categoryRepository.findOne(id);
+  async update(id: string, data: CreateCategoryDto) {
+    const category = await this.categoryRepository.findOne(id);
 
-    if (!category) {
-      throw new NotFoundException();
-    }
+    if (!category) throw new NotFoundException();
 
-    const updatedCategory = this.categoryRepository.update(id, data);
-    if (!updatedCategory) {
-      throw new InternalServerErrorException();
-    }
-
-    return updatedCategory;
+    return this.categoryRepository.update(id, data);
   }
 
-  delete(id: string) {
-    const category = this.categoryRepository.findOne(id);
+  async delete(id: string) {
+    const category = await this.categoryRepository.findOne(id);
 
-    if (!category) {
-      throw new NotFoundException();
-    }
+    if (!category) throw new NotFoundException();
 
-    const result = this.categoryRepository.delete(id);
-
-    this.articleService.unsetArticleCategory(id);
-
-    return result;
+    return this.categoryRepository.delete(id);
   }
 
-  validateCategoryExist(id: string) {
-    const user = this.categoryRepository.findOne(id);
+  async validateCategoryExist(id: string) {
+    const user = await this.categoryRepository.findOne(id);
 
     return !!user;
   }
 
-  validateCategoryExistWithException(id: string) {
-    const exist = this.validateCategoryExist(id);
+  async validateCategoryExistWithException(id: string) {
+    const exist = await this.validateCategoryExist(id);
 
-    if (!exist) {
-      throw new BadRequestException();
-    }
+    if (!exist) throw new BadRequestException();
   }
 }

@@ -35,42 +35,46 @@ export class ArticleController {
 
   @Get()
   @ApiOkResponse({ type: [ArticleEntity] })
-  getAll(@Query() filter: ArticleListFiltersDto): ArticleEntity[] {
+  async getAll(
+    @Query() filter: ArticleListFiltersDto,
+  ): Promise<ArticleEntity[]> {
     return this.articleService.getAll(filter);
   }
 
   @Get('paginated')
   @ApiPaginatedResponse(ArticleEntity)
-  getAllPaginated(
+  async getAllPaginated(
     @Query() filter: ArticleListFiltersPaginatdDto,
-  ): PaginatedResponseDto<ArticleEntity> {
+  ): Promise<PaginatedResponseDto<ArticleEntity>> {
     return this.articleService.getAllPaginated(filter);
   }
 
   @Post()
   @ApiCreatedResponse({ type: ArticleEntity })
-  create(@Body() createArticleDto: CreateArticleDto): ArticleEntity {
+  async create(
+    @Body() createArticleDto: CreateArticleDto,
+  ): Promise<ArticleEntity> {
     return this.articleService.create(createArticleDto);
   }
 
   @Get(':id')
   @ApiOkResponse({ type: ArticleEntity })
-  getById(@Param() { id }: IdParamDto): ArticleEntity {
+  async getById(@Param() { id }: IdParamDto): Promise<ArticleEntity> {
     return this.articleService.getById(id);
   }
 
   @Put(':id')
   @ApiOkResponse({ type: ArticleEntity })
-  update(
+  async update(
     @Param() { id }: IdParamDto,
     @Body() updateArticleDto: UpdateArticleDto,
-  ): ArticleEntity {
+  ): Promise<ArticleEntity> {
     return this.articleService.update(id, updateArticleDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param() { id }: IdParamDto) {
-    this.articleService.delete(id);
+  async delete(@Param() { id }: IdParamDto) {
+    await this.articleService.delete(id);
   }
 }

@@ -1,34 +1,19 @@
 import { ApiSchema } from '@nestjs/swagger';
-import { BaseEntity } from 'src/core/base.entity';
-import { ArticleStatus } from './article.constants';
+import { ArticleStatus, Article as PrismaArticle } from '@prisma/client';
 
 @ApiSchema({ name: 'Article' })
-export class ArticleEntity extends BaseEntity<ArticleEntity> {
+export class ArticleEntity implements PrismaArticle {
+  id: string;
   title: string;
   content: string;
   status: ArticleStatus;
   authorId: string | null;
   categoryId: string | null;
   tags: string[];
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
 
-  constructor(
-    articleData: Omit<ArticleEntity, 'id' | 'createdAt' | 'updatedAt'>,
-  ) {
-    const createdAt = Date.now();
-
-    super({
-      ...articleData,
-      createdAt,
-      updatedAt: createdAt,
-    });
-  }
-
-  update(articleData: Partial<ArticleEntity>): ArticleEntity {
-    return super.update({
-      ...articleData,
-      updatedAt: Date.now(),
-    });
+  constructor(partial: Partial<ArticleEntity>) {
+    Object.assign(this, partial);
   }
 }
