@@ -3,7 +3,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -11,7 +10,6 @@ import { CreateArticleDto } from './models/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
 import { UpdateArticleDto } from './models/update-article.dto';
-import { CommentService } from 'src/comment/comment.service';
 import {
   ArticleListFiltersDto,
   ArticleListFiltersPaginatdDto,
@@ -25,104 +23,68 @@ export class ArticleService {
     private categoryService: CategoryService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-    @Inject(forwardRef(() => CommentService))
-    private commentService: CommentService,
   ) {}
 
-  create(data: CreateArticleDto) {
+  async create(data: CreateArticleDto) {
     if (data.categoryId)
-      this.categoryService.validateCategoryExistWithException(data.categoryId);
+      await this.categoryService.validateCategoryExistWithException(
+        data.categoryId,
+      );
     if (data.authorId)
-      this.userService.validateUserExistWithException(data.authorId);
+      await this.userService.validateUserExistWithException(data.authorId);
 
     return this.articleRepository.create(data);
   }
 
-  getAll(filter: ArticleListFiltersDto) {
+  async getAll(filter: ArticleListFiltersDto) {
     return this.articleRepository.findAll(filter);
   }
 
-  getAllPaginated(filter: ArticleListFiltersPaginatdDto) {
+  async getAllPaginated(filter: ArticleListFiltersPaginatdDto) {
     return this.articleRepository.findAllPaginated(filter);
   }
 
-  getById(id: string) {
-    const article = this.articleRepository.findOne(id);
+  async getById(id: string) {
+    const article = await this.articleRepository.findOne(id);
 
-    if (!article) {
-      throw new NotFoundException();
-    }
+    if (!article) throw new NotFoundException();
 
     return article;
   }
 
-  update(id: string, data: UpdateArticleDto) {
-    const article = this.articleRepository.findOne(id);
+  async update(id: string, data: UpdateArticleDto) {
+    const article = await this.articleRepository.findOne(id);
 
-    if (!article) {
-      throw new NotFoundException();
-    }
+    if (!article) throw new NotFoundException();
 
     if (data.categoryId)
-      this.categoryService.validateCategoryExistWithException(data.categoryId);
+      await this.categoryService.validateCategoryExistWithException(
+        data.categoryId,
+      );
 
-    const updatedArticel = this.articleRepository.update(id, data);
-    if (!updatedArticel) {
-      throw new InternalServerErrorException();
-    }
-
-    return updatedArticel;
+    return this.articleRepository.update(id, data);
   }
 
   delete(id: string) {
     const article = this.articleRepository.findOne(id);
 
-    if (!article) {
-      throw new NotFoundException();
-    }
+    if (!article) throw new NotFoundException();
 
-    const result = this.articleRepository.delete(id);
-
-    this.commentService.deleteAllArticleComments(id);
-
-    return result;
+    return this.articleRepository.delete(id);
   }
 
-  validateArticleExist(id: string) {
-    const user = this.articleRepository.findOne(id);
+  async validateArticleExist(id: string) {
+    const user = await this.articleRepository.findOne(id);
 
     return !!user;
   }
 
-  validateArticleExistWithException(id: string) {
-    const exist = this.validateArticleExist(id);
+  async validateArticleExistWithException(id: string) {
+    const exist = await this.validateArticleExist(id);
 
-    if (!exist) {
+    if (!exist)
       throw new UnprocessableEntityException(
         `Article with given articleId doesn't exist`,
       );
-    }
-  }
-
-  unsetArticleCategory(id: string) {
-    const updatedArticlesData = this.articleRepository
-      .findAllRelated('categoryId', id)
-      .map((a) => ({
-        id: a.id,
-        categoryId: null,
-      }));
-
-    return this.articleRepository.updateBatch(updatedArticlesData);
-  }
-
-  unsetArticleAuthor(id: string) {
-    const updatedArticlesData = this.articleRepository
-      .findAllRelated('authorId', id)
-      .map((a) => ({
-        id: a.id,
-        authorId: null,
-      }));
-
-    return this.articleRepository.updateBatch(updatedArticlesData);
   }
 }

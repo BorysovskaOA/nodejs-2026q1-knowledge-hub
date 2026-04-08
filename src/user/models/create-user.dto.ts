@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
-import { UserRole } from './user.constants';
+import { UserRole } from '@prisma/client';
 import { ApiSchema } from '@nestjs/swagger';
 
 @ApiSchema({ name: 'CreateUserBody' })

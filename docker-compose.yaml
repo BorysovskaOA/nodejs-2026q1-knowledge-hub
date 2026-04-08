@@ -1,0 +1,23 @@
+include:
+  - path: docker-compose.db.yaml
+
+services:
+  app:
+    container_name: knowledge_hub_prod
+    build:
+      context: .
+      target: production
+    restart: on-failure
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      - PORT=${PORT}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:${PORT}/health || exit 1']
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    depends_on:
+      db:
+        condition: service_healthy

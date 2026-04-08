@@ -3,7 +3,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
@@ -25,71 +24,43 @@ export class CommentService {
     private userService: UserService,
   ) {}
 
-  create(data: CreateCommentDto) {
-    this.articleService.validateArticleExistWithException(data.articleId);
+  async create(data: CreateCommentDto) {
+    await this.articleService.validateArticleExistWithException(data.articleId);
     if (data.authorId)
-      this.userService.validateUserExistWithException(data.authorId);
+      await this.userService.validateUserExistWithException(data.authorId);
 
     return this.commentRepository.create(data);
   }
 
-  getAll(filter: CommentListFiltersDto) {
+  async getAll(filter: CommentListFiltersDto) {
     return this.commentRepository.findAll(filter);
   }
 
-  getAllPaginated(filter: CommentListFiltersPaginatedDto) {
+  async getAllPaginated(filter: CommentListFiltersPaginatedDto) {
     return this.commentRepository.findAllPaginated(filter);
   }
 
-  getById(id: string) {
-    const comment = this.commentRepository.findOne(id);
+  async getById(id: string) {
+    const comment = await this.commentRepository.findOne(id);
 
-    if (!comment) {
-      throw new NotFoundException();
-    }
+    if (!comment) throw new NotFoundException();
 
     return comment;
   }
 
-  update(id: string, data: UpdateArticleDto) {
+  async update(id: string, data: UpdateArticleDto) {
     const comment = this.commentRepository.findOne(id);
 
-    if (!comment) {
-      throw new NotFoundException();
-    }
+    if (!comment) throw new NotFoundException();
 
-    const updatedComment = this.commentRepository.update(id, data);
-
-    if (!updatedComment) {
-      throw new InternalServerErrorException();
-    }
-
-    return updatedComment;
+    return this.commentRepository.update(id, data);
   }
 
-  delete(id: string) {
-    const comment = this.commentRepository.findOne(id);
+  async delete(id: string) {
+    const comment = await this.commentRepository.findOne(id);
 
-    if (!comment) {
-      throw new NotFoundException();
-    }
+    if (!comment) throw new NotFoundException();
 
     return this.commentRepository.delete(id);
-  }
-
-  deleteAllArticleComments(id: string) {
-    const deleteCommentIds = this.commentRepository
-      .findAllRelated('articleId', id)
-      .map((c) => c.id);
-
-    return this.commentRepository.deleteBatch(deleteCommentIds);
-  }
-
-  deleteAllAuthorComments(id: string) {
-    const deleteCommentIds = this.commentRepository
-      .findAllRelated('authorId', id)
-      .map((c) => c.id);
-
-    return this.commentRepository.deleteBatch(deleteCommentIds);
   }
 }

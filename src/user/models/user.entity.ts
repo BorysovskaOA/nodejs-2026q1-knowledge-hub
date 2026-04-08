@@ -1,32 +1,20 @@
 import { ApiSchema } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { BaseEntity } from 'src/core/base.entity';
-import { UserRole } from './user.constants';
+import { UserRole, User as PrismaUser } from '@prisma/client';
 
 @ApiSchema({ name: 'User' })
-export class UserEntity extends BaseEntity<UserEntity> {
+export class UserEntity implements PrismaUser {
+  id: string;
+
   @Exclude()
-  password: string;
+  passwordHash: string;
 
   login: string;
   role: UserRole;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
 
-  constructor(userData: Omit<UserEntity, 'id' | 'createdAt' | 'updatedAt'>) {
-    const createdAt = Date.now();
-
-    super({
-      ...userData,
-      createdAt,
-      updatedAt: createdAt,
-    });
-  }
-
-  update(userData: Partial<UserEntity>): UserEntity {
-    return super.update({
-      ...userData,
-      updatedAt: Date.now(),
-    });
+  constructor(partial: Partial<UserEntity>) {
+    Object.assign(this, partial);
   }
 }

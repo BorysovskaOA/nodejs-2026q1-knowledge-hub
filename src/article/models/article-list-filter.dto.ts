@@ -9,7 +9,7 @@ import { PaginationDto } from 'src/core/dtos/pagination.dto';
 import { IntersectionType } from '@nestjs/swagger';
 import { SortOrder, WithSortingDto } from 'src/core/dtos/sorting.dto';
 import { ArticleEntity } from './article.entity';
-import { ArticleStatus } from './article.constants';
+import { ArticleStatus } from '@prisma/client';
 
 export class ArticleListFiltersDto {
   @IsOptional()
