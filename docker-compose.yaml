@@ -2,6 +2,17 @@ include:
   - path: docker-compose.db.yaml
 
 services:
+  db-migrate:
+    build:
+      context: .
+      target: production
+    restart: 'no'
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npx prisma migrate dev --skip-generate
   app:
     container_name: knowledge_hub_prod
     build:
@@ -15,11 +26,11 @@ services:
     ports:
       - '${PORT}:4000'
     healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:${PORT}/health || exit 1']
+      test: ['CMD-SHELL', 'curl -f http://localhost:4000/health || exit 1']
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
     depends_on:
-      db:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
