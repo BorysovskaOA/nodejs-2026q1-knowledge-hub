@@ -6,7 +6,12 @@ import {
 } from './models/article-list-filter.dto';
 import { ArticleEntity } from './models/article.entity';
 import { PrismaService } from 'prisma/prisma.service';
-import { Article, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { CreateArticleDto } from './models/create-article.dto';
+
+type ArticleWithTags = Prisma.ArticleGetPayload<{
+  include: { tags: true };
+}>;
 
 @Injectable()
 export class ArticleRepository {
@@ -16,8 +21,11 @@ export class ArticleRepository {
     return this.prisma.article;
   }
 
-  private map(data: Article): ArticleEntity {
-    return new ArticleEntity(data);
+  private map(data: ArticleWithTags): ArticleEntity {
+    return new ArticleEntity({
+      ...data,
+      tags: data.tags.map((t: any) => t.name) || [],
+    });
   }
 
   private formatFindAllWhereFilter({
@@ -28,13 +36,14 @@ export class ArticleRepository {
     return {
       status: status,
       categoryId: categoryId,
-      tags: tag ? { has: tag } : undefined,
+      tags: tag ? { some: { name: tag } } : undefined,
     };
   }
 
   async findAll(filter: ArticleListFiltersDto): Promise<ArticleEntity[]> {
     const items = await this.db.findMany({
       where: this.formatFindAllWhereFilter(filter),
+      include: { tags: true },
     });
 
     return items.map(this.map);
@@ -55,6 +64,7 @@ export class ArticleRepository {
     const [items, total] = await Promise.all([
       this.db.findMany({
         where: whereFilter,
+        include: { tags: true },
         take: limit,
         skip: skip,
         orderBy: sortKey ? { [sortKey]: sortOrder.toLowerCase() } : undefined,
@@ -66,15 +76,29 @@ export class ArticleRepository {
   }
 
   async findOne(id: string): Promise<ArticleEntity | null> {
-    const item = await this.db.findUnique({ where: { id } });
+    const item = await this.db.findUnique({
+      where: { id },
+      include: { tags: true },
+    });
 
     return item ? this.map(item) : null;
   }
 
-  async create(
-    data: Prisma.ArticleUncheckedCreateInput,
-  ): Promise<ArticleEntity> {
-    const item = await this.db.create({ data });
+  async create(data: CreateArticleDto): Promise<ArticleEntity> {
+    const item = await this.db.create({
+      data: {
+        ...data,
+        tags: {
+          connectOrCreate: data.tags?.map((name: string) => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+      },
+      include: {
+        tags: true,
+      },
+    });
 
     return this.map(item);
   }
@@ -85,7 +109,17 @@ export class ArticleRepository {
   ): Promise<ArticleEntity> {
     const item = await this.db.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        tags: {
+          set: [],
+          connectOrCreate: data.tags?.map((name: string) => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+      },
+      include: { tags: true },
     });
 
     return this.map(item);
@@ -94,6 +128,7 @@ export class ArticleRepository {
   async delete(id: string): Promise<ArticleEntity> {
     const item = await this.db.delete({
       where: { id },
+      include: { tags: true },
     });
 
     return this.map(item);

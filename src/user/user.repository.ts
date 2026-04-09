@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UserEntity } from './models/user.entity';
 import { PrismaService } from 'prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
+import { CreateUserDto } from './models/create-user.dto';
 
 @Injectable()
 export class UserRepository {
@@ -49,7 +50,9 @@ export class UserRepository {
     return item ? this.map(item) : null;
   }
 
-  async create(data: Prisma.UserUncheckedCreateInput): Promise<UserEntity> {
+  async create(
+    data: Omit<CreateUserDto, 'password'> & { passwordHash: string },
+  ): Promise<UserEntity> {
     const item = await this.db.create({ data });
 
     return this.map(item);

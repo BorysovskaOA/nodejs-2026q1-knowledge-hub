@@ -6,13 +6,19 @@ Define env variables on based on .env.example
 
 ## Run in docker
 
+### Production
+
+```
+docker compose up -d --build
+```
+
 ### Development
 
 ```
-docker compose -f docker-compose.dev.yaml up -d --build
+docker compose --profile dev up -d --build
 ```
 
-## Local install
+## Local installation
 
 ### Installing NPM modules
 

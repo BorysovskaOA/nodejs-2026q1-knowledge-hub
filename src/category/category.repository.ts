@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity } from './models/category.entity';
-import { Category, Prisma } from '@prisma/client';
+import { Category } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
+import { CreateCategoryDto } from './models/create-category.dto';
 
 @Injectable()
 export class CategoryRepository {
@@ -30,9 +31,7 @@ export class CategoryRepository {
     return item ? this.map(item) : null;
   }
 
-  async create(
-    data: Prisma.CategoryUncheckedCreateInput,
-  ): Promise<CategoryEntity> {
+  async create(data: CreateCategoryDto): Promise<CategoryEntity> {
     const item = await this.db.create({ data });
 
     return this.map(item);
