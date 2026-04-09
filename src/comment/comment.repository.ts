@@ -5,8 +5,9 @@ import {
 } from './models/comment-list-filter.dto';
 import { CommentEntity } from './models/comment.entity';
 import { PrismaService } from 'prisma/prisma.service';
-import { Comment, Prisma } from '@prisma/client';
+import { Comment } from '@prisma/client';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
+import { CreateCommentDto } from './models/create-comment.dto';
 
 @Injectable()
 export class CommentRepository {
@@ -65,9 +66,7 @@ export class CommentRepository {
     return item ? this.map(item) : null;
   }
 
-  async create(
-    data: Prisma.CommentUncheckedCreateInput,
-  ): Promise<CommentEntity> {
+  async create(data: CreateCommentDto): Promise<CommentEntity> {
     const item = await this.db.create({ data });
 
     return this.map(item);
