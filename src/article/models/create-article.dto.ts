@@ -22,7 +22,7 @@ export class CreateArticleDto {
 
   @IsOptional()
   @IsEnum(ArticleStatus)
-  status: ArticleStatus = ArticleStatus.DRAFT;
+  status: ArticleStatus = ArticleStatus.draft;
 
   @IsOptional()
   @ValidateIf((_, value) => value !== null)

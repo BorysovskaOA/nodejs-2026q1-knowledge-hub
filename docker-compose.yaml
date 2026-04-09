@@ -46,7 +46,7 @@ services:
     restart: on-failure
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public&connection_limit=5&pool_timeout=10
       - PORT=${PORT}
     ports:
       - '${PORT}:4000'
