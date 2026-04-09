@@ -49,13 +49,16 @@ model Comment {
   authorId  String?
   author    User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   
+  @@index([articleId, createdAt(sort: Asc)])
 }
 
 model Category {
   id          String    @id @default(uuid())
-  name        String
+  name        String    @unique
   description String
   articles    Article[]
+
+  @@index([name(sort: Asc)]) 
 }
 
 model Article {
@@ -73,4 +76,8 @@ model Article {
 
   categoryId String?
   category   Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdAt(sort: Desc)])
 }

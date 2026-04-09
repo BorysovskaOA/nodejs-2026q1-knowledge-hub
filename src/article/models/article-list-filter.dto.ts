@@ -31,7 +31,7 @@ export class ArticleListFiltersPaginatdDto extends IntersectionType(
   PaginationDto,
   WithSortingDto<ArticleEntity>(
     ['createdAt', 'updatedAt', 'status', 'authorId', 'categoryId'],
-    'updatedAt',
+    'createdAt',
     SortOrder.DESC,
   ),
 ) {}
