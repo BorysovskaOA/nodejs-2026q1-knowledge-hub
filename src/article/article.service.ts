@@ -65,8 +65,8 @@ export class ArticleService {
     return this.articleRepository.update(id, data);
   }
 
-  delete(id: string) {
-    const article = this.articleRepository.findOne(id);
+  async delete(id: string) {
+    const article = await this.articleRepository.findOne(id);
 
     if (!article) throw new NotFoundException();
 

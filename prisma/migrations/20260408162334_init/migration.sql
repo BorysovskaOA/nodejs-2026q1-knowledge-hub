@@ -2,7 +2,7 @@
 CREATE TYPE "UserRole" AS ENUM ('admin', 'editor', 'viewer');
 
 -- CreateEnum
-CREATE TYPE "ArticleStatus" AS ENUM ('draft', 'published', 'archived');
+CREATE TYPE "ArticleStatus" AS ENUM ('archived', 'draft', 'published');
 
 -- CreateTable
 CREATE TABLE "User" (

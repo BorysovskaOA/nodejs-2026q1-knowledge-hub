@@ -4,6 +4,18 @@
 
 Define env variables on based on .env.example
 
+## Docker image
+
+```
+olhaborysovska/nodejs-2026q1-knowledge-hub-app
+```
+
+Image does not have any critical vulnerabilities:
+CRITICAL 0  
+HIGH 12
+MEDIUM 13
+LOW 1
+
 ## Run in docker
 
 ### Production

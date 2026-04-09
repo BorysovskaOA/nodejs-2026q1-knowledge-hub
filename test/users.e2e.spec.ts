@@ -146,8 +146,8 @@ describe('Users (e2e)', () => {
 
   describe('GET /paginated)', () => {
     it('should correctly get paginated response', async () => {
-      const users = Array.from({ length: 25 }, () => ({
-        login: `TEST_LOGIN${randomUUID}`,
+      const users = Array.from({ length: 25 }, (_, i) => ({
+        login: `TEST_LOGIN_${i}`,
         password: 'TEST_PASSWORD',
       }));
 
@@ -185,7 +185,7 @@ describe('Users (e2e)', () => {
 
     it('should correctly sort response', async () => {
       const users = Array.from({ length: 25 }, (_, i) => ({
-        login: `TEST_LOGIN${randomUUID}`,
+        login: `TEST_LOGIN_${i}`,
         password: 'TEST_PASSWORD',
         role: i % 2 ? 'admin' : 'viewer',
       }));

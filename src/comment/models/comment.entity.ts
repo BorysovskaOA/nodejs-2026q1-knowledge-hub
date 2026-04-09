@@ -1,5 +1,6 @@
 import { ApiSchema } from '@nestjs/swagger';
 import { Comment as PrismaComment } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 @ApiSchema({ name: 'Comment' })
 export class CommentEntity implements PrismaComment {
@@ -7,6 +8,8 @@ export class CommentEntity implements PrismaComment {
   content: string;
   articleId: string;
   authorId: string | null;
+
+  @Transform(({ value }) => value.getTime())
   createdAt: Date;
 
   constructor(partial: Partial<CommentEntity>) {

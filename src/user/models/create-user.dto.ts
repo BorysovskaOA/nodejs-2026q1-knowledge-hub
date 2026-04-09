@@ -14,5 +14,5 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsEnum(UserRole)
-  role: UserRole = UserRole.VIEWER;
+  role: UserRole = UserRole.viewer;
 }

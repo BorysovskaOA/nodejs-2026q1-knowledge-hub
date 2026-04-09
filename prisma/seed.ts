@@ -14,7 +14,7 @@ async function main() {
     create: {
       login: 'admin_user',
       passwordHash: 'hashed_password_123',
-      role: UserRole.ADMIN,
+      role: UserRole.admin,
     },
   });
 
@@ -24,7 +24,7 @@ async function main() {
     create: {
       login: 'editor_user',
       passwordHash: 'hashed_password_456',
-      role: UserRole.EDITOR,
+      role: UserRole.editor,
     },
   });
 
@@ -44,7 +44,7 @@ async function main() {
     {
       title: 'How to slim Docker images',
       content: 'Long content about multi-stage builds...',
-      status: ArticleStatus.PUBLISHED,
+      status: ArticleStatus.published,
       authorId: admin.id,
       categoryId: categories[0].id,
       tags: ['Docker', 'Prisma'],
@@ -52,7 +52,7 @@ async function main() {
     {
       title: 'Prisma Many-to-Many Guide',
       content: 'Implicit vs Explicit relations...',
-      status: ArticleStatus.PUBLISHED,
+      status: ArticleStatus.published,
       authorId: editor.id,
       categoryId: categories[0].id,
       tags: ['Prisma', 'NodeJS'],
@@ -60,7 +60,7 @@ async function main() {
     {
       title: 'Morning Routine for Devs',
       content: 'Coffee and code...',
-      status: ArticleStatus.DRAFT,
+      status: ArticleStatus.draft,
       authorId: editor.id,
       categoryId: categories[1].id,
       tags: ['Tutorial'],
@@ -68,7 +68,7 @@ async function main() {
     {
       title: 'Legacy SQL Database',
       content: 'Old school migrations...',
-      status: ArticleStatus.ARCHIVED,
+      status: ArticleStatus.archived,
       authorId: admin.id,
       categoryId: categories[2].id,
       tags: ['Database'],
@@ -76,7 +76,7 @@ async function main() {
     {
       title: 'Learning Alpine Linux',
       content: 'Smallest distro ever...',
-      status: ArticleStatus.PUBLISHED,
+      status: ArticleStatus.published,
       authorId: editor.id,
       categoryId: categories[0].id,
       tags: ['Docker', 'Tutorial'],

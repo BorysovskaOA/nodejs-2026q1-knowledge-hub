@@ -67,7 +67,7 @@ export class ArticleRepository {
         include: { tags: true },
         take: limit,
         skip: skip,
-        orderBy: sortKey ? { [sortKey]: sortOrder.toLowerCase() } : undefined,
+        orderBy: sortKey ? { [sortKey]: sortOrder } : undefined,
       }),
       this.db.count({ where: whereFilter }),
     ]);
