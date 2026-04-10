@@ -1,27 +1,34 @@
-## Build
-FROM node:24-alpine AS build
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY package*.json ./
-COPY prisma ./prisma/ 
+COPY prisma ./prisma
 
-RUN npm ci
+## Build
+FROM base AS build
+RUN npm ci && npx prisma generate
 COPY . .
 RUN npm run build
 
+## Pre-production
+FROM base as pre-production
+RUN npm ci --omit=dev \
+  && npx prisma generate \
+  && npm cache clean --force
+
 ## Production
 FROM node:24-alpine AS production
+WORKDIR /app
 RUN apk add --no-cache tini
 ENV NODE_ENV=production
-WORKDIR /app
 
+COPY --from=pre-production /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
-RUN mkdir -p /app/node_modules && chown -R node:node /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma.config.js ./
+
 USER node
-RUN npm ci --omit=dev && npm cache clean --force
-COPY --from=build --chown=node:node /app/dist ./dist
-COPY --from=build --chown=node:node /app/prisma.config.js ./prisma.config.js
 
 EXPOSE 4000
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/src/main.js"]
+CMD ["npm" "run" "start:prod"]

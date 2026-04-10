@@ -51,7 +51,7 @@ services:
     ports:
       - '${PORT}:4000'
     command: >
-      sh -c "npx prisma migrate dev && node dist/src/main.js"
+      sh -c "npx prisma migrate dev && npm run start:prod"
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:4000/health || exit 1']
       interval: 10s

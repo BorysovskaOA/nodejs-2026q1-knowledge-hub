@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserEntity } from './models/user.entity';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';

@@ -4,7 +4,7 @@ import {
   CommentListFiltersPaginatedDto,
 } from './models/comment-list-filter.dto';
 import { CommentEntity } from './models/comment.entity';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Comment } from '@prisma/client';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { CreateCommentDto } from './models/create-comment.dto';
