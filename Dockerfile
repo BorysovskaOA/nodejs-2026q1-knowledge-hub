@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 ## Pre-production
-FROM base as pre-production
+FROM base AS pre-production
 RUN npm ci --omit=dev \
   && npx prisma generate \
   && npm cache clean --force
@@ -31,4 +31,4 @@ USER node
 
 EXPOSE 4000
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["npm" "run" "start:prod"]
+CMD ["npm", "run", "start:prod"]

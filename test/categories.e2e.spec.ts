@@ -75,9 +75,9 @@ describe('Category (e2e)', () => {
     });
 
     it('should should return categories sorted', async () => {
-      const categories = Array.from({ length: 2 }, () => ({
+      const categories = Array.from({ length: 2 }, (_, i) => ({
         ...createCategoryDto,
-        name: randomUUID,
+        name: `${createCategoryDto.name}_${i}`,
       }));
 
       const createCategoriesResponse = await Promise.all(
@@ -101,7 +101,7 @@ describe('Category (e2e)', () => {
       expect(response.body).toBeInstanceOf(Array);
 
       const sortedData = structuredClone(response.body).sort(
-        (a, b) => b.name - a.name,
+        (a, b) => a.name - b.name,
       );
 
       expect(response.body).toEqual(sortedData);
@@ -254,6 +254,12 @@ describe('Category (e2e)', () => {
         });
 
       expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+
+      const cleanupResponse = await unauthorizedRequest
+        .delete(categoriesRoutes.delete(createdId))
+        .set(commonHeaders);
+
+      expect(cleanupResponse.statusCode).toBe(StatusCodes.NO_CONTENT);
     });
 
     it("should respond with NOT_FOUND status code in case if category doesn't exist", async () => {
