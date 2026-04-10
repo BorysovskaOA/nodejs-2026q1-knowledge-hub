@@ -9,7 +9,6 @@
     "node": ">=22.14.0"
   },
   "scripts": {
-    "postinstall": "prisma generate",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

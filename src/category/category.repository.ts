@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity } from './models/category.entity';
 import { Category } from '@prisma/client';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { CreateCategoryDto } from './models/create-category.dto';
 

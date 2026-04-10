@@ -5,7 +5,7 @@ import {
   ArticleListFiltersPaginatdDto,
 } from './models/article-list-filter.dto';
 import { ArticleEntity } from './models/article.entity';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateArticleDto } from './models/create-article.dto';
 

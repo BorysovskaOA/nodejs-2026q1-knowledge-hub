@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, ArticleStatus, Article } from '@prisma/client';
+import { PrismaClient, UserRole, ArticleStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -83,7 +83,7 @@ async function main() {
     },
   ];
 
-  const articles: Article[] = [];
+  const articles = [];
 
   for (const item of articlesData) {
     const article = await prisma.article.create({
