@@ -1,9 +1,5 @@
 # Knowledge Hub
 
-## Env variables
-
-Define env variables on based on .env.example
-
 ## Docker image
 
 ```
@@ -15,6 +11,10 @@ CRITICAL 0
 HIGH 12
 MEDIUM 13
 LOW 1
+
+## Env variables
+
+Define env variables in .env based on .env.example
 
 ## Run in docker
 
@@ -30,18 +30,28 @@ docker compose up -d --build
 docker compose --profile dev up -d --build
 ```
 
+## Seeding
+
+```
+npx prisma db seed
+```
+
 ## Local installation
 
 ### Installing NPM modules
 
 ```
+
 npm install
+
 ```
 
 ### Running application
 
 ```
+
 npm start
+
 ```
 
 After starting the app on port (4000 as default) you can open
@@ -55,47 +65,63 @@ After application running open new terminal and enter:
 To run all tests without authorization
 
 ```
+
 npm run test
+
 ```
 
 To run only one of all test suites
 
 ```
+
 npm run test -- <path to suite>
+
 ```
 
 To run all test with authorization
 
 ```
+
 npm run test:auth
+
 ```
 
 To run only specific test suite with authorization
 
 ```
+
 npm run test:auth -- <path to suite>
+
 ```
 
 To run refresh token tests
 
 ```
+
 npm run test:refresh
+
 ```
 
 To run RBAC (role-based access control) tests
 
 ```
+
 npm run test:rbac
+
 ```
 
 ### Auto-fix and format
 
 ```
+
 npm run lint
+
 ```
 
 ```
+
 npm run format
+
 ```
 
 ### Debugging in VSCode
@@ -103,3 +129,7 @@ npm run format
 Press <kbd>F5</kbd> to debug.
 
 For more information, visit: https://code.visualstudio.com/docs/editor/debugging
+
+```
+
+```
