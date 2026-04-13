@@ -23,6 +23,7 @@ import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response
 import { CommentEntity } from './models/comment.entity';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiUnprocessableEntityResponse,
@@ -30,6 +31,7 @@ import {
 import { UnprocessableEntityResponseDto } from 'src/core/dtos/unprocessable-entity-response.dto';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
+@ApiBearerAuth('accessToken')
 @Controller('comment')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 export class CommentController {
