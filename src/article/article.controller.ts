@@ -20,6 +20,7 @@ import {
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
@@ -28,6 +29,7 @@ import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response
 import { ArticleEntity } from './models/article.entity';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
+@ApiBearerAuth('accessToken')
 @Controller('article')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 export class ArticleController {

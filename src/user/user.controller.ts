@@ -17,6 +17,7 @@ import { IdParamDto } from 'src/core/dtos/id-param.dto';
 import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
@@ -25,6 +26,7 @@ import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 
+@ApiBearerAuth('accessToken')
 @Controller('user')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 export class UserController {
@@ -62,7 +64,7 @@ export class UserController {
     @Param() { id }: IdParamDto,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ): Promise<UserEntity> {
-    return this.userService.update(id, updatePasswordDto);
+    return this.userService.updatePassword(id, updatePasswordDto);
   }
 
   @Delete(':id')

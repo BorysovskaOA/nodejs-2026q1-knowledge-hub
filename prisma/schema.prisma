@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -13,29 +13,28 @@ enum UserRole {
   viewer
 }
 
-
 enum ArticleStatus {
   archived
-  draft      
+  draft
   published
 }
 
-
 model User {
-  id            String   @id @default(uuid())
-  login         String   @unique
-  passwordHash  String
-  role          UserRole @default(viewer)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  comments      Comment[]
-  articles      Article[]
+  id               String    @id @default(uuid())
+  login            String    @unique
+  passwordHash     String
+  refreshTokenHash String?
+  role             UserRole  @default(viewer)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  comments         Comment[]
+  articles         Article[]
 }
 
 model Tag {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  articles  Article[]
+  id       String    @id @default(uuid())
+  name     String    @unique
+  articles Article[]
 }
 
 model Comment {
@@ -44,11 +43,11 @@ model Comment {
   createdAt DateTime @default(now())
 
   articleId String
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
-  authorId  String?
-  author    User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
   @@index([articleId, createdAt(sort: Asc)])
 }
 
@@ -58,24 +57,24 @@ model Category {
   description String
   articles    Article[]
 
-  @@index([name(sort: Asc)]) 
+  @@index([name(sort: Asc)])
 }
 
 model Article {
-  id         String        @id @default(uuid())
-  title      String
-  content    String
-  status     ArticleStatus @default(draft)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  comments   Comment[]
-  tags       Tag[]
+  id        String        @id @default(uuid())
+  title     String
+  content   String
+  status    ArticleStatus @default(draft)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  comments  Comment[]
+  tags      Tag[]
 
-  authorId   String?
-  author     User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   categoryId String?
-  category   Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([categoryId])
