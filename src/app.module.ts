@@ -11,9 +11,16 @@ import { GlobalValidationPipe } from './core/pipes/global-validation.pipe';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { AuthzGuard } from './core/guards/authz.guard';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.RATE_LIMIT_TTL),
+        limit: Number(process.env.RATE_LIMIT),
+      },
+    ]),
     ArticleModule,
     CategoryModule,
     CommentModule,

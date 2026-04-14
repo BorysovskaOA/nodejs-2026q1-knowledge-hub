@@ -7,6 +7,7 @@ import {
   RawBody,
   Request,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -26,23 +27,26 @@ import { AuthEntity, AuthUserEntity } from './models/auth.entity';
 import { PublicRote } from '../core/decorators/public-route.decorator';
 import { AuthenticatedRequest } from '../core/interfaces/authenticated_request.interface';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @PublicRote()
   @Post('signup')
+  @PublicRote()
+  @UseGuards(ThrottlerGuard)
   @ApiCreatedResponse({ type: AuthUserEntity })
   @ApiBadRequestResponse({ type: ValidationResponseDto })
   async signup(@Body() signupDto: SignupDto): Promise<AuthUserEntity> {
     return this.authService.signup(signupDto);
   }
 
-  @PublicRote()
   @Post('login')
+  @PublicRote()
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse({ type: ValidationResponseDto })
   @ApiForbiddenResponse(ExceptionResponse(403))
@@ -50,8 +54,8 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @ApiBearerAuth('accessToken')
   @Post('refresh')
+  @ApiBearerAuth('accessToken')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AuthEntity })
   @ApiUnauthorizedResponse(ExceptionResponse(401))
@@ -63,5 +67,13 @@ export class AuthController {
     if (!refreshDto.refreshToken) throw new UnauthorizedException();
 
     return this.authService.refresh(refreshDto, req.user);
+  }
+
+  @Post('logout')
+  @ApiBearerAuth('accessToken')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiUnauthorizedResponse(ExceptionResponse(401))
+  async logout(@Request() req: AuthenticatedRequest) {
+    this.authService.logout(req.user);
   }
 }

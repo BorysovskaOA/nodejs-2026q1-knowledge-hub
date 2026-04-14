@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { SignupDto } from './models/signup.dto';
 import { Prisma, UserRole } from '@prisma/client';
@@ -85,7 +89,7 @@ export class AuthService {
   async refresh(data: RefreshDto, authUser: AuthPayloadUser) {
     const user = await this.userService.getOne({ id: authUser.userId });
 
-    if (!user) throw new ForbiddenException();
+    if (!user) throw new InternalServerErrorException();
 
     if (user.refreshTokenHash) {
       const isValidToken = await hashCompare(
@@ -100,5 +104,13 @@ export class AuthService {
     await this.updateUserRefreshToken(user.id, tokens.refreshToken);
 
     return tokens;
+  }
+
+  async logout(authUser: AuthPayloadUser) {
+    const user = await this.userService.getOne({ id: authUser.userId });
+
+    if (!user) throw new InternalServerErrorException();
+
+    await this.userService.update(user.id, { refreshTokenHash: null });
   }
 }
