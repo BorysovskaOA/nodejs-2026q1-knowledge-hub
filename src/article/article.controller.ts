@@ -22,16 +22,21 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
 import { ArticleEntity } from './models/article.entity';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
+import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import { Authorize } from 'src/core/decorators/authorize.decorator';
+import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('article')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
+@ApiInternalServerErrorResponse(ExceptionResponse(500))
 export class ArticleController {
   constructor(private articleService: ArticleService) {}
 
@@ -52,6 +57,7 @@ export class ArticleController {
   }
 
   @Post()
+  @Authorize({ roles: [UserRole.admin, UserRole.editor] })
   @ApiCreatedResponse({ type: ArticleEntity })
   async create(
     @Body() createArticleDto: CreateArticleDto,
@@ -66,6 +72,14 @@ export class ArticleController {
   }
 
   @Put(':id')
+  @Authorize({
+    roles: [UserRole.admin],
+    owner: {
+      service: ArticleService,
+      paramName: 'id',
+      propertyName: 'authorId',
+    },
+  })
   @ApiOkResponse({ type: ArticleEntity })
   async update(
     @Param() { id }: IdParamDto,
@@ -75,6 +89,14 @@ export class ArticleController {
   }
 
   @Delete(':id')
+  @Authorize({
+    roles: [UserRole.admin],
+    owner: {
+      service: ArticleService,
+      paramName: 'id',
+      propertyName: 'authorId',
+    },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param() { id }: IdParamDto) {
     await this.articleService.delete(id);

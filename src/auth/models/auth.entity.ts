@@ -21,7 +21,7 @@ export class AuthUserEntity extends IntersectionType(UserEntity, AuthEntity) {
 }
 
 export class AuthPayloadUser {
-  sub: string;
+  userId: string;
   login: string;
   role: UserRole;
 }

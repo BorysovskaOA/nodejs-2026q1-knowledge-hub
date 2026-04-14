@@ -8,8 +8,9 @@ import { UserModule } from './user/user.module';
 
 import { LoggerMiddleware } from './core/middlewares/logger.middleware';
 import { GlobalValidationPipe } from './core/pipes/global-validation.pipe';
-import { AuthGuard } from './auth/auth.guard';
+import { AuthGuard } from './core/guards/auth.guard';
 import { AuthModule } from './auth/auth.module';
+import { AuthzGuard } from './core/guards/authz.guard';
 
 @Module({
   imports: [
@@ -27,6 +28,10 @@ import { AuthModule } from './auth/auth.module';
     {
       provide: APP_PIPE,
       useClass: GlobalValidationPipe,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthzGuard,
     },
   ],
 })

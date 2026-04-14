@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity } from './models/category.entity';
-import { Category } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { CreateCategoryDto } from './models/create-category.dto';
@@ -25,8 +25,16 @@ export class CategoryRepository {
     return items.map(this.map);
   }
 
-  async findOne(id: string): Promise<CategoryEntity | null> {
+  async findById(id: string): Promise<CategoryEntity | null> {
     const item = await this.db.findUnique({ where: { id } });
+
+    return item ? this.map(item) : null;
+  }
+
+  async findUnique(
+    where: Prisma.CategoryWhereUniqueInput,
+  ): Promise<CategoryEntity | null> {
+    const item = await this.db.findUnique({ where });
 
     return item ? this.map(item) : null;
   }
