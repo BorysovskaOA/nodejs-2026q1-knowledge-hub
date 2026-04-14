@@ -25,15 +25,20 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { UnprocessableEntityResponseDto } from 'src/core/dtos/unprocessable-entity-response.dto';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
+import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import { Authorize } from 'src/core/decorators/authorize.decorator';
+import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('comment')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
+@ApiInternalServerErrorResponse(ExceptionResponse(500))
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
@@ -54,6 +59,7 @@ export class CommentController {
   }
 
   @Post()
+  @Authorize({ roles: [UserRole.admin, UserRole.editor] })
   @ApiCreatedResponse({ type: CommentEntity })
   @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
   async create(
@@ -69,6 +75,14 @@ export class CommentController {
   }
 
   @Put(':id')
+  @Authorize({
+    roles: [UserRole.admin],
+    owner: {
+      service: CommentService,
+      paramName: 'id',
+      propertyName: 'authorId',
+    },
+  })
   @ApiOkResponse({ type: CommentEntity })
   async update(
     @Param() { id }: IdParamDto,
@@ -78,6 +92,14 @@ export class CommentController {
   }
 
   @Delete(':id')
+  @Authorize({
+    roles: [UserRole.admin],
+    owner: {
+      service: CommentService,
+      paramName: 'id',
+      propertyName: 'authorId',
+    },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param() { id }: IdParamDto) {
     await this.commentService.delete(id);

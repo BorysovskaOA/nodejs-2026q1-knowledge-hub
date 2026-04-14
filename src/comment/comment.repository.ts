@@ -5,7 +5,7 @@ import {
 } from './models/comment-list-filter.dto';
 import { CommentEntity } from './models/comment.entity';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Comment } from '@prisma/client';
+import { Comment, Prisma } from '@prisma/client';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { CreateCommentDto } from './models/create-comment.dto';
 
@@ -60,8 +60,16 @@ export class CommentRepository {
     return new PaginatedResponseDto(items.map(this.map), total, page, limit);
   }
 
-  async findOne(id: string): Promise<CommentEntity | null> {
+  async findById(id: string): Promise<CommentEntity | null> {
     const item = await this.db.findUnique({ where: { id } });
+
+    return item ? this.map(item) : null;
+  }
+
+  async findUnique(
+    where: Prisma.CommentWhereUniqueInput,
+  ): Promise<CommentEntity | null> {
+    const item = await this.db.findUnique({ where });
 
     return item ? this.map(item) : null;
   }

@@ -13,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -21,11 +22,13 @@ import { AuthService } from './auth.service';
 import { SignupDto } from './models/signup.dto';
 import { LoginDto } from './models/login.dto';
 import { RefreshDto } from './models/refresh.dto';
-import { AuthEntity, AuthUserEntity } from './models/atuh.entity';
+import { AuthEntity, AuthUserEntity } from './models/auth.entity';
 import { PublicRote } from '../core/decorators/public-route.decorator';
-import { AuthenticatedRequest } from './models/authenticated_request.interface';
+import { AuthenticatedRequest } from '../core/interfaces/authenticated_request.interface';
+import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 
 @Controller('auth')
+@ApiInternalServerErrorResponse(ExceptionResponse(500))
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -42,7 +45,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse({ type: ValidationResponseDto })
-  @ApiForbiddenResponse()
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async login(@Body() loginDto: LoginDto): Promise<AuthEntity> {
     return this.authService.login(loginDto);
   }
@@ -51,8 +54,8 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AuthEntity })
-  @ApiUnauthorizedResponse()
-  @ApiForbiddenResponse()
+  @ApiUnauthorizedResponse(ExceptionResponse(401))
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async refresh(
     @RawBody() refreshDto: RefreshDto,
     @Request() req: AuthenticatedRequest,
