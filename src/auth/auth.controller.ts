@@ -6,12 +6,12 @@ import {
   Post,
   RawBody,
   Request,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -28,6 +28,7 @@ import { PublicRote } from '../core/decorators/public-route.decorator';
 import { AuthenticatedRequest } from '../core/interfaces/authenticated_request.interface';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { UnauthorizedValidationPipe } from './unauthorized-validation.pipe';
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
@@ -57,15 +58,14 @@ export class AuthController {
   @Post('refresh')
   @ApiBearerAuth('accessToken')
   @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ type: AuthEntity })
   @ApiUnauthorizedResponse(ExceptionResponse(401))
   @ApiForbiddenResponse(ExceptionResponse(403))
   async refresh(
-    @RawBody() refreshDto: RefreshDto,
+    @RawBody(UnauthorizedValidationPipe) refreshDto: RefreshDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<AuthEntity> {
-    if (!refreshDto.refreshToken) throw new UnauthorizedException();
-
     return this.authService.refresh(refreshDto, req.user);
   }
 
