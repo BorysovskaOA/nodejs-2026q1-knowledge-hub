@@ -18,7 +18,7 @@ RUN npm ci --omit=dev \
 ## Production
 FROM node:24-alpine AS production
 WORKDIR /app
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini curl
 ENV NODE_ENV=production
 
 COPY --from=pre-production /app/node_modules ./node_modules
