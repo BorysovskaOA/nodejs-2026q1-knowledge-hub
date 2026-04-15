@@ -11,7 +11,6 @@ export class GlobalValidationPipe extends ValidationPipe {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: { enableImplicitConversion: true },
       exceptionFactory: (errors) => {
         const formattedErrors = errors.map((err) => ({
           field: err.property,

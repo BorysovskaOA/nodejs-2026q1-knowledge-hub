@@ -1,6 +1,8 @@
 import { PrismaClient, UserRole, ArticleStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
+import 'dotenv/config';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -13,7 +15,10 @@ async function main() {
     update: {},
     create: {
       login: 'admin_user',
-      passwordHash: 'hashed_password_123',
+      passwordHash: await bcrypt.hash(
+        'password_123',
+        Number(process.env.SALT_ROUNDS),
+      ),
       role: UserRole.admin,
     },
   });
@@ -23,7 +28,10 @@ async function main() {
     update: {},
     create: {
       login: 'editor_user',
-      passwordHash: 'hashed_password_456',
+      passwordHash: await bcrypt.hash(
+        'password_456',
+        Number(process.env.SALT_ROUNDS),
+      ),
       role: UserRole.editor,
     },
   });
