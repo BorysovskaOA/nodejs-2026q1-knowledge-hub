@@ -25,8 +25,10 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { UnprocessableEntityResponseDto } from 'src/core/dtos/unprocessable-entity-response.dto';
@@ -39,6 +41,7 @@ import { UserRole } from '@prisma/client';
 @Controller('comment')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
+@ApiUnauthorizedResponse(ExceptionResponse(401))
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
@@ -62,6 +65,7 @@ export class CommentController {
   @Authorize({ roles: [UserRole.admin, UserRole.editor] })
   @ApiCreatedResponse({ type: CommentEntity })
   @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createCommentDto: CreateCommentDto,
   ): Promise<CommentEntity> {
@@ -84,6 +88,7 @@ export class CommentController {
     },
   })
   @ApiOkResponse({ type: CommentEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
     @Param() { id }: IdParamDto,
     @Body() updateCommentDto: UpdateCommentDto,
@@ -101,6 +106,7 @@ export class CommentController {
     },
   })
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.commentService.delete(id);
   }

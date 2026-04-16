@@ -43,7 +43,7 @@ export class AuthzGuard implements CanActivate {
     });
     const resource = await service.getOne({ id: resourceId });
     const isOwner = !!(
-      resource?.[authzOptions.owner.propertyName] === request.user.userId
+      resource?.[authzOptions.owner.propertyName] === request.user.id
     );
 
     if (!isOwner) throw new ForbiddenException();

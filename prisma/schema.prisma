@@ -20,15 +20,15 @@ enum ArticleStatus {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  login            String    @unique
-  passwordHash     String
-  refreshTokenHash String?
-  role             UserRole  @default(viewer)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  comments         Comment[]
-  articles         Article[]
+  id           String    @id @default(uuid())
+  login        String    @unique
+  passwordHash String
+  tokenVersion Int       @default(1)
+  role         UserRole  @default(viewer)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  comments     Comment[]
+  articles     Article[]
 }
 
 model Tag {

@@ -16,8 +16,10 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CategoryEntity } from './models/category.entity';
 import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
@@ -29,6 +31,7 @@ import { UserRole } from '@prisma/client';
 @Controller('category')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
+@ApiUnauthorizedResponse(ExceptionResponse(401))
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
@@ -41,6 +44,7 @@ export class CategoryController {
   @Post()
   @Authorize({ roles: [UserRole.admin] })
   @ApiCreatedResponse({ type: CategoryEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<CategoryEntity> {
@@ -56,6 +60,7 @@ export class CategoryController {
   @Put(':id')
   @Authorize({ roles: [UserRole.admin] })
   @ApiOkResponse({ type: CategoryEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
     @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: CreateCategoryDto,
@@ -66,6 +71,7 @@ export class CategoryController {
   @Delete(':id')
   @Authorize({ roles: [UserRole.admin] })
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.categoryService.delete(id);
   }

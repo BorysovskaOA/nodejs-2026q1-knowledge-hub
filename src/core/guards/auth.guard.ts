@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,12 +10,15 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public-route.decorator';
 import { AuthPayloadUser } from '../../auth/models/auth.entity';
+import { UserService } from 'src/user/user.service';
+import { StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    private userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -35,13 +39,23 @@ export class AuthGuard implements CanActivate {
     try {
       const payload: AuthPayloadUser = await this.jwtService.verifyAsync(
         token,
-        { secret: process.env.JWT_SECRET_KEY },
+        {
+          secret: process.env.JWT_SECRET_KEY,
+        },
       );
-      request['user'] = payload;
-    } catch {
+
+      const user = await this.userService.getOne({ id: payload.userId });
+
+      if (!user || payload.version !== user?.tokenVersion)
+        throw new ForbiddenException();
+
+      request['user'] = user;
+      return true;
+    } catch (err) {
+      if (err?.statusCode === StatusCodes.FORBIDDEN)
+        throw new ForbiddenException();
       throw new UnauthorizedException();
     }
-    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

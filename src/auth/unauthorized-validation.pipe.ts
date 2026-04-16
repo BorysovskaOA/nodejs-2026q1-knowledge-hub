@@ -11,6 +11,7 @@ import { plainToInstance } from 'class-transformer';
 @Injectable()
 export class UnauthorizedValidationPipe implements PipeTransform {
   async transform(value: unknown, { metatype }: ArgumentMetadata) {
+    console.log('ddd', value);
     if (!value) throw new UnauthorizedException();
 
     if (!metatype || !this.canValidate(metatype)) {
@@ -25,6 +26,8 @@ export class UnauthorizedValidationPipe implements PipeTransform {
     const errors = await validate(object);
 
     if (errors.length > 0) throw new UnauthorizedException();
+
+    console.log('ddd');
 
     return value;
   }

@@ -1,6 +1,6 @@
 import { Request } from 'express';
-import { AuthPayloadUser } from '../../auth/models/auth.entity';
+import { UserEntity } from 'src/user/models/user.entity';
 
 export interface AuthenticatedRequest extends Request {
-  user: AuthPayloadUser;
+  user: UserEntity;
 }

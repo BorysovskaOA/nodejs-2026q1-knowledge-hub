@@ -19,8 +19,10 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UserEntity } from './models/user.entity';
 import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
@@ -34,6 +36,7 @@ import { UserRole } from '@prisma/client';
 @Controller('user')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
+@ApiUnauthorizedResponse(ExceptionResponse(401))
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -54,6 +57,7 @@ export class UserController {
   @Post()
   @Authorize({ roles: [UserRole.admin] })
   @ApiCreatedResponse({ type: UserEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
     return this.userService.create(createUserDto);
   }
@@ -70,6 +74,7 @@ export class UserController {
     owner: { service: UserService, paramName: 'id', propertyName: 'id' },
   })
   @ApiOkResponse({ type: UserEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async updatePassword(
     @Param() { id }: IdParamDto,
     @Body() updatePasswordDto: UpdatePasswordDto,
@@ -80,6 +85,7 @@ export class UserController {
   @Delete(':id')
   @Authorize({ roles: [UserRole.admin] })
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.userService.delete(id);
   }

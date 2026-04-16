@@ -12,6 +12,7 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { AuthzGuard } from './core/guards/authz.guard';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
         limit: Number(process.env.RATE_LIMIT),
       },
     ]),
+    HealthModule,
     ArticleModule,
     CategoryModule,
     CommentModule,

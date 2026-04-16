@@ -24,4 +24,5 @@ export class AuthPayloadUser {
   userId: string;
   login: string;
   role: UserRole;
+  version: number;
 }

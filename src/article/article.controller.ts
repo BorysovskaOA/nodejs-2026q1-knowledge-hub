@@ -22,8 +22,10 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
@@ -37,6 +39,7 @@ import { UserRole } from '@prisma/client';
 @Controller('article')
 @ApiBadRequestResponse({ type: ValidationResponseDto })
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
+@ApiUnauthorizedResponse(ExceptionResponse(401))
 export class ArticleController {
   constructor(private articleService: ArticleService) {}
 
@@ -59,6 +62,7 @@ export class ArticleController {
   @Post()
   @Authorize({ roles: [UserRole.admin, UserRole.editor] })
   @ApiCreatedResponse({ type: ArticleEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createArticleDto: CreateArticleDto,
   ): Promise<ArticleEntity> {
@@ -81,6 +85,7 @@ export class ArticleController {
     },
   })
   @ApiOkResponse({ type: ArticleEntity })
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
     @Param() { id }: IdParamDto,
     @Body() updateArticleDto: UpdateArticleDto,
@@ -98,6 +103,7 @@ export class ArticleController {
     },
   })
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.articleService.delete(id);
   }

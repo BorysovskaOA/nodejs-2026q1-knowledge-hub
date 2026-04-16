@@ -13,7 +13,7 @@ export class UserEntity implements PrismaUser {
 
   @ApiHideProperty()
   @Exclude()
-  refreshTokenHash: string | null;
+  tokenVersion: number;
 
   @ApiProperty({ enum: UserRole })
   role: UserRole;

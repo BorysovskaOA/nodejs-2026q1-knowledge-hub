@@ -1,13 +1,9 @@
-import {
-  ForbiddenException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { SignupDto } from './models/signup.dto';
-import { Prisma, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { LoginDto } from './models/login.dto';
-import { hashCompare, hash } from 'src/core/utils/hashing.util';
+import { hashCompare } from 'src/core/utils/hashing.util';
 import { JwtService } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
 import {
@@ -15,7 +11,6 @@ import {
   AuthPayloadUser,
   AuthUserEntity,
 } from './models/auth.entity';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { UserEntity } from 'src/user/models/user.entity';
 import { RefreshDto } from './models/refresh.dto';
 
@@ -24,11 +19,15 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-    private readonly prisma: PrismaService,
   ) {}
 
   private async generateTokens(user: UserEntity) {
-    const payload = { userId: user.id, login: user.login, role: user.role };
+    const payload = {
+      userId: user.id,
+      login: user.login,
+      role: user.role,
+      version: user.tokenVersion,
+    };
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET_KEY,
       expiresIn: process.env.TOKEN_EXPIRE_TIME as SignOptions['expiresIn'],
@@ -42,35 +41,15 @@ export class AuthService {
     return new AuthEntity({ accessToken, refreshToken });
   }
 
-  private async updateUserRefreshToken(
-    id: string,
-    refreshToken: string,
-    tx?: Prisma.TransactionClient,
-  ) {
-    const refreshTokenHash = await hash(refreshToken);
-
-    return this.userService.update(id, { refreshTokenHash }, tx);
-  }
-
   async signup(data: SignupDto) {
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const user = await this.userService.create(
-        {
-          ...data,
-          role: UserRole.viewer,
-        },
-        tx,
-      );
-
-      const tokens = await this.generateTokens(user);
-      const updatedUser = await this.updateUserRefreshToken(
-        user.id,
-        tokens.refreshToken,
-        tx,
-      );
-
-      return new AuthUserEntity({ ...updatedUser, ...tokens });
+    const user = await this.userService.create({
+      ...data,
+      role: UserRole.viewer,
     });
+
+    const tokens = await this.generateTokens(user);
+
+    return new AuthUserEntity({ ...user, ...tokens });
   }
 
   async login(data: LoginDto) {
@@ -80,37 +59,32 @@ export class AuthService {
     const isValid = await hashCompare(data.password, user.passwordHash);
     if (!isValid) throw new ForbiddenException();
 
-    const tokens = await this.generateTokens(user);
-    await this.updateUserRefreshToken(user.id, tokens.refreshToken);
-
-    return tokens;
+    return this.generateTokens(user);
   }
 
-  async refresh(data: RefreshDto, authUser: AuthPayloadUser) {
-    const user = await this.userService.getOne({ id: authUser.userId });
+  async refresh(data: RefreshDto) {
+    let payload: AuthPayloadUser;
 
-    if (!user) throw new InternalServerErrorException();
-
-    if (user.refreshTokenHash) {
-      const isValidToken = await hashCompare(
-        data.refreshToken,
-        user.refreshTokenHash,
-      );
-
-      if (!isValidToken) throw new ForbiddenException();
+    try {
+      payload = await this.jwtService.verifyAsync(data.refreshToken, {
+        secret: process.env.JWT_SECRET_REFRESH_KEY,
+      });
+    } catch {
+      throw new ForbiddenException();
     }
 
-    const tokens = await this.generateTokens(user);
-    await this.updateUserRefreshToken(user.id, tokens.refreshToken);
+    const user = await this.userService.getOne({
+      id: payload.userId,
+    });
 
-    return tokens;
+    if (!user) throw new ForbiddenException();
+
+    return this.generateTokens(user);
   }
 
-  async logout(authUser: AuthPayloadUser) {
-    const user = await this.userService.getOne({ id: authUser.userId });
-
-    if (!user) throw new InternalServerErrorException();
-
-    await this.userService.update(user.id, { refreshTokenHash: null });
+  async logout(user: UserEntity) {
+    await this.userService.update(user.id, {
+      tokenVersion: user.tokenVersion + 1,
+    });
   }
 }
