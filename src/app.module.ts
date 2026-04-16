@@ -1,3 +1,4 @@
+import { HealthModule } from './health/health.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ArticleModule } from './article/article.module';
@@ -9,7 +10,13 @@ import { LoggerMiddleware } from './core/middlewares/logger.middleware';
 import { GlobalValidationPipe } from './core/pipes/global-validation.pipe';
 
 @Module({
-  imports: [ArticleModule, CategoryModule, CommentModule, UserModule],
+  imports: [
+    HealthModule,
+    ArticleModule,
+    CategoryModule,
+    CommentModule,
+    UserModule,
+  ],
   providers: [
     {
       provide: APP_PIPE,

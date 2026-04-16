@@ -3,7 +3,7 @@
 ## Docker image
 
 ```
-olhaborysovska/nodejs-2026q1-knowledge-hub-app
+https://hub.docker.com/r/olhaborysovska/nodejs-2026q1-knowledge-hub-app
 ```
 
 Image does not have any critical vulnerabilities:
