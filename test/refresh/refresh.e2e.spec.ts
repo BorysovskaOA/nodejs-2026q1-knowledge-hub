@@ -76,7 +76,6 @@ describe('Refresh (e2e)', () => {
         .send({ refreshToken: userTokens.refreshToken });
 
       expect(response.statusCode).toBe(HttpStatus.OK);
-      console.log(response.body);
       expect(response.body).toBeInstanceOf(Object);
 
       const { accessToken, refreshToken } = response.body as RefreshResponse;
@@ -88,9 +87,7 @@ describe('Refresh (e2e)', () => {
 
       const accessTokenPayload: TokenPayload = await verifyToken(accessToken);
       const refreshTokenPayload: TokenPayload = await verifyToken(refreshToken);
-      expect(refreshTokenPayload.exp).toBeGreaterThan(
-        accessTokenPayload.exp as number,
-      );
+      expect(refreshTokenPayload.exp).toBeGreaterThan(accessTokenPayload.exp);
     });
 
     it('should fail with 403 (invalid refresh token)', async () => {
