@@ -15,6 +15,7 @@ export class HealthController {
     private prisma: PrismaService,
   ) {}
 
+  // Health check is usually also a route excluded from authentication so it's public, although it's not defined in task
   @Get()
   @HealthCheck()
   @PublicRote()

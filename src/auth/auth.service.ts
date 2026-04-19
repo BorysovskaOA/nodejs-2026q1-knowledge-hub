@@ -49,6 +49,7 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
 
+    // It's not required in task, but it's a good practice to log newly created user immediately with 1 request
     return new AuthUserEntity({ ...user, ...tokens });
   }
 
