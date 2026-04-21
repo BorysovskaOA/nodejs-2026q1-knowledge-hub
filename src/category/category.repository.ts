@@ -9,38 +9,45 @@ import { CreateCategoryDto } from './models/create-category.dto';
 export class CategoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private get db() {
-    return this.prisma.category;
+  private db(tx?: Prisma.TransactionClient) {
+    return (tx || this.prisma).category;
   }
 
   private map(data: Category): CategoryEntity {
     return new CategoryEntity(data);
   }
 
-  async findAll(): Promise<CategoryEntity[]> {
-    const items = await this.db.findMany({
+  async findAll(tx?: Prisma.TransactionClient): Promise<CategoryEntity[]> {
+    const items = await this.db(tx).findMany({
       orderBy: { name: SortOrder.ASC },
     });
 
     return items.map(this.map);
   }
 
-  async findById(id: string): Promise<CategoryEntity | null> {
-    const item = await this.db.findUnique({ where: { id } });
-
-    return item ? this.map(item) : null;
-  }
-
-  async findUnique(
-    where: Prisma.CategoryWhereUniqueInput,
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<CategoryEntity | null> {
-    const item = await this.db.findUnique({ where });
+    const item = await this.db(tx).findUnique({ where: { id } });
 
     return item ? this.map(item) : null;
   }
 
-  async create(data: CreateCategoryDto): Promise<CategoryEntity> {
-    const item = await this.db.create({ data });
+  async findOne(
+    where: Prisma.CategoryWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CategoryEntity | null> {
+    const item = await this.db(tx).findFirst({ where });
+
+    return item ? this.map(item) : null;
+  }
+
+  async create(
+    data: CreateCategoryDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CategoryEntity> {
+    const item = await this.db(tx).create({ data });
 
     return this.map(item);
   }
@@ -48,8 +55,9 @@ export class CategoryRepository {
   async update(
     id: string,
     data: Partial<CategoryEntity>,
+    tx?: Prisma.TransactionClient,
   ): Promise<CategoryEntity> {
-    const item = await this.db.update({
+    const item = await this.db(tx).update({
       where: { id },
       data,
     });
@@ -57,8 +65,11 @@ export class CategoryRepository {
     return this.map(item);
   }
 
-  async delete(id: string): Promise<CategoryEntity> {
-    const item = await this.db.delete({
+  async delete(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CategoryEntity> {
+    const item = await this.db(tx).delete({
       where: { id },
     });
 

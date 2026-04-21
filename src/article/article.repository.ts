@@ -9,7 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateArticleDto } from './models/create-article.dto';
 
-type ArticleWithTags = Prisma.ArticleGetPayload<{
+export type ArticleWithTags = Prisma.ArticleGetPayload<{
   include: { tags: true };
 }>;
 
@@ -17,8 +17,8 @@ type ArticleWithTags = Prisma.ArticleGetPayload<{
 export class ArticleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private get db() {
-    return this.prisma.article;
+  private db(tx?: Prisma.TransactionClient) {
+    return (tx || this.prisma).article;
   }
 
   private map(data: ArticleWithTags): ArticleEntity {
@@ -40,8 +40,11 @@ export class ArticleRepository {
     };
   }
 
-  async findAll(filter: ArticleListFiltersDto): Promise<ArticleEntity[]> {
-    const items = await this.db.findMany({
+  async findAll(
+    filter: ArticleListFiltersDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ArticleEntity[]> {
+    const items = await this.db(tx).findMany({
       where: this.formatFindAllWhereFilter(filter),
       include: { tags: true },
     });
@@ -49,34 +52,38 @@ export class ArticleRepository {
     return items.map(this.map);
   }
 
-  async findAllPaginated({
-    page,
-    limit,
-    sortKey,
-    sortOrder,
-    ...restFilter
-  }: ArticleListFiltersPaginatdDto): Promise<
-    PaginatedResponseDto<ArticleEntity>
-  > {
+  async findAllPaginated(
+    {
+      page,
+      limit,
+      sortKey,
+      sortOrder,
+      ...restFilter
+    }: ArticleListFiltersPaginatdDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaginatedResponseDto<ArticleEntity>> {
     const whereFilter = this.formatFindAllWhereFilter(restFilter);
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      this.db.findMany({
+      this.db(tx).findMany({
         where: whereFilter,
         include: { tags: true },
         take: limit,
         skip: skip,
         orderBy: sortKey ? { [sortKey]: sortOrder } : undefined,
       }),
-      this.db.count({ where: whereFilter }),
+      this.db(tx).count({ where: whereFilter }),
     ]);
 
     return new PaginatedResponseDto(items.map(this.map), total, page, limit);
   }
 
-  async findById(id: string): Promise<ArticleEntity | null> {
-    const item = await this.db.findUnique({
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ArticleEntity | null> {
+    const item = await this.db(tx).findUnique({
       where: { id },
       include: { tags: true },
     });
@@ -84,16 +91,23 @@ export class ArticleRepository {
     return item ? this.map(item) : null;
   }
 
-  async findUnique(
-    where: Prisma.ArticleWhereUniqueInput,
+  async findOne(
+    where: Prisma.ArticleWhereInput,
+    tx?: Prisma.TransactionClient,
   ): Promise<ArticleEntity | null> {
-    const item = await this.db.findUnique({ where, include: { tags: true } });
+    const item = await this.db(tx).findFirst({
+      where,
+      include: { tags: true },
+    });
 
     return item ? this.map(item) : null;
   }
 
-  async create(data: CreateArticleDto): Promise<ArticleEntity> {
-    const item = await this.db.create({
+  async create(
+    data: CreateArticleDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ArticleEntity> {
+    const item = await this.db(tx).create({
       data: {
         ...data,
         tags: {
@@ -114,18 +128,21 @@ export class ArticleRepository {
   async update(
     id: string,
     data: Partial<ArticleEntity>,
+    tx?: Prisma.TransactionClient,
   ): Promise<ArticleEntity> {
-    const item = await this.db.update({
+    const item = await this.db(tx).update({
       where: { id },
       data: {
         ...data,
-        tags: {
-          set: [],
-          connectOrCreate: data.tags?.map((name: string) => ({
-            where: { name },
-            create: { name },
-          })),
-        },
+        tags: data.tags
+          ? {
+              set: [],
+              connectOrCreate: data.tags?.map((name: string) => ({
+                where: { name },
+                create: { name },
+              })),
+            }
+          : undefined,
       },
       include: { tags: true },
     });
@@ -133,8 +150,11 @@ export class ArticleRepository {
     return this.map(item);
   }
 
-  async delete(id: string): Promise<ArticleEntity> {
-    const item = await this.db.delete({
+  async delete(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ArticleEntity> {
+    const item = await this.db(tx).delete({
       where: { id },
       include: { tags: true },
     });

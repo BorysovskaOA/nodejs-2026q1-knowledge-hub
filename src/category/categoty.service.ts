@@ -28,23 +28,19 @@ export class CategoryService {
   }
 
   async getOne(where: Prisma.CategoryWhereUniqueInput) {
-    return await this.categoryRepository.findUnique(where);
+    return await this.categoryRepository.findOne(where);
   }
 
   async update(id: string, data: CreateCategoryDto) {
-    const category = await this.categoryRepository.findById(id);
+    const category = await this.getById(id);
 
-    if (!category) throw new NotFoundException();
-
-    return this.categoryRepository.update(id, data);
+    return this.categoryRepository.update(category.id, data);
   }
 
   async delete(id: string) {
-    const category = await this.categoryRepository.findById(id);
+    const category = await this.getById(id);
 
-    if (!category) throw new NotFoundException();
-
-    return this.categoryRepository.delete(id);
+    return this.categoryRepository.delete(category.id);
   }
 
   async validateCategoryExist(id: string) {

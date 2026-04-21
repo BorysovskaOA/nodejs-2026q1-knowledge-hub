@@ -1,5 +1,6 @@
 import { ArticleRepository } from './article.repository';
 import {
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -14,7 +15,8 @@ import {
   ArticleListFiltersDto,
   ArticleListFiltersPaginatdDto,
 } from './models/article-list-filter.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
+import { UserEntity } from 'src/user/models/user.entity';
 
 @Injectable()
 export class ArticleService {
@@ -26,13 +28,16 @@ export class ArticleService {
     private userService: UserService,
   ) {}
 
-  async create(data: CreateArticleDto) {
+  async create(data: CreateArticleDto, user: UserEntity) {
     if (data.categoryId)
       await this.categoryService.validateCategoryExistWithException(
         data.categoryId,
       );
     if (data.authorId)
       await this.userService.validateUserExistWithException(data.authorId);
+
+    if (user.role !== UserRole.admin && data.authorId !== user.id)
+      throw new ForbiddenException();
 
     return this.articleRepository.create(data);
   }
@@ -53,29 +58,25 @@ export class ArticleService {
     return article;
   }
 
-  async getOne(where: Prisma.ArticleWhereUniqueInput) {
-    return await this.articleRepository.findUnique(where);
+  async getOne(where: Prisma.ArticleWhereInput) {
+    return await this.articleRepository.findOne(where);
   }
 
   async update(id: string, data: UpdateArticleDto) {
-    const article = await this.articleRepository.findById(id);
-
-    if (!article) throw new NotFoundException();
+    const article = await this.getById(id);
 
     if (data.categoryId)
       await this.categoryService.validateCategoryExistWithException(
         data.categoryId,
       );
 
-    return this.articleRepository.update(id, data);
+    return this.articleRepository.update(article.id, data);
   }
 
   async delete(id: string) {
-    const article = await this.articleRepository.findById(id);
+    const article = await this.getById(id);
 
-    if (!article) throw new NotFoundException();
-
-    return this.articleRepository.delete(id);
+    return this.articleRepository.delete(article.id);
   }
 
   async validateArticleExist(id: string) {

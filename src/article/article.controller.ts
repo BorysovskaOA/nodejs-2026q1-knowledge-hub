@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { UpdateArticleDto } from './models/update-article.dto';
@@ -34,6 +35,7 @@ import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
+import { AuthenticatedRequest } from 'src/core/interfaces/authenticated_request.interface';
 
 @ApiBearerAuth('accessToken')
 @Controller('article')
@@ -65,8 +67,9 @@ export class ArticleController {
   @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createArticleDto: CreateArticleDto,
+    @Request() req: AuthenticatedRequest,
   ): Promise<ArticleEntity> {
-    return this.articleService.create(createArticleDto);
+    return this.articleService.create(createArticleDto, req.user);
   }
 
   @Get(':id')
