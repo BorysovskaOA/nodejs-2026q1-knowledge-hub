@@ -11,7 +11,7 @@ import {
   AUTHZ_OPTIONS_KEY,
   AuthzOption,
 } from '../decorators/authorize.decorator';
-import { AuthenticatedRequest } from '../interfaces/authenticated_request.interface';
+import { AuthenticatedRequest } from '../interfaces/authenticated-request.interface';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {

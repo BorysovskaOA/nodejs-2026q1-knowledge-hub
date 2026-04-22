@@ -6,6 +6,7 @@ import {
   Post,
   Request,
   UseGuards,
+  RawBody,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -24,11 +25,10 @@ import { LoginDto } from './models/login.dto';
 import { RefreshDto } from './models/refresh.dto';
 import { AuthEntity, AuthUserEntity } from './models/auth.entity';
 import { PublicRote } from '../core/decorators/public-route.decorator';
-import { AuthenticatedRequest } from '../core/interfaces/authenticated_request.interface';
+import { AuthenticatedRequest } from '../core/interfaces/authenticated-request.interface';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { UnauthorizedValidationPipe } from './unauthorized-validation.pipe';
-import { RawBody } from 'src/core/decorators/raw-body-decorator';
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(ExceptionResponse(500))
