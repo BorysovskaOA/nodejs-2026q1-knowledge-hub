@@ -93,7 +93,7 @@ export class UserController {
   @Authorize([
     { roles: [UserRole.admin] },
     {
-      roles: [UserRole.editor, UserRole.editor],
+      roles: [UserRole.editor, UserRole.viewer],
       constraints: {
         service: UserService,
         paramName: 'id',
