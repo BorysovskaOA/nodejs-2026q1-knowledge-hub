@@ -1,38 +1,33 @@
-import { ArticleStatus } from '@prisma/client';
 import { validate } from 'class-validator';
-import { CreateArticleDto } from 'src/article/models/create-article.dto';
+import { randomUUID } from 'crypto';
+import { CreateCommentDto } from 'src/comment/models/create-comment.dto';
 import { describe, it, expect } from 'vitest';
 
 const objWithRequiredFields = {
-  title: 'Title',
   content: 'Content',
+  articleId: randomUUID(),
 };
 const wrongFormatTests = [
-  { property: 'title', value: 2, constraint: 'isString' },
   { property: 'content', value: 2, constraint: 'isString' },
-  { property: 'status', value: 'new', constraint: 'isEnum' },
   { property: 'authorId', value: 'authorId', constraint: 'isUuid' },
-  { property: 'categoryId', value: 'categoryId', constraint: 'isUuid' },
-  { property: 'tags', value: 'tag', constraint: 'isArray' },
-  { property: 'tags', value: [2], constraint: 'isString' },
+  { property: 'articleId', value: 'articleId', constraint: 'isUuid' },
 ];
 
-describe('Create Article DTO', () => {
+describe('Create Comment DTO', () => {
   it('should set default values', () => {
-    const dto = new CreateArticleDto();
+    const dto = new CreateCommentDto();
+
+    console.log(dto);
 
     expect(dto).toMatchObject({
-      status: ArticleStatus.draft,
       authorId: null,
-      categoryId: null,
-      tags: [],
     });
   });
 
   it.each(Object.keys(objWithRequiredFields))(
     "should fail of '%s' is missing",
     async (field) => {
-      const dto = new CreateArticleDto();
+      const dto = new CreateCommentDto();
 
       Object.keys(objWithRequiredFields).forEach((f) => {
         if (f === field) return;
@@ -50,7 +45,7 @@ describe('Create Article DTO', () => {
   it.each(wrongFormatTests)(
     'throw $constraint constraint error on $property',
     async ({ property, value, constraint }) => {
-      const dto = new CreateArticleDto();
+      const dto = new CreateCommentDto();
 
       Object.keys(objWithRequiredFields).forEach((f) => {
         dto[f] = objWithRequiredFields[f];

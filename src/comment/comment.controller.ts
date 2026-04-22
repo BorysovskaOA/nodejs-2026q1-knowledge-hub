@@ -9,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  Request,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './models/create-comment.dto';
@@ -37,7 +36,6 @@ import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
-import { AuthenticatedRequest } from 'src/core/interfaces/authenticated_request.interface';
 
 @ApiBearerAuth('accessToken')
 @Controller('comment')
@@ -73,9 +71,8 @@ export class CommentController {
   @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createCommentDto: CreateCommentDto,
-    @Request() req: AuthenticatedRequest,
   ): Promise<CommentEntity> {
-    return this.commentService.create(createCommentDto, req.user);
+    return this.commentService.create(createCommentDto);
   }
 
   @Get(':id')

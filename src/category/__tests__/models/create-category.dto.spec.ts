@@ -13,7 +13,7 @@ const wrongFormatTests = [
 
 describe('Create Category DTO', () => {
   it.each(Object.keys(objWithRequiredFields))(
-    'should fail of %s is missing',
+    "should fail of '%s' is missing",
     async (field) => {
       const dto = new CreateCategoryDto();
 

@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserRole } from '@prisma/client';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { UserEntity } from 'src/user/models/user.entity';
 import { CommentEntity } from '../models/comment.entity';
 import { CommentService } from '../comment.service';
 import { ArticleService } from 'src/article/article.service';
@@ -21,16 +15,6 @@ const comment = new CommentEntity({
   authorId: 'authorId',
   articleId: 'articleId',
   createdAt: new Date(),
-});
-
-const user = new UserEntity({
-  id: 'id',
-  login: 'login',
-  passwordHash: 'passwordHash',
-  tokenVersion: 1,
-  role: UserRole.admin,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 });
 
 describe('Comment Service', () => {
@@ -97,14 +81,14 @@ describe('Comment Service', () => {
     });
 
     it('returns data correctly', async () => {
-      const result = await service.create(createData, user);
+      const result = await service.create(createData);
 
       expect(result).toBeInstanceOf(CommentEntity);
       expect(result).toMatchObject(comment);
     });
 
     it('should check for valid articleId', async () => {
-      await service.create(createData, user);
+      await service.create(createData);
 
       expect(
         mockArticleService.validateArticleExistWithException,
@@ -119,13 +103,13 @@ describe('Comment Service', () => {
         new BadRequestException(),
       );
 
-      await expect(service.create(createData, user)).rejects.toThrow(
+      await expect(service.create(createData)).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('should check for valid authorId', async () => {
-      await service.create(createData, user);
+      await service.create(createData);
 
       expect(
         mockUserService.validateUserExistWithException,
@@ -140,15 +124,8 @@ describe('Comment Service', () => {
         new BadRequestException(),
       );
 
-      await expect(service.create(createData, user)).rejects.toThrow(
+      await expect(service.create(createData)).rejects.toThrow(
         BadRequestException,
-      );
-    });
-
-    it('throws ForbiddenException if try to create comment for other person and not admin', async () => {
-      const nonAdminUser = { ...user, role: UserRole.editor };
-      await expect(service.create(createData, nonAdminUser)).rejects.toThrow(
-        ForbiddenException,
       );
     });
   });

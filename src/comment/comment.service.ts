@@ -1,6 +1,5 @@
 import { CommentRepository } from './comment.repository';
 import {
-  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -13,8 +12,7 @@ import {
   CommentListFiltersDto,
   CommentListFiltersPaginatedDto,
 } from './models/comment-list-filter.dto';
-import { Prisma, UserRole } from '@prisma/client';
-import { UserEntity } from 'src/user/models/user.entity';
+import { Prisma } from '@prisma/client';
 import { UpdateCommentDto } from './models/update-comment.dto';
 
 @Injectable()
@@ -27,13 +25,10 @@ export class CommentService {
     private userService: UserService,
   ) {}
 
-  async create(data: CreateCommentDto, user: UserEntity) {
+  async create(data: CreateCommentDto) {
     await this.articleService.validateArticleExistWithException(data.articleId);
     if (data.authorId)
       await this.userService.validateUserExistWithException(data.authorId);
-
-    if (user.role !== UserRole.admin && data.authorId !== user.id)
-      throw new ForbiddenException();
 
     return this.commentRepository.create(data);
   }
