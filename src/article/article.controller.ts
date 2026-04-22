@@ -9,14 +9,13 @@ import {
   Post,
   Put,
   Query,
-  Request,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { UpdateArticleDto } from './models/update-article.dto';
 import { CreateArticleDto } from './models/create-article.dto';
 import {
   ArticleListFiltersDto,
-  ArticleListFiltersPaginatdDto,
+  ArticleListFiltersPaginatedDto,
 } from './models/article-list-filter.dto';
 import { IdParamDto } from 'src/core/dtos/id-param.dto';
 import {
@@ -35,7 +34,6 @@ import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 import { ExceptionResponse } from 'src/core/utils/exception-response.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
-import { AuthenticatedRequest } from 'src/core/interfaces/authenticated_request.interface';
 
 @ApiBearerAuth('accessToken')
 @Controller('article')
@@ -56,20 +54,22 @@ export class ArticleController {
   @Get('paginated')
   @ApiPaginatedResponse(ArticleEntity)
   async getAllPaginated(
-    @Query() filter: ArticleListFiltersPaginatdDto,
+    @Query() filter: ArticleListFiltersPaginatedDto,
   ): Promise<PaginatedResponseDto<ArticleEntity>> {
     return this.articleService.getAllPaginated(filter);
   }
 
   @Post()
-  @Authorize({ roles: [UserRole.admin, UserRole.editor] })
+  @Authorize([
+    { roles: [UserRole.admin] },
+    { roles: [UserRole.editor], constraints: { bodyPropertyName: 'authorId' } },
+  ])
   @ApiCreatedResponse({ type: ArticleEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
     @Body() createArticleDto: CreateArticleDto,
-    @Request() req: AuthenticatedRequest,
   ): Promise<ArticleEntity> {
-    return this.articleService.create(createArticleDto, req.user);
+    return this.articleService.create(createArticleDto);
   }
 
   @Get(':id')
@@ -79,14 +79,17 @@ export class ArticleController {
   }
 
   @Put(':id')
-  @Authorize({
-    roles: [UserRole.admin],
-    owner: {
-      service: ArticleService,
-      paramName: 'id',
-      propertyName: 'authorId',
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor],
+      constraints: {
+        service: ArticleService,
+        paramName: 'id',
+        propertyName: 'authorId',
+      },
     },
-  })
+  ])
   @ApiOkResponse({ type: ArticleEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
@@ -97,14 +100,17 @@ export class ArticleController {
   }
 
   @Delete(':id')
-  @Authorize({
-    roles: [UserRole.admin],
-    owner: {
-      service: ArticleService,
-      paramName: 'id',
-      propertyName: 'authorId',
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor],
+      constraints: {
+        service: ArticleService,
+        paramName: 'id',
+        propertyName: 'authorId',
+      },
     },
-  })
+  ])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {

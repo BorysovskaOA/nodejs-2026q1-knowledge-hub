@@ -1,6 +1,5 @@
 import { ArticleRepository } from './article.repository';
 import {
-  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -13,10 +12,9 @@ import { UserService } from 'src/user/user.service';
 import { UpdateArticleDto } from './models/update-article.dto';
 import {
   ArticleListFiltersDto,
-  ArticleListFiltersPaginatdDto,
+  ArticleListFiltersPaginatedDto,
 } from './models/article-list-filter.dto';
-import { Prisma, UserRole } from '@prisma/client';
-import { UserEntity } from 'src/user/models/user.entity';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArticleService {
@@ -28,16 +26,13 @@ export class ArticleService {
     private userService: UserService,
   ) {}
 
-  async create(data: CreateArticleDto, user: UserEntity) {
+  async create(data: CreateArticleDto) {
     if (data.categoryId)
       await this.categoryService.validateCategoryExistWithException(
         data.categoryId,
       );
     if (data.authorId)
       await this.userService.validateUserExistWithException(data.authorId);
-
-    if (user.role !== UserRole.admin && data.authorId !== user.id)
-      throw new ForbiddenException();
 
     return this.articleRepository.create(data);
   }
@@ -46,7 +41,7 @@ export class ArticleService {
     return this.articleRepository.findAll(filter);
   }
 
-  async getAllPaginated(filter: ArticleListFiltersPaginatdDto) {
+  async getAllPaginated(filter: ArticleListFiltersPaginatedDto) {
     return this.articleRepository.findAllPaginated(filter);
   }
 

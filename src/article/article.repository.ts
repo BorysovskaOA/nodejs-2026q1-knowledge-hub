@@ -2,7 +2,7 @@ import { PaginatedResponseDto } from './../core/dtos/paginated-response.dto';
 import { Injectable } from '@nestjs/common';
 import {
   ArticleListFiltersDto,
-  ArticleListFiltersPaginatdDto,
+  ArticleListFiltersPaginatedDto,
 } from './models/article-list-filter.dto';
 import { ArticleEntity } from './models/article.entity';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -59,7 +59,7 @@ export class ArticleRepository {
       sortKey,
       sortOrder,
       ...restFilter
-    }: ArticleListFiltersPaginatdDto,
+    }: ArticleListFiltersPaginatedDto,
     tx?: Prisma.TransactionClient,
   ): Promise<PaginatedResponseDto<ArticleEntity>> {
     const whereFilter = this.formatFindAllWhereFilter(restFilter);

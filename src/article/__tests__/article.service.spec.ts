@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ArticleStatus, UserRole } from '@prisma/client';
+import { ArticleStatus } from '@prisma/client';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -14,7 +13,6 @@ import { ArticleService } from '../article.service';
 import { ArticleRepository } from '../article.repository';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
-import { UserEntity } from 'src/user/models/user.entity';
 
 const article = new ArticleEntity({
   id: 'id',
@@ -24,16 +22,6 @@ const article = new ArticleEntity({
   authorId: 'authorId',
   categoryId: 'categoryId',
   tags: ['tag'],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
-
-const user = new UserEntity({
-  id: 'id',
-  login: 'login',
-  passwordHash: 'passwordHash',
-  tokenVersion: 1,
-  role: UserRole.admin,
   createdAt: new Date(),
   updatedAt: new Date(),
 });
@@ -105,14 +93,14 @@ describe('Article Service', () => {
     });
 
     it('returns data correctly', async () => {
-      const result = await service.create(createData, user);
+      const result = await service.create(createData);
 
       expect(result).toBeInstanceOf(ArticleEntity);
       expect(result).toMatchObject(article);
     });
 
     it('should check for valid categoryId', async () => {
-      await service.create(createData, user);
+      await service.create(createData);
 
       expect(
         mockCategoryService.validateCategoryExistWithException,
@@ -127,13 +115,13 @@ describe('Article Service', () => {
         new BadRequestException(),
       );
 
-      await expect(service.create(createData, user)).rejects.toThrow(
+      await expect(service.create(createData)).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('should check for valid authorId', async () => {
-      await service.create(createData, user);
+      await service.create(createData);
 
       expect(
         mockUserService.validateUserExistWithException,
@@ -148,15 +136,8 @@ describe('Article Service', () => {
         new BadRequestException(),
       );
 
-      await expect(service.create(createData, user)).rejects.toThrow(
+      await expect(service.create(createData)).rejects.toThrow(
         BadRequestException,
-      );
-    });
-
-    it('throws ForbiddenException if try to create article for other person and not admin', async () => {
-      const nonAdminUser = { ...user, role: UserRole.editor };
-      await expect(service.create(createData, nonAdminUser)).rejects.toThrow(
-        ForbiddenException,
       );
     });
   });

@@ -42,7 +42,7 @@ export class CategoryController {
   }
 
   @Post()
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @ApiCreatedResponse({ type: CategoryEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async create(
@@ -58,7 +58,7 @@ export class CategoryController {
   }
 
   @Put(':id')
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @ApiOkResponse({ type: CategoryEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
@@ -69,7 +69,7 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {

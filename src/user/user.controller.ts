@@ -55,7 +55,7 @@ export class UserController {
   }
 
   @Post()
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @ApiCreatedResponse({ type: UserEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -69,10 +69,17 @@ export class UserController {
   }
 
   @Put(':id')
-  @Authorize({
-    roles: [UserRole.admin],
-    owner: { service: UserService, paramName: 'id', propertyName: 'id' },
-  })
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor, UserRole.viewer],
+      constraints: {
+        service: UserService,
+        paramName: 'id',
+        propertyName: 'id',
+      },
+    },
+  ])
   @ApiOkResponse({ type: UserEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async updatePassword(
@@ -83,7 +90,17 @@ export class UserController {
   }
 
   @Delete(':id')
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor, UserRole.editor],
+      constraints: {
+        service: UserService,
+        paramName: 'id',
+        propertyName: 'id',
+      },
+    },
+  ])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {

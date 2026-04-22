@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import {
+  AuthBodyConstraints,
+  AuthParamConstraints,
   AUTHZ_OPTIONS_KEY,
-  AuthzOptions,
+  AuthzOption,
 } from '../decorators/authorize.decorator';
 import { AuthenticatedRequest } from '../interfaces/authenticated_request.interface';
 
@@ -19,35 +21,62 @@ export class AuthzGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const authzOptions = this.reflector.getAllAndOverride<AuthzOptions>(
+    const authzOptions = this.reflector.getAllAndOverride<AuthzOption[]>(
       AUTHZ_OPTIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
-    if (!authzOptions) {
+    if (!authzOptions || !authzOptions.length) {
       return true;
     }
 
     const request: AuthenticatedRequest = context.switchToHttp().getRequest();
 
-    if (authzOptions.roles && authzOptions.roles.includes(request.user.role)) {
-      return true;
-    }
-
-    if (!authzOptions.owner) throw new ForbiddenException();
-
-    const resourceId = request.params[authzOptions.owner.paramName];
-    if (!resourceId) throw new ForbiddenException();
-
-    const service = this.moduleRef.get(authzOptions.owner.service, {
-      strict: false,
-    });
-    const resource = await service.getOne({ id: resourceId });
-    const isOwner = !!(
-      resource?.[authzOptions.owner.propertyName] === request.user.id
+    const validationResults = await Promise.all(
+      authzOptions.map((o) => this.isAllowedByAuthOption(o, request)),
     );
 
-    if (!isOwner) throw new ForbiddenException();
+    if (!validationResults.includes(true)) throw new ForbiddenException();
 
-    return isOwner;
+    return true;
+  }
+
+  private async isAllowedByAuthOption(
+    authzOption: AuthzOption,
+    request: AuthenticatedRequest,
+  ) {
+    if (!authzOption.roles.includes(request.user.role)) {
+      return false;
+    }
+
+    if (!authzOption.constraints) return true;
+
+    const ownerParam = authzOption.constraints as AuthParamConstraints;
+    const ownerBody = authzOption.constraints as AuthBodyConstraints;
+
+    if (ownerParam.paramName) {
+      const resourceId = request.params[ownerParam.paramName];
+      if (!resourceId) return false;
+
+      const service = this.moduleRef.get(ownerParam.service, {
+        strict: false,
+      });
+
+      const resource = await service.getOne({ id: resourceId });
+      const isOwner = !!(
+        resource?.[ownerParam.propertyName] === request.user.id
+      );
+
+      if (!isOwner) return false;
+    }
+
+    if (ownerBody.bodyPropertyName) {
+      const isOwner = !!(
+        request.body[ownerBody.bodyPropertyName] === request.user.id
+      );
+
+      if (!isOwner) return false;
+    }
+
+    return true;
   }
 }

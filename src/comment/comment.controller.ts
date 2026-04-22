@@ -64,7 +64,10 @@ export class CommentController {
   }
 
   @Post()
-  @Authorize({ roles: [UserRole.admin, UserRole.editor] })
+  @Authorize([
+    { roles: [UserRole.admin] },
+    { roles: [UserRole.editor], constraints: { bodyPropertyName: 'authorId' } },
+  ])
   @ApiCreatedResponse({ type: CommentEntity })
   @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
   @ApiForbiddenResponse(ExceptionResponse(403))
@@ -82,14 +85,17 @@ export class CommentController {
   }
 
   @Put(':id')
-  @Authorize({
-    roles: [UserRole.admin],
-    owner: {
-      service: CommentService,
-      paramName: 'id',
-      propertyName: 'authorId',
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor],
+      constraints: {
+        service: CommentService,
+        paramName: 'id',
+        propertyName: 'authorId',
+      },
     },
-  })
+  ])
   @ApiOkResponse({ type: CommentEntity })
   @ApiForbiddenResponse(ExceptionResponse(403))
   async update(
@@ -100,14 +106,17 @@ export class CommentController {
   }
 
   @Delete(':id')
-  @Authorize({
-    roles: [UserRole.admin],
-    owner: {
-      service: CommentService,
-      paramName: 'id',
-      propertyName: 'authorId',
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor],
+      constraints: {
+        service: CommentService,
+        paramName: 'id',
+        propertyName: 'authorId',
+      },
     },
-  })
+  ])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiForbiddenResponse(ExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
