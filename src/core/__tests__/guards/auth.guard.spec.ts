@@ -59,7 +59,7 @@ describe('AuthGuard', () => {
     vi.unstubAllEnvs();
   });
 
-  it('should return true if route is public', async () => {
+  it('allows access for public routes', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(true);
     const context = createMockContext();
 
@@ -72,7 +72,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should throw UnauthorizedException if no token', async () => {
+  it('throws UnauthorizedException if no token', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext(undefined);
 
@@ -81,7 +81,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should throw UnauthorizedException if token is invalid', async () => {
+  it('throws UnauthorizedException if token is invalid', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
@@ -92,7 +92,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should throw UnauthorizedException if had error finding user', async () => {
+  it('throws UnauthorizedException if had error finding user', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
@@ -105,7 +105,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should throw ForbiddenException if no user found', async () => {
+  it('throws ForbiddenException if no user found', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
@@ -118,7 +118,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should throw ForbiddenException if user version mismatch', async () => {
+  it('throws ForbiddenException if user version mismatch', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer valid-token');
 
@@ -133,7 +133,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('should return true and set user if everything is valid', async () => {
+  it('allows access to authenticated route with valid token', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const request = { headers: { authorization: 'Bearer token' }, user: null };
     const context = {

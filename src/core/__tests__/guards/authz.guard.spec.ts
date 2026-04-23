@@ -47,7 +47,7 @@ describe('Authz Guard', () => {
       }),
     }) as unknown as ExecutionContext;
 
-  it('should allow if no authz options are defined', async () => {
+  it('allows access if no authz options defined', async () => {
     vi.mocked(reflector.getAllAndOverride).mockReturnValue(undefined);
     const context = createMockContext({});
 
@@ -55,7 +55,7 @@ describe('Authz Guard', () => {
     expect(result).toBe(true);
   });
 
-  it('should throw ForbiddenException if roles do not match', async () => {
+  it('throws ForbiddenException if roles do not match', async () => {
     vi.mocked(reflector.getAllAndOverride).mockReturnValue([
       { roles: [UserRole.admin] },
     ]);
@@ -68,7 +68,7 @@ describe('Authz Guard', () => {
     );
   });
 
-  it('should validate ownership via params using ModuleRef', async () => {
+  it('validates ownership via params constraints', async () => {
     const authOptions = [
       {
         roles: [UserRole.editor],
@@ -104,7 +104,7 @@ describe('Authz Guard', () => {
     });
   });
 
-  it('should validate ownership via body property', async () => {
+  it('should validate ownership via body constraints', async () => {
     const authOptions = [
       {
         roles: [UserRole.editor],
@@ -123,7 +123,7 @@ describe('Authz Guard', () => {
     expect(result).toBe(true);
   });
 
-  it('should throw ForbiddenException if ownership check fails', async () => {
+  it('throws ForbiddenException if ownership check fails', async () => {
     const authOptions = [
       {
         roles: [UserRole.editor],
