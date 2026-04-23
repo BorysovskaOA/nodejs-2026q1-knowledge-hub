@@ -14,7 +14,7 @@ import { UserEntity } from './models/user.entity';
 import { Prisma } from '@prisma/client';
 import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
 import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
-import { StatusCodes } from 'http-status-codes';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class UserService {
@@ -115,12 +115,19 @@ export class UserService {
 
   async validateUserExistWithException(
     id: string,
+    fieldName: string = 'login',
     tx?: Prisma.TransactionClient,
   ) {
     const exist = await this.validateUserExist(id, tx);
 
     if (!exist) {
-      throw new BadRequestException();
+      throw new BadRequestException({
+        statusCode: StatusCodes.BAD_REQUEST,
+        error: getReasonPhrase(StatusCodes.BAD_REQUEST),
+        message: [
+          { field: fieldName, errors: [`${fieldName} is already taken`] },
+        ],
+      });
     }
   }
 }

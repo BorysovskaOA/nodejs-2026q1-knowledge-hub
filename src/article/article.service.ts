@@ -75,12 +75,14 @@ export class ArticleService {
       throw new ConflictException({
         statusCode: StatusCodes.CONFLICT,
         error: getReasonPhrase(StatusCodes.CONFLICT),
-        message: {
-          field: 'status',
-          errors: [
-            `Cannot transition from '${article.status}' to '${data.status}'`,
-          ],
-        },
+        message: [
+          {
+            field: 'status',
+            errors: [
+              `Cannot transition from '${article.status}' to '${data.status}'`,
+            ],
+          },
+        ],
       });
 
     return this.articleRepository.update(article.id, data);
@@ -98,17 +100,22 @@ export class ArticleService {
     return !!user;
   }
 
-  async validateArticleExistWithException(id: string, fieldName: string) {
+  async validateArticleExistWithException(
+    id: string,
+    fieldName: string = 'articleId',
+  ) {
     const exist = await this.validateArticleExist(id);
 
     if (!exist)
       throw new UnprocessableEntityException({
         statusCode: StatusCodes.UNPROCESSABLE_ENTITY,
         error: getReasonPhrase(StatusCodes.UNPROCESSABLE_ENTITY),
-        message: {
-          field: fieldName,
-          errors: [`${fieldName} does not exist`],
-        },
+        message: [
+          {
+            field: fieldName,
+            errors: [`${fieldName} does not exist`],
+          },
+        ],
       });
   }
 }

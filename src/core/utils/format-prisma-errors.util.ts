@@ -11,9 +11,11 @@ export const formatUniqueConstraintError = (
   return {
     statusCode,
     error: getReasonPhrase(statusCode),
-    message: {
-      field: field,
-      errors: [`${field} already exist`],
-    },
+    message: [
+      {
+        field: field,
+        errors: [`${field} already exist`],
+      },
+    ],
   };
 };

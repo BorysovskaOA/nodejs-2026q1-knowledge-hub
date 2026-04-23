@@ -15,6 +15,7 @@ import { ArticleService } from '../article.service';
 import { ArticleRepository } from '../article.repository';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 vi.mock('./../utils/article-workflow.util', () => ({
   ArticleWorkflow: {
@@ -305,12 +306,21 @@ describe('Article Service', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws ConflictException if invalid categoryId', async () => {
+    it('throws ConflictException if cannot transition', async () => {
       vi.mocked(ArticleWorkflow.canTransition).mockImplementation(() => false);
 
-      await expect(
-        service.update('id', { status: ArticleStatus.archived }),
-      ).rejects.toThrow(ConflictException);
+      try {
+        await service.update('id', { status: ArticleStatus.archived });
+      } catch (err) {
+        expect(err).toBeInstanceOf(ConflictException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.CONFLICT,
+          error: getReasonPhrase(StatusCodes.CONFLICT),
+          message: [{ field: 'status', errors: [expect.any(String)] }],
+        });
+      }
     });
   });
 
@@ -359,10 +369,7 @@ describe('Article Service', () => {
     });
 
     it('should not return anything if exist', async () => {
-      const result = await service.validateArticleExistWithException(
-        'id',
-        'articleId',
-      );
+      const result = await service.validateArticleExistWithException('id');
 
       expect(result).toBeUndefined();
     });
@@ -370,9 +377,18 @@ describe('Article Service', () => {
     it('throws UnprocessableEntityException if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.validateArticleExistWithException('id', 'articleId'),
-      ).rejects.toThrow(UnprocessableEntityException);
+      try {
+        await service.validateArticleExistWithException('id');
+      } catch (err) {
+        expect(err).toBeInstanceOf(UnprocessableEntityException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.UNPROCESSABLE_ENTITY,
+          error: getReasonPhrase(StatusCodes.UNPROCESSABLE_ENTITY),
+          message: [{ field: 'articleId', errors: [expect.any(String)] }],
+        });
+      }
     });
   });
 });

@@ -13,6 +13,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 vi.mock('src/core/utils/hashing.util', () => ({
   hash: vi.fn(),
@@ -94,13 +95,29 @@ describe('User Service', () => {
         {
           code: 'P2002',
           clientVersion: '5.0.0',
+          meta: {
+            driverAdapterError: {
+              cause: {
+                constraint: { fields: ['login'] },
+              },
+            },
+          },
         },
       );
       mockRepository.create.mockRejectedValue(prismaError);
 
-      await expect(service.create(createData)).rejects.toThrow(
-        ConflictException,
-      );
+      try {
+        await service.create(createData);
+      } catch (err) {
+        expect(err).toBeInstanceOf(ConflictException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.CONFLICT,
+          error: getReasonPhrase(StatusCodes.CONFLICT),
+          message: [{ field: 'login', errors: [expect.any(String)] }],
+        });
+      }
     });
 
     it('throws original error if not unique constraint error', async () => {
@@ -322,9 +339,18 @@ describe('User Service', () => {
     it('throws BadRequestException if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.validateUserExistWithException('id'),
-      ).rejects.toThrow(BadRequestException);
+      try {
+        await service.validateUserExistWithException('id');
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.BAD_REQUEST,
+          error: getReasonPhrase(StatusCodes.BAD_REQUEST),
+          message: [{ field: 'login', errors: [expect.any(String)] }],
+        });
+      }
     });
   });
 });

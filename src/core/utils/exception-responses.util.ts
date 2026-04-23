@@ -22,12 +22,15 @@ export function ExtendedExceptionResponse(status: number): ApiResponseOptions {
         statusCode: { type: 'number', example: status },
         error: { type: 'string', example: STATUS_CODES[status] || 'Error' },
         message: {
-          type: 'object',
-          properties: {
-            field: { type: 'string' },
-            errors: {
-              type: 'array',
-              items: { type: 'string' },
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              field: { type: 'string' },
+              errors: {
+                type: 'array',
+                items: { type: 'string' },
+              },
             },
           },
         },

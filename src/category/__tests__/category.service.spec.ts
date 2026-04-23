@@ -9,6 +9,7 @@ import { CategoryEntity } from '../models/category.entity';
 import { CategoryService } from '../categoty.service';
 import { CategoryRepository } from '../category.repository';
 import { Prisma } from '@prisma/client';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 const category = new CategoryEntity({
   id: 'id',
@@ -71,13 +72,29 @@ describe('Category Service', () => {
         {
           code: 'P2002',
           clientVersion: '5.0.0',
+          meta: {
+            driverAdapterError: {
+              cause: {
+                constraint: { fields: ['name'] },
+              },
+            },
+          },
         },
       );
       mockRepository.create.mockRejectedValue(prismaError);
 
-      await expect(service.create(createData)).rejects.toThrow(
-        ConflictException,
-      );
+      try {
+        await service.create(createData);
+      } catch (err) {
+        expect(err).toBeInstanceOf(ConflictException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.CONFLICT,
+          error: getReasonPhrase(StatusCodes.CONFLICT),
+          message: [{ field: 'name', errors: [expect.any(String)] }],
+        });
+      }
     });
 
     it('throws original error if not unique constraint error', async () => {
@@ -171,13 +188,29 @@ describe('Category Service', () => {
         {
           code: 'P2002',
           clientVersion: '5.0.0',
+          meta: {
+            driverAdapterError: {
+              cause: {
+                constraint: { fields: ['name'] },
+              },
+            },
+          },
         },
       );
       mockRepository.update.mockRejectedValue(prismaError);
 
-      await expect(service.update('id', updateData)).rejects.toThrow(
-        ConflictException,
-      );
+      try {
+        await service.update('id', updateData);
+      } catch (err) {
+        expect(err).toBeInstanceOf(ConflictException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.CONFLICT,
+          error: getReasonPhrase(StatusCodes.CONFLICT),
+          message: [{ field: 'name', errors: [expect.any(String)] }],
+        });
+      }
     });
 
     it('throws original error if not unique constraint error', async () => {
@@ -240,9 +273,18 @@ describe('Category Service', () => {
     it('throws BadRequestException if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.validateCategoryExistWithException('id'),
-      ).rejects.toThrow(BadRequestException);
+      try {
+        await service.validateCategoryExistWithException('id');
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException);
+        const response = err.getResponse();
+
+        expect(response).toEqual({
+          statusCode: StatusCodes.BAD_REQUEST,
+          error: getReasonPhrase(StatusCodes.BAD_REQUEST),
+          message: [{ field: 'categoryId', errors: [expect.any(String)] }],
+        });
+      }
     });
   });
 });

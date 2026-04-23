@@ -26,10 +26,7 @@ export class CommentService {
   ) {}
 
   async create(data: CreateCommentDto) {
-    await this.articleService.validateArticleExistWithException(
-      data.articleId,
-      'articleId',
-    );
+    await this.articleService.validateArticleExistWithException(data.articleId);
     if (data.authorId)
       await this.userService.validateUserExistWithException(data.authorId);
 

@@ -95,7 +95,7 @@ describe('Comment Service', () => {
       ).toHaveBeenCalledTimes(1);
       expect(
         mockArticleService.validateArticleExistWithException,
-      ).toHaveBeenCalledWith(createData.articleId, 'articleId');
+      ).toHaveBeenCalledWith(createData.articleId);
     });
 
     it('throws BadRequestException if invalid authorId', async () => {

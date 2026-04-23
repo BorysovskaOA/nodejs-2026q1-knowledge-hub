@@ -9,7 +9,7 @@ import { CreateCategoryDto } from './models/create-category.dto';
 import { Prisma } from '@prisma/client';
 import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
 import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
-import { StatusCodes } from 'http-status-codes';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class CategoryService {
@@ -71,9 +71,22 @@ export class CategoryService {
     return !!user;
   }
 
-  async validateCategoryExistWithException(id: string) {
+  async validateCategoryExistWithException(
+    id: string,
+    fieldName: string = 'categoryId',
+  ) {
     const exist = await this.validateCategoryExist(id);
 
-    if (!exist) throw new BadRequestException();
+    if (!exist)
+      throw new BadRequestException({
+        statusCode: StatusCodes.BAD_REQUEST,
+        error: getReasonPhrase(StatusCodes.BAD_REQUEST),
+        message: [
+          {
+            field: fieldName,
+            errors: [`${fieldName} does not exist`],
+          },
+        ],
+      });
   }
 }
