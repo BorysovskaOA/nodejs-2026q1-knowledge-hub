@@ -15,6 +15,7 @@ import { IdParamDto } from 'src/core/dtos/id-param.dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -22,16 +23,18 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CategoryEntity } from './models/category.entity';
-import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
-import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import {
+  ExtendedExceptionResponse,
+  GeneralExceptionResponse,
+} from 'src/core/utils/exception-responses.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('category')
-@ApiBadRequestResponse({ type: ValidationResponseDto })
-@ApiInternalServerErrorResponse(ExceptionResponse(500))
-@ApiUnauthorizedResponse(ExceptionResponse(401))
+@ApiBadRequestResponse(ExtendedExceptionResponse(400))
+@ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
+@ApiUnauthorizedResponse(GeneralExceptionResponse(401))
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
@@ -42,9 +45,10 @@ export class CategoryController {
   }
 
   @Post()
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @ApiCreatedResponse({ type: CategoryEntity })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
+  @ApiConflictResponse(ExtendedExceptionResponse(409))
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<CategoryEntity> {
@@ -58,9 +62,10 @@ export class CategoryController {
   }
 
   @Put(':id')
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @ApiOkResponse({ type: CategoryEntity })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
+  @ApiConflictResponse(ExtendedExceptionResponse(409))
   async update(
     @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: CreateCategoryDto,
@@ -69,9 +74,9 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  @Authorize({ roles: [UserRole.admin] })
+  @Authorize([{ roles: [UserRole.admin] }])
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.categoryService.delete(id);
   }

@@ -11,7 +11,7 @@ import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public-route.decorator';
 import { AuthPayloadUser } from '../../auth/models/auth.entity';
 import { UserService } from 'src/user/user.service';
-import { StatusCodes } from 'http-status-codes';
+import { UserEntity } from 'src/user/models/user.entity';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -36,26 +36,28 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException();
     }
+
+    let payload: AuthPayloadUser;
     try {
-      const payload: AuthPayloadUser = await this.jwtService.verifyAsync(
-        token,
-        {
-          secret: process.env.JWT_SECRET_KEY,
-        },
-      );
-
-      const user = await this.userService.getOne({ id: payload.userId });
-
-      if (!user || payload.version !== user?.tokenVersion)
-        throw new ForbiddenException();
-
-      request['user'] = user;
-      return true;
-    } catch (err) {
-      if (err?.statusCode === StatusCodes.FORBIDDEN)
-        throw new ForbiddenException();
+      payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET_KEY,
+      });
+    } catch {
       throw new UnauthorizedException();
     }
+
+    let user: UserEntity | null;
+    try {
+      user = await this.userService.getOne({ id: payload.userId });
+    } catch {
+      throw new UnauthorizedException();
+    }
+
+    if (!user || payload.version !== user?.tokenVersion)
+      throw new ForbiddenException();
+
+    request.user = user;
+    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
