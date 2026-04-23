@@ -2,13 +2,14 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { UserService } from '../user.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserEntity } from '../models/user.entity';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { UserRepository } from '../user.repository';
 import { hash, hashCompare } from 'src/core/utils/hashing.util';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -85,6 +86,27 @@ describe('User Service', () => {
 
       expect(hash).toHaveBeenCalledTimes(1);
       expect(hash).toHaveBeenCalledWith(createData.password);
+    });
+
+    it("throws ConflictException if 'login' already exist", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`login`)',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        },
+      );
+      mockRepository.create.mockRejectedValue(prismaError);
+
+      await expect(service.create(createData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('throws original error if not unique constraint error', async () => {
+      mockRepository.create.mockRejectedValue(new Error());
+
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
   });
 

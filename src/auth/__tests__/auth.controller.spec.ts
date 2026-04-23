@@ -7,7 +7,11 @@ import {
   PATH_METADATA,
   ROUTE_ARGS_METADATA,
 } from '@nestjs/common/constants';
-import { HttpStatus, RequestMethod } from '@nestjs/common';
+import {
+  HttpStatus,
+  RequestMethod,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { UserEntity } from 'src/user/models/user.entity';
 import { AuthEntity, AuthUserEntity } from '../models/auth.entity';
@@ -20,6 +24,7 @@ import { RefreshDto } from '../models/refresh.dto';
 import { AuthenticatedRequest } from 'src/core/interfaces/authenticated-request.interface';
 import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum';
 import { IS_PUBLIC_KEY } from 'src/core/decorators/public-route.decorator';
+import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
 
 const user = new UserEntity({
   id: 'id',
@@ -206,26 +211,35 @@ describe('Auth Controller', () => {
       expect(isPublic).toBeTruthy();
     });
 
-    it('should take @RawBody as params', () => {
+    it('should have GlobalValidationPipe with UnauthorizedException factory', () => {
       const metadata = Reflect.getMetadata(
         ROUTE_ARGS_METADATA,
-        controller.constructor,
+        AuthController,
         'refresh',
       );
 
-      const rawBodyKey = `${RouteParamtypes.RAW_BODY}:0`;
+      const bodyParam = Object.values(metadata).find(
+        (p: any) => p.index === 0,
+      ) as any;
+      const pipe = bodyParam.pipes[0];
+      expect(pipe).toBeInstanceOf(GlobalValidationPipe);
 
-      expect(metadata[rawBodyKey]).toBeDefined();
+      const exception = pipe.validatorOptions.exceptionFactory();
+      expect(exception).toBeInstanceOf(UnauthorizedException);
     });
 
-    it('should take correct arguments', async () => {
-      const paramsTypes = Reflect.getMetadata(
-        'design:paramtypes',
-        controller,
+    it('should have expectedType set to RefreshDto in the pipe', () => {
+      const metadata = Reflect.getMetadata(
+        ROUTE_ARGS_METADATA,
+        AuthController,
         'refresh',
       );
+      const bodyParam = Object.values(metadata).find(
+        (p: any) => p.index === 0,
+      ) as any;
+      const pipe = bodyParam.pipes[0];
 
-      expect(paramsTypes[0]).toBe(RefreshDto);
+      expect(pipe.expectedType).toBe(RefreshDto);
     });
 
     it('should return correct format', async () => {

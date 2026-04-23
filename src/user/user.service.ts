@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,19 +12,35 @@ import { UpdatePasswordDto } from './models/update-password.dto';
 import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
 import { UserEntity } from './models/user.entity';
 import { Prisma } from '@prisma/client';
+import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
+import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
+import { StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
-  async create(data: CreateUserDto, tx?: Prisma.TransactionClient) {
+  async create(
+    data: CreateUserDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<UserEntity> {
     const { password, ...restData } = data;
     const hashedPassword = await hash(password);
     const userData = {
       ...restData,
       passwordHash: hashedPassword,
     };
-    return this.userRepository.create(userData, tx);
+
+    try {
+      return await this.userRepository.create(userData, tx);
+    } catch (err) {
+      if (isUniqueConstraint(err))
+        throw new ConflictException(
+          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        );
+
+      throw err;
+    }
   }
 
   async getAll(tx?: Prisma.TransactionClient) {

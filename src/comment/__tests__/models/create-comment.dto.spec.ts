@@ -17,8 +17,6 @@ describe('Create Comment DTO', () => {
   it('should set default values', () => {
     const dto = new CreateCommentDto();
 
-    console.log(dto);
-
     expect(dto).toMatchObject({
       authorId: null,
     });

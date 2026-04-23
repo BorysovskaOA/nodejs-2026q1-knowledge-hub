@@ -31,17 +31,18 @@ import {
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
-import { UnprocessableEntityResponseDto } from 'src/core/dtos/unprocessable-entity-response.dto';
-import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
-import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import {
+  ExtendedExceptionResponse,
+  GeneralExceptionResponse,
+} from 'src/core/utils/exception-responses.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('comment')
-@ApiBadRequestResponse({ type: ValidationResponseDto })
-@ApiInternalServerErrorResponse(ExceptionResponse(500))
-@ApiUnauthorizedResponse(ExceptionResponse(401))
+@ApiBadRequestResponse(ExtendedExceptionResponse(400))
+@ApiUnauthorizedResponse(GeneralExceptionResponse(401))
+@ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
@@ -67,8 +68,8 @@ export class CommentController {
     { roles: [UserRole.editor], constraints: { bodyPropertyName: 'authorId' } },
   ])
   @ApiCreatedResponse({ type: CommentEntity })
-  @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
+  @ApiUnprocessableEntityResponse(ExtendedExceptionResponse(422))
   async create(
     @Body() createCommentDto: CreateCommentDto,
   ): Promise<CommentEntity> {
@@ -94,7 +95,7 @@ export class CommentController {
     },
   ])
   @ApiOkResponse({ type: CommentEntity })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async update(
     @Param() { id }: IdParamDto,
     @Body() updateCommentDto: UpdateCommentDto,
@@ -115,7 +116,7 @@ export class CommentController {
     },
   ])
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.commentService.delete(id);
   }

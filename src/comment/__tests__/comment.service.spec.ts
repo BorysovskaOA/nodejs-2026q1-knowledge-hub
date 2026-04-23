@@ -95,10 +95,10 @@ describe('Comment Service', () => {
       ).toHaveBeenCalledTimes(1);
       expect(
         mockArticleService.validateArticleExistWithException,
-      ).toHaveBeenCalledWith(createData.articleId);
+      ).toHaveBeenCalledWith(createData.articleId, 'articleId');
     });
 
-    it('throws error from validation if invalid authorId', async () => {
+    it('throws BadRequestException if invalid authorId', async () => {
       mockArticleService.validateArticleExistWithException.mockRejectedValue(
         new BadRequestException(),
       );
@@ -119,7 +119,7 @@ describe('Comment Service', () => {
       ).toHaveBeenCalledWith(createData.authorId);
     });
 
-    it('throws error from validation if invalid authorId', async () => {
+    it('throws BadRequestException if invalid authorId', async () => {
       mockUserService.validateUserExistWithException.mockRejectedValue(
         new BadRequestException(),
       );

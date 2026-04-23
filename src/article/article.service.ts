@@ -1,5 +1,6 @@
 import { ArticleRepository } from './article.repository';
 import {
+  ConflictException,
   forwardRef,
   Inject,
   Injectable,
@@ -15,6 +16,8 @@ import {
   ArticleListFiltersPaginatedDto,
 } from './models/article-list-filter.dto';
 import { Prisma } from '@prisma/client';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
+import { ArticleWorkflow } from './utils/article-workflow.util';
 
 @Injectable()
 export class ArticleService {
@@ -65,6 +68,21 @@ export class ArticleService {
         data.categoryId,
       );
 
+    if (
+      data.status &&
+      !ArticleWorkflow.canTransition(article.status, data.status)
+    )
+      throw new ConflictException({
+        statusCode: StatusCodes.CONFLICT,
+        error: getReasonPhrase(StatusCodes.CONFLICT),
+        message: {
+          field: 'status',
+          errors: [
+            `Cannot transition from '${article.status}' to '${data.status}'`,
+          ],
+        },
+      });
+
     return this.articleRepository.update(article.id, data);
   }
 
@@ -80,12 +98,17 @@ export class ArticleService {
     return !!user;
   }
 
-  async validateArticleExistWithException(id: string) {
+  async validateArticleExistWithException(id: string, fieldName: string) {
     const exist = await this.validateArticleExist(id);
 
     if (!exist)
-      throw new UnprocessableEntityException(
-        `Article with given articleId doesn't exist`,
-      );
+      throw new UnprocessableEntityException({
+        statusCode: StatusCodes.UNPROCESSABLE_ENTITY,
+        error: getReasonPhrase(StatusCodes.UNPROCESSABLE_ENTITY),
+        message: {
+          field: fieldName,
+          errors: [`${fieldName} does not exist`],
+        },
+      });
   }
 }

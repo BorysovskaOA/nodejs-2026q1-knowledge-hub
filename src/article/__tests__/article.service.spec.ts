@@ -1,3 +1,4 @@
+import { ArticleWorkflow } from './../utils/article-workflow.util';
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ArticleStatus } from '@prisma/client';
@@ -5,6 +6,7 @@ import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import {
   BadRequestException,
+  ConflictException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -13,6 +15,12 @@ import { ArticleService } from '../article.service';
 import { ArticleRepository } from '../article.repository';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
+
+vi.mock('./../utils/article-workflow.util', () => ({
+  ArticleWorkflow: {
+    canTransition: vi.fn(),
+  },
+}));
 
 const article = new ArticleEntity({
   id: 'id',
@@ -76,6 +84,7 @@ describe('Article Service', () => {
       undefined,
     );
     mockUserService.validateUserExistWithException.mockResolvedValue(undefined);
+    vi.mocked(ArticleWorkflow).canTransition.mockImplementation(() => true);
   });
 
   describe('create', () => {
@@ -110,7 +119,7 @@ describe('Article Service', () => {
       ).toHaveBeenCalledWith(createData.categoryId);
     });
 
-    it('throws error from validation if invalid categoryId', async () => {
+    it('throws BadRequestException if invalid categoryId', async () => {
       mockCategoryService.validateCategoryExistWithException.mockRejectedValue(
         new BadRequestException(),
       );
@@ -131,7 +140,7 @@ describe('Article Service', () => {
       ).toHaveBeenCalledWith(createData.authorId);
     });
 
-    it('throws error from validation if invalid authorId', async () => {
+    it('throws BadRequestException if invalid authorId', async () => {
       mockUserService.validateUserExistWithException.mockRejectedValue(
         new BadRequestException(),
       );
@@ -286,7 +295,7 @@ describe('Article Service', () => {
       ).toHaveBeenCalledWith('categoryId');
     });
 
-    it('throws error from validation if invalid categoryId', async () => {
+    it('throws BadRequestException if invalid categoryId', async () => {
       mockCategoryService.validateCategoryExistWithException.mockRejectedValue(
         new BadRequestException(),
       );
@@ -294,6 +303,14 @@ describe('Article Service', () => {
       await expect(
         service.update('id', { categoryId: 'categoryId' }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ConflictException if invalid categoryId', async () => {
+      vi.mocked(ArticleWorkflow.canTransition).mockImplementation(() => false);
+
+      await expect(
+        service.update('id', { status: ArticleStatus.archived }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
@@ -342,7 +359,10 @@ describe('Article Service', () => {
     });
 
     it('should not return anything if exist', async () => {
-      const result = await service.validateArticleExistWithException('id');
+      const result = await service.validateArticleExistWithException(
+        'id',
+        'articleId',
+      );
 
       expect(result).toBeUndefined();
     });
@@ -351,7 +371,7 @@ describe('Article Service', () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.validateArticleExistWithException('id'),
+        service.validateArticleExistWithException('id', 'articleId'),
       ).rejects.toThrow(UnprocessableEntityException);
     });
   });

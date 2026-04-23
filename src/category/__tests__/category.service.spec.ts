@@ -1,9 +1,14 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CategoryEntity } from '../models/category.entity';
 import { CategoryService } from '../categoty.service';
 import { CategoryRepository } from '../category.repository';
+import { Prisma } from '@prisma/client';
 
 const category = new CategoryEntity({
   id: 'id',
@@ -58,6 +63,27 @@ describe('Category Service', () => {
 
       expect(result).toBeInstanceOf(CategoryEntity);
       expect(result).toMatchObject(category);
+    });
+
+    it("throws ConflictException if 'name' already exist", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`name`)',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        },
+      );
+      mockRepository.create.mockRejectedValue(prismaError);
+
+      await expect(service.create(createData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('throws original error if not unique constraint error', async () => {
+      mockRepository.create.mockRejectedValue(new Error());
+
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
   });
 
@@ -137,6 +163,27 @@ describe('Category Service', () => {
       await expect(service.update('id', updateData)).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it("throws ConflictException if 'name' already exist", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`name`)',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        },
+      );
+      mockRepository.update.mockRejectedValue(prismaError);
+
+      await expect(service.update('id', updateData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('throws original error if not unique constraint error', async () => {
+      mockRepository.update.mockRejectedValue(new Error());
+
+      await expect(service.update('id', updateData)).rejects.toThrow(Error);
     });
   });
 

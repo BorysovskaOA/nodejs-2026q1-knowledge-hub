@@ -18,6 +18,7 @@ import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -27,16 +28,18 @@ import {
 import { UserEntity } from './models/user.entity';
 import { ApiPaginatedResponse } from 'src/core/decorators/api-paginated-response.decorator';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
-import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
-import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import {
+  GeneralExceptionResponse,
+  ExtendedExceptionResponse,
+} from 'src/core/utils/exception-responses.util';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('user')
-@ApiBadRequestResponse({ type: ValidationResponseDto })
-@ApiInternalServerErrorResponse(ExceptionResponse(500))
-@ApiUnauthorizedResponse(ExceptionResponse(401))
+@ApiBadRequestResponse(ExtendedExceptionResponse(400))
+@ApiUnauthorizedResponse(GeneralExceptionResponse(401))
+@ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -57,7 +60,8 @@ export class UserController {
   @Post()
   @Authorize([{ roles: [UserRole.admin] }])
   @ApiCreatedResponse({ type: UserEntity })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
+  @ApiConflictResponse(ExtendedExceptionResponse(409))
   async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
     return this.userService.create(createUserDto);
   }
@@ -81,7 +85,7 @@ export class UserController {
     },
   ])
   @ApiOkResponse({ type: UserEntity })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async updatePassword(
     @Param() { id }: IdParamDto,
     @Body() updatePasswordDto: UpdatePasswordDto,
@@ -102,7 +106,7 @@ export class UserController {
     },
   ])
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.userService.delete(id);
   }

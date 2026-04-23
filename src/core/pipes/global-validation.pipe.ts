@@ -2,11 +2,12 @@ import {
   Injectable,
   ValidationPipe,
   BadRequestException,
+  ValidationPipeOptions,
 } from '@nestjs/common';
 
 @Injectable()
 export class GlobalValidationPipe extends ValidationPipe {
-  constructor() {
+  constructor(overrides?: ValidationPipeOptions) {
     super({
       whitelist: true,
       forbidNonWhitelisted: true,
@@ -18,6 +19,7 @@ export class GlobalValidationPipe extends ValidationPipe {
         }));
         return new BadRequestException(formattedErrors);
       },
+      ...overrides,
     });
   }
 }
