@@ -2,12 +2,12 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { CommentEntity } from '../models/comment.entity';
 import { CommentService } from '../comment.service';
 import { ArticleService } from 'src/article/article.service';
 import { CommentRepository } from '../comment.repository';
+import { NotFoundError } from 'src/core/exceptions/app-errors';
 
 const comment = new CommentEntity({
   id: 'id',
@@ -31,11 +31,11 @@ describe('Comment Service', () => {
   };
 
   const mockArticleService = {
-    validateArticleExistWithException: vi.fn(),
+    validateArticleExistWithUnprocessableEntityError: vi.fn(),
   };
 
   const mockUserService = {
-    validateUserExistWithException: vi.fn(),
+    validateUserExistWithBadRequestError: vi.fn(),
   };
 
   beforeAll(async () => {
@@ -63,10 +63,12 @@ describe('Comment Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetAllMocks();
-    mockArticleService.validateArticleExistWithException.mockResolvedValue(
+    mockArticleService.validateArticleExistWithUnprocessableEntityError.mockResolvedValue(
       undefined,
     );
-    mockUserService.validateUserExistWithException.mockResolvedValue(undefined);
+    mockUserService.validateUserExistWithBadRequestError.mockResolvedValue(
+      undefined,
+    );
   });
 
   describe('create', () => {
@@ -91,42 +93,38 @@ describe('Comment Service', () => {
       await service.create(createData);
 
       expect(
-        mockArticleService.validateArticleExistWithException,
+        mockArticleService.validateArticleExistWithUnprocessableEntityError,
       ).toHaveBeenCalledTimes(1);
       expect(
-        mockArticleService.validateArticleExistWithException,
+        mockArticleService.validateArticleExistWithUnprocessableEntityError,
       ).toHaveBeenCalledWith(createData.articleId);
     });
 
-    it('throws BadRequestException if invalid authorId', async () => {
-      mockArticleService.validateArticleExistWithException.mockRejectedValue(
-        new BadRequestException(),
+    it('throws Error if invalid authorId', async () => {
+      mockArticleService.validateArticleExistWithUnprocessableEntityError.mockRejectedValue(
+        new Error(),
       );
 
-      await expect(service.create(createData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
 
     it('should check for valid authorId', async () => {
       await service.create(createData);
 
       expect(
-        mockUserService.validateUserExistWithException,
+        mockUserService.validateUserExistWithBadRequestError,
       ).toHaveBeenCalledTimes(1);
       expect(
-        mockUserService.validateUserExistWithException,
+        mockUserService.validateUserExistWithBadRequestError,
       ).toHaveBeenCalledWith(createData.authorId);
     });
 
-    it('throws BadRequestException if invalid authorId', async () => {
-      mockUserService.validateUserExistWithException.mockRejectedValue(
-        new BadRequestException(),
+    it('throws Error if invalid authorId', async () => {
+      mockUserService.validateUserExistWithBadRequestError.mockRejectedValue(
+        new Error(),
       );
 
-      await expect(service.create(createData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
   });
 
@@ -191,10 +189,10 @@ describe('Comment Service', () => {
       expect(result).toMatchObject(comment);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getById('id')).rejects.toThrow(NotFoundException);
+      await expect(service.getById('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -235,11 +233,11 @@ describe('Comment Service', () => {
       expect(result).toMatchObject(comment);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.update('id', updateData)).rejects.toThrow(
-        NotFoundException,
+        NotFoundError,
       );
     });
   });
@@ -257,10 +255,10 @@ describe('Comment Service', () => {
       expect(result).toMatchObject(comment);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.delete('id')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('id')).rejects.toThrow(NotFoundError);
     });
   });
 });
