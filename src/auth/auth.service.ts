@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { SignupDto } from './models/signup.dto';
 import { UserRole } from '@prisma/client';
@@ -13,6 +13,7 @@ import {
 } from './models/auth.entity';
 import { UserEntity } from 'src/user/models/user.entity';
 import { RefreshDto } from './models/refresh.dto';
+import { ForbiddenError } from 'src/core/exceptions/app-errors';
 
 @Injectable()
 export class AuthService {
@@ -55,10 +56,12 @@ export class AuthService {
 
   async login(data: LoginDto) {
     const user = await this.userService.getOne({ login: data.login });
-    if (!user) throw new ForbiddenException();
+    if (!user)
+      throw new ForbiddenError(AuthService.name, 'Credential are invalid');
 
     const isValid = await hashCompare(data.password, user.passwordHash);
-    if (!isValid) throw new ForbiddenException();
+    if (!isValid)
+      throw new ForbiddenError(AuthService.name, 'Credential are invalid');
 
     return this.generateTokens(user);
   }
@@ -70,13 +73,13 @@ export class AuthService {
         secret: process.env.JWT_SECRET_REFRESH_KEY,
       });
     } catch {
-      throw new ForbiddenException();
+      throw new ForbiddenError(AuthService.name, 'Access Denied');
     }
 
     const user = await this.userService.getOne({
       id: payload.userId,
     });
-    if (!user) throw new ForbiddenException();
+    if (!user) throw new ForbiddenError(AuthService.name, 'Access Denied');
 
     return this.generateTokens(user);
   }

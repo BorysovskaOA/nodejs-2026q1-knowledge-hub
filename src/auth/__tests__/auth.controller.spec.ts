@@ -7,11 +7,7 @@ import {
   PATH_METADATA,
   ROUTE_ARGS_METADATA,
 } from '@nestjs/common/constants';
-import {
-  HttpStatus,
-  RequestMethod,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { HttpStatus, RequestMethod } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { UserEntity } from 'src/user/models/user.entity';
 import { AuthEntity, AuthUserEntity } from '../models/auth.entity';
@@ -25,6 +21,7 @@ import { AuthenticatedRequest } from 'src/core/interfaces/authenticated-request.
 import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum';
 import { IS_PUBLIC_KEY } from 'src/core/decorators/public-route.decorator';
 import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
+import { UnauthorizedError } from 'src/core/exceptions/app-errors';
 
 const user = new UserEntity({
   id: 'id',
@@ -211,7 +208,7 @@ describe('Auth Controller', () => {
       expect(isPublic).toBeTruthy();
     });
 
-    it('should have GlobalValidationPipe with UnauthorizedException factory', () => {
+    it('should have GlobalValidationPipe with UnauthorizedError factory', () => {
       const metadata = Reflect.getMetadata(
         ROUTE_ARGS_METADATA,
         AuthController,
@@ -225,7 +222,7 @@ describe('Auth Controller', () => {
       expect(pipe).toBeInstanceOf(GlobalValidationPipe);
 
       const exception = pipe.validatorOptions.exceptionFactory();
-      expect(exception).toBeInstanceOf(UnauthorizedException);
+      expect(exception).toBeInstanceOf(UnauthorizedError);
     });
 
     it('should have expectedType set to RefreshDto in the pipe', () => {
