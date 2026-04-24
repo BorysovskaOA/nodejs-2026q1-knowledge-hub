@@ -13,8 +13,6 @@ const nestToPinoLevel = (level: string) => {
   return map[level] || 'info';
 };
 
-console.log(process.env.LOG_LEVEL);
-
 export const pinoConfig: Params = {
   pinoHttp: {
     redact: {
