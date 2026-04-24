@@ -1,11 +1,9 @@
-import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { TooManyRequestsError } from '../exceptions/app-errors';
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  private readonly logger = new Logger('THROTTLER');
-
   protected async throwThrottlingException(
     context: ExecutionContext,
   ): Promise<void> {

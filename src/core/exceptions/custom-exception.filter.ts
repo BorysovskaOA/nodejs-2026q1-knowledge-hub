@@ -1,10 +1,10 @@
-// all-exceptions.filter.ts
+import { getReasonPhrase } from 'http-status-codes';
 import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
 import { AppError } from './app-errors';
 import { StatusCodes } from 'http-status-codes';
 
 @Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
+export class CustomExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('HTTP_ERROR');
 
   catch(exception: any, host: ArgumentsHost) {
@@ -34,6 +34,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.log(logPayload, message);
     }
 
-    response.status(status).json(exception.getResponse());
+    response.status(status).json(
+      exception.getResponse
+        ? exception.getResponse()
+        : {
+            statusCode: status,
+            message: getReasonPhrase(status),
+            description: exception.message,
+          },
+    );
   }
 }

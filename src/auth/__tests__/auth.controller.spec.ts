@@ -15,7 +15,7 @@ import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { SignupDto } from '../models/signup.dto';
 import { LoginDto } from '../models/login.dto';
-import { ThrottlerGuard } from '@nestjs/throttler/dist/throttler.guard';
+import { CustomThrottlerGuard } from 'src/core/guards/custom-throttler.guard';
 import { RefreshDto } from '../models/refresh.dto';
 import { AuthenticatedRequest } from 'src/core/interfaces/authenticated-request.interface';
 import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum';
@@ -62,12 +62,16 @@ describe('Auth Controller', () => {
       controllers: [AuthController],
       providers: [
         {
+          provide: 'THROTTLER:MODULE_OPTIONS',
+          useValue: [],
+        },
+        {
           provide: AuthService,
           useValue: mockService,
         },
       ],
     })
-      .overrideGuard(ThrottlerGuard)
+      .overrideGuard(CustomThrottlerGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -126,7 +130,7 @@ describe('Auth Controller', () => {
         AuthController.prototype.refresh,
       );
 
-      expect(guards).toContain(ThrottlerGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
     });
   });
 
@@ -180,7 +184,7 @@ describe('Auth Controller', () => {
         AuthController.prototype.refresh,
       );
 
-      expect(guards).toContain(ThrottlerGuard);
+      expect(guards).toContain(CustomThrottlerGuard);
     });
   });
 

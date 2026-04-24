@@ -14,7 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthzGuard } from './core/guards/authz.guard';
 import { pinoConfig } from './core/configs/logger.config';
 import { throttlerConfig } from './core/configs/throttler.config';
-import { AllExceptionsFilter } from './core/exceptions/all-exception.filter';
+import { ExceptionFilter } from './core/exceptions/custom-exception.filter';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { AllExceptionsFilter } from './core/exceptions/all-exception.filter';
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_PIPE, useClass: GlobalValidationPipe },
     { provide: APP_GUARD, useClass: AuthzGuard },
-    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_FILTER, useClass: ExceptionFilter },
   ],
 })
 export class AppModule {}
