@@ -1,12 +1,5 @@
 import { ArticleRepository } from './article.repository';
-import {
-  ConflictException,
-  forwardRef,
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateArticleDto } from './models/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
@@ -16,8 +9,12 @@ import {
   ArticleListFiltersPaginatedDto,
 } from './models/article-list-filter.dto';
 import { Prisma } from '@prisma/client';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 import { ArticleWorkflow } from './utils/article-workflow.util';
+import {
+  ConflictError,
+  NotFoundError,
+  UnprocessableEntityError,
+} from 'src/core/exceptions/app-errors';
 
 @Injectable()
 export class ArticleService {
@@ -31,11 +28,13 @@ export class ArticleService {
 
   async create(data: CreateArticleDto) {
     if (data.categoryId)
-      await this.categoryService.validateCategoryExistWithException(
+      await this.categoryService.validateCategoryExistWithBadRequestError(
         data.categoryId,
       );
     if (data.authorId)
-      await this.userService.validateUserExistWithException(data.authorId);
+      await this.userService.validateUserExistWithBadRequestError(
+        data.authorId,
+      );
 
     return this.articleRepository.create(data);
   }
@@ -51,7 +50,11 @@ export class ArticleService {
   async getById(id: string) {
     const article = await this.articleRepository.findById(id);
 
-    if (!article) throw new NotFoundException();
+    if (!article)
+      throw new NotFoundError(
+        ArticleService.name,
+        `Article ${id} is not found`,
+      );
 
     return article;
   }
@@ -64,7 +67,7 @@ export class ArticleService {
     const article = await this.getById(id);
 
     if (data.categoryId)
-      await this.categoryService.validateCategoryExistWithException(
+      await this.categoryService.validateCategoryExistWithBadRequestError(
         data.categoryId,
       );
 
@@ -72,16 +75,9 @@ export class ArticleService {
       data.status &&
       !ArticleWorkflow.canTransition(article.status, data.status)
     )
-      throw new ConflictException({
-        statusCode: StatusCodes.CONFLICT,
-        error: getReasonPhrase(StatusCodes.CONFLICT),
-        message: [
-          {
-            field: 'status',
-            errors: [
-              `Cannot transition from '${article.status}' to '${data.status}'`,
-            ],
-          },
+      throw new ConflictError(ArticleService.name, {
+        status: [
+          `Cannot transition from '${article.status}' to '${data.status}'`,
         ],
       });
 
@@ -100,22 +96,15 @@ export class ArticleService {
     return !!user;
   }
 
-  async validateArticleExistWithException(
+  async validateArticleExistWithUnprocessableEntityError(
     id: string,
     fieldName: string = 'articleId',
   ) {
     const exist = await this.validateArticleExist(id);
 
     if (!exist)
-      throw new UnprocessableEntityException({
-        statusCode: StatusCodes.UNPROCESSABLE_ENTITY,
-        error: getReasonPhrase(StatusCodes.UNPROCESSABLE_ENTITY),
-        message: [
-          {
-            field: fieldName,
-            errors: [`${fieldName} does not exist`],
-          },
-        ],
+      throw new UnprocessableEntityError(ArticleService.name, {
+        [fieldName]: [`${fieldName} does not exist`],
       });
   }
 }

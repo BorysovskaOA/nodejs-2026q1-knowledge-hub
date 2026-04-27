@@ -2,7 +2,7 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import {
@@ -12,9 +12,12 @@ import {
   AuthzOption,
 } from '../decorators/authorize.decorator';
 import { AuthenticatedRequest } from '../interfaces/authenticated-request.interface';
+import { ForbiddenError } from '../exceptions/app-errors';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
+  private readonly logger = new Logger('AUTHZ');
+
   constructor(
     private reflector: Reflector,
     private moduleRef: ModuleRef,
@@ -35,8 +38,17 @@ export class AuthzGuard implements CanActivate {
       authzOptions.map((o) => this.isAllowedByAuthOption(o, request)),
     );
 
-    if (!validationResults.includes(true)) throw new ForbiddenException();
+    if (!validationResults.includes(true))
+      throw new ForbiddenError(
+        {
+          service: AuthzGuard.name,
+          authzOptions,
+          user: request.user,
+        },
+        'Access denied',
+      );
 
+    this.logger.verbose({ authzOptions, user: request.user }, 'Access alloed:');
     return true;
   }
 
@@ -55,18 +67,26 @@ export class AuthzGuard implements CanActivate {
 
     if (ownerParam.paramName) {
       const resourceId = request.params[ownerParam.paramName];
+
       if (!resourceId) return false;
 
       const service = this.moduleRef.get(ownerParam.service, {
         strict: false,
       });
 
-      const resource = await service.getOne({ id: resourceId });
-      const isOwner = !!(
-        resource?.[ownerParam.propertyName] === request.user.id
-      );
+      try {
+        const resource = await service.getOne({ id: resourceId });
 
-      if (!isOwner) return false;
+        const isOwner = !!(
+          resource?.[ownerParam.propertyName] === request.user.id
+        );
+
+        if (!isOwner) {
+          return false;
+        }
+      } catch (err) {
+        return false;
+      }
     }
 
     if (ownerBody.bodyPropertyName) {
@@ -74,7 +94,9 @@ export class AuthzGuard implements CanActivate {
         request.body[ownerBody.bodyPropertyName] === request.user.id
       );
 
-      if (!isOwner) return false;
+      if (!isOwner) {
+        return false;
+      }
     }
 
     return true;

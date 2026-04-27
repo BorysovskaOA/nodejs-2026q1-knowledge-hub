@@ -1,9 +1,9 @@
 import {
   Injectable,
   ValidationPipe,
-  BadRequestException,
   ValidationPipeOptions,
 } from '@nestjs/common';
+import { BadRequestError } from '../exceptions/app-errors';
 
 @Injectable()
 export class GlobalValidationPipe extends ValidationPipe {
@@ -13,11 +13,13 @@ export class GlobalValidationPipe extends ValidationPipe {
       forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (errors) => {
-        const formattedErrors = errors.map((err) => ({
-          field: err.property,
-          errors: Object.values(err.constraints || {}),
-        }));
-        return new BadRequestException(formattedErrors);
+        const formattedErrors = errors.reduce((acc, err) => {
+          return {
+            ...acc,
+            [err.property]: Object.values(err.constraints || {}),
+          };
+        }, {});
+        return new BadRequestError(GlobalValidationPipe.name, formattedErrors);
       },
       ...overrides,
     });
