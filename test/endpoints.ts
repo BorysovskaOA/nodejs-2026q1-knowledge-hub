@@ -1,5 +1,6 @@
 export const usersRoutes = {
   getAll: '/user',
+  getAllPaginated: '/user/paginated',
   getById: (userId) => `/user/${userId}`,
   create: '/user',
   update: (userId) => `/user/${userId}`,
@@ -16,6 +17,7 @@ export const categoriesRoutes = {
 
 export const articlesRoutes = {
   getAll: '/article',
+  getAllPaginated: '/article/paginated',
   getById: (articleId) => `/article/${articleId}`,
   create: '/article',
   update: (articleId) => `/article/${articleId}`,
@@ -24,6 +26,8 @@ export const articlesRoutes = {
 
 export const commentsRoutes = {
   getByArticle: (articleId) => `/comment?articleId=${articleId}`,
+  getAllPaginatedByArticle: (articleId) =>
+    `/comment/paginated?articleId=${articleId}`,
   getById: (commentId) => `/comment/${commentId}`,
   create: '/comment',
   delete: (commentId) => `/comment/${commentId}`,
