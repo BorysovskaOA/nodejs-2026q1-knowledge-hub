@@ -1,4 +1,4 @@
-import { ApiSchema } from '@nestjs/swagger';
+import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import { Comment as PrismaComment } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
@@ -9,6 +9,7 @@ export class CommentEntity implements PrismaComment {
   articleId: string;
   authorId: string | null;
 
+  @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())
   createdAt: Date;
 

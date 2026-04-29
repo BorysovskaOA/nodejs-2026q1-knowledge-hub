@@ -1,13 +1,13 @@
 import { ApiSchema } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 
-@ApiSchema({ name: 'CreateCategoryBody' })
-export class CreateCategoryDto {
+@ApiSchema({ name: 'SignupBody' })
+export class SignupDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  login: string;
 
   @IsString()
   @IsNotEmpty()
-  description: string;
+  password: string;
 }
