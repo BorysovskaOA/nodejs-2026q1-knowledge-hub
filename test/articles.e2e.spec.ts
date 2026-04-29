@@ -498,6 +498,12 @@ describe('Article (e2e)', () => {
         });
 
       expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+
+      const cleanupResponse = await unauthorizedRequest
+        .delete(articlesRoutes.delete(createdId))
+        .set(commonHeaders);
+
+      expect(cleanupResponse.status).toBe(StatusCodes.NO_CONTENT);
     });
 
     it("should respond with NOT_FOUND status code in case if article doesn't exist", async () => {

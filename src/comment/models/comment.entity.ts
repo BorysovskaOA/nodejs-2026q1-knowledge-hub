@@ -1,20 +1,18 @@
 import { ApiSchema } from '@nestjs/swagger';
-import { BaseEntity } from 'src/core/base.entity';
+import { Comment as PrismaComment } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 @ApiSchema({ name: 'Comment' })
-export class CommentEntity extends BaseEntity<CommentEntity> {
+export class CommentEntity implements PrismaComment {
   id: string;
   content: string;
   articleId: string;
   authorId: string | null;
-  createdAt: number;
 
-  constructor(commentData: Omit<CommentEntity, 'id' | 'createdAt'>) {
-    const createdAt = Date.now();
+  @Transform(({ value }) => value.getTime())
+  createdAt: Date;
 
-    super({
-      ...commentData,
-      createdAt,
-    });
+  constructor(partial: Partial<CommentEntity>) {
+    Object.assign(this, partial);
   }
 }

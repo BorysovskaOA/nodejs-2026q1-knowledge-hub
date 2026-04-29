@@ -7,7 +7,7 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
-import { ArticleStatus } from './article.constants';
+import { ArticleStatus } from '@prisma/client';
 import { ApiSchema } from '@nestjs/swagger';
 
 @ApiSchema({ name: 'CreateArticleBody' })
@@ -22,7 +22,7 @@ export class CreateArticleDto {
 
   @IsOptional()
   @IsEnum(ArticleStatus)
-  status: ArticleStatus = ArticleStatus.DRAFT;
+  status: ArticleStatus = ArticleStatus.draft;
 
   @IsOptional()
   @ValidateIf((_, value) => value !== null)

@@ -1,13 +1,13 @@
 import { ApiSchema } from '@nestjs/swagger';
-import { BaseEntity } from 'src/core/base.entity';
+import { Category as PrismaCategory } from '@prisma/client';
 
 @ApiSchema({ name: 'Category' })
-export class CategoryEntity extends BaseEntity<CategoryEntity> {
+export class CategoryEntity implements PrismaCategory {
   id: string;
   name: string;
   description: string;
 
-  constructor(categoryData: Omit<CategoryEntity, 'id'>) {
-    super(categoryData);
+  constructor(partial: Partial<CategoryEntity>) {
+    Object.assign(this, partial);
   }
 }

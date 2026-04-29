@@ -27,34 +27,36 @@ export class CategoryController {
 
   @Get()
   @ApiOkResponse({ type: [CategoryEntity] })
-  getAll(): CategoryEntity[] {
+  async getAll(): Promise<CategoryEntity[]> {
     return this.categoryService.getAll();
   }
 
   @Post()
   @ApiCreatedResponse({ type: CategoryEntity })
-  create(@Body() createCategoryDto: CreateCategoryDto): CategoryEntity {
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+  ): Promise<CategoryEntity> {
     return this.categoryService.create(createCategoryDto);
   }
 
   @Get(':id')
   @ApiOkResponse({ type: CategoryEntity })
-  getById(@Param() { id }: IdParamDto): CategoryEntity {
+  async getById(@Param() { id }: IdParamDto): Promise<CategoryEntity> {
     return this.categoryService.getById(id);
   }
 
   @Put(':id')
   @ApiOkResponse({ type: CategoryEntity })
-  update(
+  async update(
     @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: CreateCategoryDto,
-  ): CategoryEntity {
+  ): Promise<CategoryEntity> {
     return this.categoryService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param() { id }: IdParamDto) {
-    this.categoryService.delete(id);
+  async delete(@Param() { id }: IdParamDto) {
+    await this.categoryService.delete(id);
   }
 }

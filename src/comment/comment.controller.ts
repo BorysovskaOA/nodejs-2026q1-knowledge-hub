@@ -37,43 +37,47 @@ export class CommentController {
 
   @Get()
   @ApiOkResponse({ type: [CommentEntity] })
-  getAll(@Query() filter: CommentListFiltersDto): CommentEntity[] {
+  async getAll(
+    @Query() filter: CommentListFiltersDto,
+  ): Promise<CommentEntity[]> {
     return this.commentService.getAll(filter);
   }
 
   @Get('paginated')
   @ApiPaginatedResponse(CommentEntity)
-  getAllPaginated(
+  async getAllPaginated(
     @Query() filter: CommentListFiltersPaginatedDto,
-  ): PaginatedResponseDto<CommentEntity> {
+  ): Promise<PaginatedResponseDto<CommentEntity>> {
     return this.commentService.getAllPaginated(filter);
   }
 
   @Post()
   @ApiCreatedResponse({ type: CommentEntity })
   @ApiUnprocessableEntityResponse({ type: UnprocessableEntityResponseDto })
-  create(@Body() createCommentDto: CreateCommentDto): CommentEntity {
+  async create(
+    @Body() createCommentDto: CreateCommentDto,
+  ): Promise<CommentEntity> {
     return this.commentService.create(createCommentDto);
   }
 
   @Get(':id')
   @ApiOkResponse({ type: CommentEntity })
-  getById(@Param() { id }: IdParamDto): CommentEntity {
+  async getById(@Param() { id }: IdParamDto): Promise<CommentEntity> {
     return this.commentService.getById(id);
   }
 
   @Put(':id')
   @ApiOkResponse({ type: CommentEntity })
-  update(
+  async update(
     @Param() { id }: IdParamDto,
     @Body() updateCommentDto: UpdateCommentDto,
-  ): CommentEntity {
+  ): Promise<CommentEntity> {
     return this.commentService.update(id, updateCommentDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param() { id }: IdParamDto) {
-    this.commentService.delete(id);
+  async delete(@Param() { id }: IdParamDto) {
+    await this.commentService.delete(id);
   }
 }
