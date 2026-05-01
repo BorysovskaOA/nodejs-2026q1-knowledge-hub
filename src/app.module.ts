@@ -15,6 +15,8 @@ import { AuthzGuard } from './core/guards/authz.guard';
 import { pinoConfig } from './core/configs/logger.config';
 import { throttlerConfig } from './core/configs/throttler.config';
 import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter';
+import { AiModule } from './ai/ai.module';
+import { GeminiModule } from './gemini/gemini.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter
     CommentModule,
     UserModule,
     AuthModule,
+    GeminiModule,
+    AiModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: CustomExceptionFilter },

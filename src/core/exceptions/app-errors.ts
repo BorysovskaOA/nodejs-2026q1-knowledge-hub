@@ -78,3 +78,12 @@ export class TooManyRequestsError extends AppError {
     super(logContext, StatusCodes.TOO_MANY_REQUESTS, description);
   }
 }
+
+export class InternalServerError extends AppError {
+  constructor(
+    public readonly logContext: any,
+    public readonly description?: any,
+  ) {
+    super(logContext, StatusCodes.INTERNAL_SERVER_ERROR, description);
+  }
+}
