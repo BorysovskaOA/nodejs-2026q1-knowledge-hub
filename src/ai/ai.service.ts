@@ -10,7 +10,14 @@ import { GenerateEntity } from './models/generate.entity';
 import { SummarizeArticleEntity } from './models/summarize-article.entity';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { generateSummarizeArticlePrompt } from './prompts/summarize-article.prompt';
-import { generateTranslatePrompt } from './prompts/translate-article.promt';
+import {
+  generateTranslateArticlePrompt,
+  getTranslateArticleResponseSchema,
+} from './prompts/translate-article.promt';
+import {
+  generateAnalizeArticlePrompt,
+  getAnalyzeArticleResponseSchema,
+} from './prompts/analyze-article.prompt';
 
 @Injectable()
 export class AiService {
@@ -41,26 +48,13 @@ export class AiService {
     const article = await this.articleService.getById(articleId);
 
     const response = await this.geminiService.ask(
-      generateTranslatePrompt({
+      generateTranslateArticlePrompt({
         ...data,
         content: article.content,
       }),
       {
         responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'object',
-          properties: {
-            detectedLanguage: {
-              type: 'string',
-              description: 'Detected language name in Title Case',
-            },
-            translatedText: {
-              type: 'string',
-              description: `Tranlsated content in  ${data.targetLanguage}`,
-            },
-          },
-          required: ['detectedLanguage', 'translatedText'],
-        },
+        responseSchema: getTranslateArticleResponseSchema(data.targetLanguage),
       },
     );
 
@@ -73,8 +67,20 @@ export class AiService {
   async analyzeArticle(articleId: string, data: AnalyzeArticleDto) {
     const article = await this.articleService.getById(articleId);
 
+    const response = await this.geminiService.ask(
+      generateAnalizeArticlePrompt({
+        ...data,
+        content: article.content,
+      }),
+      {
+        responseMimeType: 'application/json',
+        responseSchema: getAnalyzeArticleResponseSchema(),
+      },
+    );
+
     return new AnalyzeArticleEntity({
       articleId: article.id,
+      ...response,
     });
   }
 

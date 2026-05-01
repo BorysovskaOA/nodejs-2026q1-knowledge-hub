@@ -1,4 +1,4 @@
-export const generateTranslatePrompt = ({
+export const generateTranslateArticlePrompt = ({
   content,
   targetLanguage,
   sourceLanguage,
@@ -16,7 +16,7 @@ export const generateTranslatePrompt = ({
 ${content}`;
 };
 
-export const getTranslateResponseSchema = (targetLanguage: string) => {
+export const getTranslateArticleResponseSchema = (targetLanguage: string) => {
   return {
     type: 'object',
     properties: {
