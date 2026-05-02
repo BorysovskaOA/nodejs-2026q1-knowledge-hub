@@ -36,8 +36,8 @@ export class UserService {
     } catch (err) {
       if (isUniqueConstraint(err))
         throw new ConflictError(
-          UserService.name,
           formatUniqueConstraintError(err),
+          UserService.name,
         );
 
       throw err;
@@ -59,7 +59,7 @@ export class UserService {
     const user = await this.userRepository.findById(id, tx);
 
     if (!user)
-      throw new NotFoundError(CommentService.name, `User ${id} is not found`);
+      throw new NotFoundError(`User ${id} is not found`, CommentService.name);
 
     return user;
   }
@@ -82,8 +82,8 @@ export class UserService {
 
     if (!oldPasswordValid)
       throw new ForbiddenError(
-        CommentService.name,
         'Credentials are not valid',
+        CommentService.name,
       );
 
     const newHashedPassword = await hash(data.newPassword);
@@ -125,9 +125,10 @@ export class UserService {
     const exist = await this.validateUserExist(id, tx);
 
     if (!exist) {
-      throw new BadRequestError(UserService.name, {
-        [fieldName]: [`${fieldName} is already taken`],
-      });
+      throw new BadRequestError(
+        { [fieldName]: [`${fieldName} is already taken`] },
+        UserService.name,
+      );
     }
   }
 }

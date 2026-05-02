@@ -3,11 +3,20 @@ import { GeminiModule } from './../gemini/gemini.module';
 import { ArticleModule } from 'src/article/article.module';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
+import { CacheModule } from '@nestjs/cache-manager';
+import 'dotenv/config';
+import { AiMonitorService } from './ai.monitoring.service';
 
 @Module({
-  imports: [GeminiModule, ArticleModule],
+  imports: [
+    CacheModule.register({
+      ttl: Number(process.env.AI_CACHE_TTL_SEC),
+    }),
+    GeminiModule,
+    ArticleModule,
+  ],
   controllers: [AiController],
-  providers: [AiService],
+  providers: [AiService, AiMonitorService],
   exports: [AiService],
 })
 export class AiModule {}

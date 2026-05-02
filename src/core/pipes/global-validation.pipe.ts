@@ -19,7 +19,7 @@ export class GlobalValidationPipe extends ValidationPipe {
             [err.property]: Object.values(err.constraints || {}),
           };
         }, {});
-        return new BadRequestError(GlobalValidationPipe.name, formattedErrors);
+        return new BadRequestError(formattedErrors, GlobalValidationPipe.name);
       },
       ...overrides,
     });

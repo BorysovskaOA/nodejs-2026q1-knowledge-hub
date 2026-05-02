@@ -36,10 +36,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedError(
-        { service: AuthGuard.name },
-        'Credentials are invalid',
-      );
+      throw new UnauthorizedError('Credentials are invalid', AuthGuard.name);
     }
 
     let payload: AuthPayloadUser;
@@ -48,27 +45,30 @@ export class AuthGuard implements CanActivate {
         secret: process.env.JWT_SECRET_KEY,
       });
     } catch (err) {
-      throw new UnauthorizedError(
-        { service: AuthGuard.name, accessToken: token, error: err.message },
-        'Credentials are invalid',
-      );
+      throw new UnauthorizedError('Credentials are invalid', {
+        service: AuthGuard.name,
+        accessToken: token,
+        error: err.message,
+      });
     }
 
     let user: UserEntity | null;
     try {
       user = await this.userService.getOne({ id: payload.userId });
     } catch (err) {
-      throw new UnauthorizedError(
-        { service: AuthGuard.name, payload, error: err.message },
-        'Credentials are invalid',
-      );
+      throw new UnauthorizedError('Credentials are invalid', {
+        service: AuthGuard.name,
+        payload,
+        error: err.message,
+      });
     }
 
     if (!user || payload.version !== user?.tokenVersion) {
-      throw new ForbiddenError(
-        { service: AuthGuard.name, user, payload },
-        'Access denied',
-      );
+      throw new ForbiddenError('Access denied', {
+        service: AuthGuard.name,
+        user,
+        payload,
+      });
     }
 
     request.user = user;

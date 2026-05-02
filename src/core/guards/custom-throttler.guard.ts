@@ -6,15 +6,23 @@ import { TooManyRequestsError } from '../exceptions/app-errors';
 export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async throwThrottlingException(
     context: ExecutionContext,
+    throttlerLimitDetail: any,
   ): Promise<void> {
     const request = context.switchToHttp().getRequest();
 
     throw new TooManyRequestsError(
+      `You have exceeded the allowed number of requests. Please retry ${throttlerLimitDetail.timeToExpire}s.`,
       {
         service: CustomThrottlerGuard.name,
         ip: request.ip,
+        throttlerLimitDetail,
       },
-      'You have exceeded the allowed number of requests. Please try again later.',
+      {
+        'Retry-After': throttlerLimitDetail.timeToExpire,
+        'X-RateLimit-Limit': throttlerLimitDetail.limit,
+        'X-RateLimit-Remaining': 0,
+        'X-RateLimit-Reset': throttlerLimitDetail.timeToBlockExpire,
+      },
     );
   }
 }

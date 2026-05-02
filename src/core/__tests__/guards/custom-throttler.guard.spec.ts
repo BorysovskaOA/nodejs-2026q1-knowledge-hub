@@ -45,6 +45,9 @@ describe('CustomThrottlerGuard', () => {
         service: 'CustomThrottlerGuard',
         ip: '127.0.0.1',
       });
+      expect(error.headers).toMatchObject({
+        'Retry-After': expect.any(Number),
+      });
     }
   });
 });

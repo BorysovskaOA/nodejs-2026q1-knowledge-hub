@@ -5,7 +5,6 @@ import {
   HttpStatus,
   Post,
   Request,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -32,7 +31,8 @@ import {
 } from 'src/core/utils/exception-responses.util';
 import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
 import { UnauthorizedError } from 'src/core/exceptions/app-errors';
-import { CustomThrottlerGuard } from 'src/core/guards/custom-throttler.guard';
+import { Throttle } from '@nestjs/throttler';
+import 'dotenv/config'; //TODO change that to intall ConfigModule
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
@@ -41,7 +41,12 @@ export class AuthController {
 
   @Post('signup')
   @PublicRote()
-  @UseGuards(CustomThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: Number(process.env.RATE_LIMIT_AUTH),
+      ttl: Number(process.env.RATE_LIMIT_TTL),
+    },
+  })
   @ApiCreatedResponse({ type: AuthUserEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiConflictResponse(ExtendedExceptionResponse(409))
@@ -53,7 +58,12 @@ export class AuthController {
   @Post('login')
   @PublicRote()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(CustomThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: Number(process.env.RATE_LIMIT_AUTH),
+      ttl: Number(process.env.RATE_LIMIT_TTL),
+    },
+  })
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
@@ -74,8 +84,8 @@ export class AuthController {
       new GlobalValidationPipe({
         exceptionFactory: () =>
           new UnauthorizedError(
-            AuthController.name,
             'Credentials are not valid',
+            AuthController.name,
           ),
         expectedType: RefreshDto,
       }),

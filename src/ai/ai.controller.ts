@@ -1,17 +1,20 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
-  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiServiceUnavailableResponse,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
@@ -28,16 +31,19 @@ import { AnalyzeArticleDto } from './models/analyze-article.dto';
 import { AnalyzeArticleEntity } from './models/analyze-article.entity';
 import { GenerateDto } from './models/generate.dto';
 import { GenerateEntity } from './models/generate.entity';
-import { CustomThrottlerGuard } from 'src/core/guards/custom-throttler.guard';
 import { Throttle } from '@nestjs/throttler';
+import 'dotenv/config';
+import { AiArticleCacheInterceptor } from './ai-article-cache.interceptor';
+import { AiMonitoringEntity } from './models/ai-monitoring.entity';
+import { Authorize } from 'src/core/decorators/authorize.decorator';
+import { UserRole } from '@prisma/client';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
-@UseGuards(CustomThrottlerGuard)
 @Throttle({
   default: {
-    limit: Number(process.env.AI_RATE_LIMIT_RPM),
-    ttl: Number(process.env.AI_CACHE_TTL_SEC),
+    limit: Number(process.env.RATE_LIMIT_AI),
+    ttl: Number(process.env.RATE_LIMIT_TTL),
   },
 })
 @ApiBadRequestResponse(ExtendedExceptionResponse(400))
@@ -48,7 +54,10 @@ export class AiController {
 
   @Post('articles/:articleId/summarize')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: SummarizeArticleEntity })
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
+  @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
   async summarizeArticle(
     @Param() { articleId }: ArticleIdParamDto,
     @Body() summarizeArticleDto: SummarizeArticleDto,
@@ -58,7 +67,10 @@ export class AiController {
 
   @Post('articles/:articleId/translate')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: TranslateArticleEntity })
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
+  @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
   async translateArticle(
     @Param() { articleId }: ArticleIdParamDto,
     @Body() translateArticleDto: TranslateArticleDto,
@@ -68,7 +80,10 @@ export class AiController {
 
   @Post('articles/:articleId/analyze')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: AnalyzeArticleEntity })
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
+  @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
   async analyzeArticle(
     @Param() { articleId }: ArticleIdParamDto,
     @Body() analyzeArticleDto: AnalyzeArticleDto,
@@ -79,7 +94,17 @@ export class AiController {
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: GenerateEntity })
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
+  @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
   async generate(@Body() generateDto: GenerateDto): Promise<GenerateEntity> {
     return this.aiService.generate(generateDto);
+  }
+
+  @Get('stats')
+  @Authorize([{ roles: [UserRole.admin] }])
+  @ApiOkResponse({ type: AiMonitoringEntity })
+  @ApiUnauthorizedResponse(GeneralExceptionResponse(403))
+  getStats(): AiMonitoringEntity {
+    return this.aiService.getStats();
   }
 }

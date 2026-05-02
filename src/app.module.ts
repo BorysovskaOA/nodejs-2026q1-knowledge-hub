@@ -17,6 +17,7 @@ import { throttlerConfig } from './core/configs/throttler.config';
 import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter';
 import { AiModule } from './ai/ai.module';
 import { GeminiModule } from './gemini/gemini.module';
+import { CustomThrottlerGuard } from './core/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { GeminiModule } from './gemini/gemini.module';
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_PIPE, useClass: GlobalValidationPipe },
     { provide: APP_GUARD, useClass: AuthzGuard },
+    { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
 export class AppModule {}

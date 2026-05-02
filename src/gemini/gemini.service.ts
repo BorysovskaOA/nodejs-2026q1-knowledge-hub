@@ -4,40 +4,41 @@ import {
   GoogleGenAI,
 } from '@google/genai';
 import { Injectable, Logger } from '@nestjs/common';
-import { InternalServerError } from 'src/core/exceptions/app-errors';
+import {
+  InternalServerError,
+  ServiceUnavailableError,
+} from 'src/core/exceptions/app-errors';
 import {
   getJsonBySchemaFromOutput,
   getOutputFormatFromJsonSchema,
 } from './utils/non-supported-json-formatting.util';
-import { isUnsupportedJsonFormat } from './utils/gemini-errors.uril';
-
-const MAX_RETRIES = 2;
+import {
+  isApiKeyPermissionDenied,
+  isInvalidApiKey,
+  isTimeoutExceed,
+  isTooManyRequestsToGemini,
+  isUnavailable,
+  isUnsupportedJsonFormat,
+} from './utils/gemini-errors.uril';
 
 @Injectable()
 export class GeminiService {
-  private readonly logger = new Logger('GEMINI');
   private genAi = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY as string,
   });
+  private readonly logger = new Logger('GEMINI');
   constructor() {}
 
-  async ask(question: string, config?: GenerateContentConfig) {
-    try {
-      return await this.askGemini(MAX_RETRIES, question, config);
-    } catch (err) {
-      throw new InternalServerError(
-        { service: GeminiService.name, error: err },
-        'Error while generating with AI',
-      );
-    }
+  async ask(question: string, config: GenerateContentConfig = {}) {
+    this.logger.debug({ question, config }, 'Question');
+
+    return this.askGemini(question, config);
   }
 
   private async askGemini(
-    retrieAllowed: number,
     question: string,
     config: GenerateContentConfig = {},
   ) {
-    console.log(question);
     let response: GenerateContentResponse;
     try {
       response = await this.genAi.models.generateContent({
@@ -48,27 +49,53 @@ export class GeminiService {
 
       return this.getFormattedResponse(response, config);
     } catch (err: any) {
-      const { error: parsedError } = JSON.parse(err.message);
-
-      if (retrieAllowed <= 1) {
-        throw err;
-      }
-      if (isUnsupportedJsonFormat(parsedError)) {
-        return await this.retryWithOutputFormat(
-          retrieAllowed - 1,
-          question,
-          config,
+      let parsedError: Record<string, any>;
+      try {
+        parsedError = JSON.parse(err.message).error;
+      } catch (error) {
+        throw new ServiceUnavailableError(
+          'Network error while generating content',
+          {
+            service: GeminiService.name,
+            error: error,
+          },
         );
       }
 
-      console.log(err);
-      this.logger.error({ error: err }, 'Unexpected error from Gemini');
-      throw err;
+      if (isUnsupportedJsonFormat(parsedError)) {
+        return await this.retryWithOutputFormat(question, config);
+      }
+
+      if (isInvalidApiKey(parsedError) || isApiKeyPermissionDenied(parsedError))
+        throw new InternalServerError(
+          'Failed to generate content, authentication errors',
+          {
+            service: GeminiService.name,
+            geminiError: parsedError,
+          },
+        );
+
+      if (
+        isTooManyRequestsToGemini(parsedError) ||
+        isTimeoutExceed(parsedError) ||
+        isUnavailable(parsedError)
+      )
+        throw new ServiceUnavailableError(
+          'Content generation service is unavailable at the moment',
+          {
+            service: GeminiService.name,
+            geminiError: parsedError,
+          },
+        );
+
+      throw new InternalServerError('Failed to generate content', {
+        service: GeminiService.name,
+        geminiError: parsedError,
+      });
     }
   }
 
   private async retryWithOutputFormat(
-    retriesAllowed: number,
     question: string,
     config: GenerateContentConfig = {},
   ) {
@@ -80,42 +107,45 @@ export class GeminiService {
     const newConfig =
       Object.keys(restConfig).length === 0 ? undefined : restConfig;
 
-    const response = await this.askGemini(
-      retriesAllowed,
+    this.logger.debug({ question, config }, 'Question reformated');
+    const { response, tokensUsed } = await this.askGemini(
       `${question}\n${getOutputFormatFromJsonSchema(config?.responseSchema)}`,
       newConfig,
     );
 
-    return getJsonBySchemaFromOutput(response, config.responseSchema);
+    const formattedResponse = getJsonBySchemaFromOutput(
+      response,
+      config.responseSchema,
+    );
+    return { response: formattedResponse, tokensUsed };
   }
 
   private getFormattedResponse = (
     response: GenerateContentResponse,
     config: GenerateContentConfig,
   ) => {
+    this.logger.debug({ response: response.text }, 'Question response');
+    const tokensUsed = response.usageMetadata?.totalTokenCount;
+
     if (!response.text)
-      throw new InternalServerError(
-        {
-          service: GeminiService.name,
-          error: 'Empty response text',
-          response,
-        },
-        'Error while generating with AI',
-      );
-    console.log(response);
-    console.log(response.text);
+      throw new InternalServerError('Error while generating with AI', {
+        service: GeminiService.name,
+        error: 'Empty response text',
+        response,
+      });
 
     if (config.responseSchema) {
       try {
-        return JSON.parse(response.text);
+        const parsedText = JSON.parse(response.text);
+        return { response: parsedText, tokensUsed };
       } catch {
-        throw new InternalServerError(
-          { service: GeminiService.name, text: response.text },
-          "Couldn't parse response from AI",
-        );
+        throw new InternalServerError("Couldn't parse response from AI", {
+          service: GeminiService.name,
+          text: response.text,
+        });
       }
     }
 
-    return response.text;
+    return { response: response.text, tokensUsed };
   };
 }

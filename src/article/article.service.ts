@@ -52,8 +52,8 @@ export class ArticleService {
 
     if (!article)
       throw new NotFoundError(
-        ArticleService.name,
         `Article ${id} is not found`,
+        ArticleService.name,
       );
 
     return article;
@@ -75,11 +75,14 @@ export class ArticleService {
       data.status &&
       !ArticleWorkflow.canTransition(article.status, data.status)
     )
-      throw new ConflictError(ArticleService.name, {
-        status: [
-          `Cannot transition from '${article.status}' to '${data.status}'`,
-        ],
-      });
+      throw new ConflictError(
+        {
+          status: [
+            `Cannot transition from '${article.status}' to '${data.status}'`,
+          ],
+        },
+        ArticleService.name,
+      );
 
     return this.articleRepository.update(article.id, data);
   }
@@ -103,8 +106,9 @@ export class ArticleService {
     const exist = await this.validateArticleExist(id);
 
     if (!exist)
-      throw new UnprocessableEntityError(ArticleService.name, {
-        [fieldName]: [`${fieldName} does not exist`],
-      });
+      throw new UnprocessableEntityError(
+        { [fieldName]: [`${fieldName} does not exist`] },
+        ArticleService.name,
+      );
   }
 }

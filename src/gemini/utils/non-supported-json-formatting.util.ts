@@ -36,12 +36,9 @@ export const getJsonBySchemaFromOutput = (
     const formattedField = field.trim();
     if (!formattedField) return;
 
-    console.log(formattedField);
     const parts = formattedField.split(':');
     const propertyName = parts[0];
     const propertyValue = parts.slice(1).join(':');
-    console.log(propertyName);
-    console.log(propertyValue);
 
     const formattingProperty = properties.find((p) => propertyName === p);
 

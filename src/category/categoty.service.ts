@@ -20,8 +20,8 @@ export class CategoryService {
     } catch (err) {
       if (isUniqueConstraint(err))
         throw new ConflictError(
-          CategoryService.name,
           formatUniqueConstraintError(err),
+          CategoryService.name,
         );
 
       throw err;
@@ -37,8 +37,8 @@ export class CategoryService {
 
     if (!category)
       throw new NotFoundError(
-        CategoryService.name,
         `Category ${id} is not found`,
+        CategoryService.name,
       );
 
     return category;
@@ -56,8 +56,8 @@ export class CategoryService {
     } catch (err) {
       if (isUniqueConstraint(err))
         throw new ConflictError(
-          CategoryService.name,
           formatUniqueConstraintError(err),
+          CategoryService.name,
         );
 
       throw err;
@@ -83,8 +83,9 @@ export class CategoryService {
     const exist = await this.validateCategoryExist(id);
 
     if (!exist)
-      throw new BadRequestError(CategoryService.name, {
-        [fieldName]: [`${fieldName} does not exist`],
-      });
+      throw new BadRequestError(
+        { [fieldName]: [`${fieldName} does not exist`] },
+        CategoryService.name,
+      );
   }
 }

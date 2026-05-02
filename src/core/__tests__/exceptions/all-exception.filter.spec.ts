@@ -54,7 +54,7 @@ describe('Exception Filter', () => {
   it('should log AppError as "warn" and use custom description and context', () => {
     const spy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
 
-    const appError = new NotFoundError('Service', 'Not found');
+    const appError = new NotFoundError('Not found', 'Service');
 
     filter.catch(appError, mockArgumentsHost);
 

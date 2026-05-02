@@ -18,23 +18,27 @@ import {
   generateAnalizeArticlePrompt,
   getAnalyzeArticleResponseSchema,
 } from './prompts/analyze-article.prompt';
+import { AiMonitorService } from './ai.monitoring.service';
 
 @Injectable()
 export class AiService {
   constructor(
     private geminiService: GeminiService,
     private articleService: ArticleService,
+    private aiMonitorService: AiMonitorService,
   ) {}
 
   async summarizeArticle(articleId: string, data: SummarizeArticleDto) {
     const article = await this.articleService.getById(articleId);
 
-    const response = await this.geminiService.ask(
+    const { response, tokensUsed } = await this.geminiService.ask(
       generateSummarizeArticlePrompt({
         content: article.content,
         summaryLength: data.maxLength,
       }),
     );
+
+    this.aiMonitorService.track('summarize', tokensUsed);
 
     return new SummarizeArticleEntity({
       articleId: article.id,
@@ -47,7 +51,7 @@ export class AiService {
   async translateArticle(articleId: string, data: TranslateArticleDto) {
     const article = await this.articleService.getById(articleId);
 
-    const response = await this.geminiService.ask(
+    const { response, tokensUsed } = await this.geminiService.ask(
       generateTranslateArticlePrompt({
         ...data,
         content: article.content,
@@ -58,6 +62,8 @@ export class AiService {
       },
     );
 
+    this.aiMonitorService.track('translate', tokensUsed);
+
     return new TranslateArticleEntity({
       articleId: article.id,
       ...response,
@@ -67,7 +73,7 @@ export class AiService {
   async analyzeArticle(articleId: string, data: AnalyzeArticleDto) {
     const article = await this.articleService.getById(articleId);
 
-    const response = await this.geminiService.ask(
+    const { response, tokensUsed } = await this.geminiService.ask(
       generateAnalizeArticlePrompt({
         ...data,
         content: article.content,
@@ -78,6 +84,8 @@ export class AiService {
       },
     );
 
+    this.aiMonitorService.track('analyze', tokensUsed);
+
     return new AnalyzeArticleEntity({
       articleId: article.id,
       ...response,
@@ -85,8 +93,14 @@ export class AiService {
   }
 
   async generate(data: GenerateDto) {
-    const response = await this.geminiService.ask(data.prompt);
+    const { response, tokensUsed } = await this.geminiService.ask(data.prompt);
+
+    this.aiMonitorService.track('generate', tokensUsed);
 
     return new GenerateEntity({ content: response });
+  }
+
+  getStats() {
+    return this.aiMonitorService.getStats();
   }
 }
