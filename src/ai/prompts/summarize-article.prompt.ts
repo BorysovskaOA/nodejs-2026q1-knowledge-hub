@@ -36,6 +36,7 @@ export const generateSummarizeArticlePrompt = ({
 - Write summary for INPUT_TEXT.
 - ${getLengthInstructions(summaryLength).join('\n- ')}
 [CONSTRAINTS]
+- Use raw UTF-8 text.
 - Do not copy sentences directly from the text. 
 - Do not include conversational text.
 - Do not include any summary description, pre or post text.

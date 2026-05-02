@@ -7,7 +7,7 @@ export enum SummarizeLength {
 export enum AnalyzeTask {
   review = 'review',
   bugs = 'bugs',
-  optimaze = 'optimaze',
+  optimaze = 'optimize',
   explain = 'explain',
 }
 

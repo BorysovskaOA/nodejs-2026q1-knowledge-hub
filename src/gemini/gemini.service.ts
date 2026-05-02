@@ -3,7 +3,7 @@ import {
   GenerateContentResponse,
   GoogleGenAI,
 } from '@google/genai';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InternalServerError } from 'src/core/exceptions/app-errors';
 import {
   getJsonBySchemaFromOutput,
@@ -15,6 +15,7 @@ const MAX_RETRIES = 2;
 
 @Injectable()
 export class GeminiService {
+  private readonly logger = new Logger('GEMINI');
   private genAi = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY as string,
   });
@@ -36,6 +37,7 @@ export class GeminiService {
     question: string,
     config: GenerateContentConfig = {},
   ) {
+    console.log(question);
     let response: GenerateContentResponse;
     try {
       response = await this.genAi.models.generateContent({
@@ -59,6 +61,8 @@ export class GeminiService {
         );
       }
 
+      console.log(err);
+      this.logger.error({ error: err }, 'Unexpected error from Gemini');
       throw err;
     }
   }
@@ -98,6 +102,8 @@ export class GeminiService {
         },
         'Error while generating with AI',
       );
+    console.log(response);
+    console.log(response.text);
 
     if (config.responseSchema) {
       try {

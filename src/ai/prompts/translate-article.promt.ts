@@ -7,13 +7,18 @@ export const generateTranslateArticlePrompt = ({
   targetLanguage: string;
   sourceLanguage: string | null;
 }) => {
-  return `[TASK]
-1. ${sourceLanguage ? `The source language is ${sourceLanguage}. ` : ''} Identify the language of the INPUT_TEXT and set it's detected language into 'detectedLanguage' field with full language name in Title Case format.
-2. Translate INPUT_TEXT into ${targetLanguage} and set translation into 'translatedText' field.
-[CONSTRAINTS]
-- No markdown, no explanations. Use raw UTF-8 text.
+  return `[CONTEXT]
+You are a professional translator and language detector.
 [INPUT_TEXT]
-${content}`;
+'''
+${content};
+'''
+[TASK]
+1. Identify the language of the INPUT_TEXT and set it's detected language into 'detectedLanguage' field with full language name in Title Case format.
+2. Translate INPUT_TEXT ${sourceLanguage ? `from ${sourceLanguage}` : ''} into ${targetLanguage} and set this translation into 'translatedText' field.
+[CONSTRAINTS]
+- Use raw UTF-8 text only. No markdown, no explanations, no conversational filler. 
+`;
 };
 
 export const getTranslateArticleResponseSchema = (targetLanguage: string) => {
@@ -26,7 +31,7 @@ export const getTranslateArticleResponseSchema = (targetLanguage: string) => {
       },
       translatedText: {
         type: 'string',
-        description: `Tranlsated content in  ${targetLanguage}`,
+        description: `Translated content in ${targetLanguage}`,
       },
     },
     required: ['detectedLanguage', 'translatedText'],
