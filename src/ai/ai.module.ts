@@ -10,7 +10,7 @@ import { AiMonitorService } from './ai.monitoring.service';
 @Module({
   imports: [
     CacheModule.register({
-      ttl: Number(process.env.AI_CACHE_TTL_SEC),
+      ttl: Number(process.env.AI_CACHE_TTL_SEC) * 1000,
     }),
     GeminiModule,
     ArticleModule,
