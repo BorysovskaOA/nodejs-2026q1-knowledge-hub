@@ -1,9 +1,8 @@
+import 'dotenv/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
-
-import 'dotenv/config';
 import { generateSwaggerDocumentConfig } from './core/utils/generate-swagger-document-config.util';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { setupProcessErrorHandler } from './core/exceptions/process-error-handler';

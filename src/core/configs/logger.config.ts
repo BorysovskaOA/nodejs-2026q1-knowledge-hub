@@ -1,6 +1,5 @@
 import { Params } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
-import 'dotenv/config';
 
 const nestToPinoLevel = (level: string) => {
   const map = {

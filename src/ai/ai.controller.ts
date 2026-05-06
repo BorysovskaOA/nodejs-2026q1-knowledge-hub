@@ -32,7 +32,6 @@ import { AnalyzeArticleEntity } from './models/analyze-article.entity';
 import { GenerateDto } from './models/generate.dto';
 import { GenerateEntity } from './models/generate.entity';
 import { Throttle } from '@nestjs/throttler';
-import 'dotenv/config';
 import { AiArticleCacheInterceptor } from './ai-article-cache.interceptor';
 import { AiMonitoringEntity } from './models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';

@@ -32,7 +32,6 @@ import {
 import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
 import { UnauthorizedError } from 'src/core/exceptions/app-errors';
 import { Throttle } from '@nestjs/throttler';
-import 'dotenv/config'; //TODO change that to intall ConfigModule
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
