@@ -18,11 +18,16 @@ import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter
 import { AiModule } from './ai/ai.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { CustomThrottlerGuard } from './core/guards/custom-throttler.guard';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     LoggerModule.forRoot(pinoConfig),
     ThrottlerModule.forRoot(throttlerConfig),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: Number(process.env.CACHE_TTL),
+    }),
     HealthModule,
     ArticleModule,
     CategoryModule,

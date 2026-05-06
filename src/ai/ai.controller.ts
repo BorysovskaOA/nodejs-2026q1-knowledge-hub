@@ -36,6 +36,7 @@ import { AiArticleCacheInterceptor } from './ai-article-cache.interceptor';
 import { AiMonitoringEntity } from './models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
+import { CacheTTL } from '@nestjs/cache-manager';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
@@ -53,6 +54,7 @@ export class AiController {
 
   @Post('articles/:articleId/summarize')
   @HttpCode(HttpStatus.OK)
+  @CacheTTL(Number(process.env.AI_CACHE_TTL_SEC))
   @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: SummarizeArticleEntity })
   @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
@@ -66,6 +68,7 @@ export class AiController {
 
   @Post('articles/:articleId/translate')
   @HttpCode(HttpStatus.OK)
+  @CacheTTL(Number(process.env.AI_CACHE_TTL_SEC))
   @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: TranslateArticleEntity })
   @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
@@ -79,6 +82,7 @@ export class AiController {
 
   @Post('articles/:articleId/analyze')
   @HttpCode(HttpStatus.OK)
+  @CacheTTL(Number(process.env.AI_CACHE_TTL_SEC))
   @UseInterceptors(AiArticleCacheInterceptor)
   @ApiOkResponse({ type: AnalyzeArticleEntity })
   @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))

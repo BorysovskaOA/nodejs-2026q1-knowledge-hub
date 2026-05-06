@@ -15,6 +15,8 @@ import {
   NotFoundError,
   UnprocessableEntityError,
 } from 'src/core/exceptions/app-errors';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ArticleService {
@@ -24,6 +26,7 @@ export class ArticleService {
     private categoryService: CategoryService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(data: CreateArticleDto) {
@@ -84,7 +87,17 @@ export class ArticleService {
         ArticleService.name,
       );
 
-    return this.articleRepository.update(article.id, data);
+    const updatedArticle = await this.articleRepository.update(
+      article.id,
+      data,
+    );
+
+    this.cacheManager.set(
+      `article:${id}:lastUpdated`,
+      updatedArticle.updatedAt.toString(),
+      0,
+    );
+    return updatedArticle;
   }
 
   async delete(id: string) {

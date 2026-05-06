@@ -38,7 +38,7 @@ export class AiService {
       }),
     );
 
-    this.aiMonitorService.track('summarize', tokensUsed);
+    this.aiMonitorService.trackTokensUsed('summarize', tokensUsed);
 
     return new SummarizeArticleEntity({
       articleId: article.id,
@@ -62,7 +62,7 @@ export class AiService {
       },
     );
 
-    this.aiMonitorService.track('translate', tokensUsed);
+    this.aiMonitorService.trackTokensUsed('translate', tokensUsed);
 
     return new TranslateArticleEntity({
       articleId: article.id,
@@ -84,7 +84,7 @@ export class AiService {
       },
     );
 
-    this.aiMonitorService.track('analyze', tokensUsed);
+    this.aiMonitorService.trackTokensUsed('analyze', tokensUsed);
 
     return new AnalyzeArticleEntity({
       articleId: article.id,
@@ -93,9 +93,12 @@ export class AiService {
   }
 
   async generate(data: GenerateDto) {
+    const start = Date.now();
     const { response, tokensUsed } = await this.geminiService.ask(data.prompt);
 
-    this.aiMonitorService.track('generate', tokensUsed);
+    const latency = Date.now() - start;
+    this.aiMonitorService.track('generate', false, latency);
+    this.aiMonitorService.trackTokensUsed('generate', tokensUsed);
 
     return new GenerateEntity({ content: response });
   }
