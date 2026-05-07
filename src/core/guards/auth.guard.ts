@@ -15,13 +15,15 @@ import { ForbiddenError, UnauthorizedError } from '../exceptions/app-errors';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  private readonly logger = new Logger('AUTH');
+  private readonly logger: Logger;
 
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
     private userService: UserService,
-  ) {}
+  ) {
+    this.logger = new Logger('AUTH');
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [

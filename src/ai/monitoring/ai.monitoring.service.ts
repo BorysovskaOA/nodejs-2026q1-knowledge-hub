@@ -13,7 +13,7 @@ const initialEndPointStats: MonitoringStatsByEndpoint = {
 };
 
 @Injectable()
-export class AiMonitorService {
+export class AiMonitoringService {
   private totalRequests = 0;
   private totalTokens = 0;
   private breakdown: Record<string, MonitoringStatsByEndpoint> = {};

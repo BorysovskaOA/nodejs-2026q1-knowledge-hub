@@ -21,7 +21,7 @@ import {
   GeneralExceptionResponse,
 } from 'src/core/utils/exception-responses.util';
 import { SummarizeArticleDto } from './models/summarize-arcticle.dto';
-import { ArticleIdParamDto } from './models/article-id-param.dto';
+import { ArticleIdParamDto } from '../models/article-id-param.dto';
 import { SummarizeArticleEntity } from './models/summarize-article.entity';
 import { TranslateArticleDto } from './models/translate-article.dto';
 import { TranslateArticleEntity } from './models/translate-article.entity';

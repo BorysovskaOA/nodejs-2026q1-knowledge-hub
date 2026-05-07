@@ -1,4 +1,4 @@
-import { AnalyzeTask } from '../article/models/constants';
+import { AnalyzeTask } from '../models/constants';
 
 const getTaskInstructions = (task: AnalyzeTask) => {
   switch (task) {

@@ -16,14 +16,14 @@ import {
   generateAnalizeArticlePrompt,
   getAnalyzeArticleResponseSchema,
 } from './prompts/analyze-article.prompt';
-import { AiMonitorService } from '../ai.monitoring.service';
+import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
 
 @Injectable()
 export class AiArticleService {
   constructor(
     private geminiService: GeminiService,
     private articleService: ArticleService,
-    private aiMonitorService: AiMonitorService,
+    private aiMonitoingService: AiMonitoringService,
   ) {}
 
   async summarize(articleId: string, data: SummarizeArticleDto) {
@@ -36,7 +36,7 @@ export class AiArticleService {
       }),
     );
 
-    this.aiMonitorService.trackTokensUsed('summarize', tokensUsed);
+    this.aiMonitoingService.trackTokensUsed('summarize', tokensUsed);
 
     return new SummarizeArticleEntity({
       articleId: article.id,
@@ -60,7 +60,7 @@ export class AiArticleService {
       },
     );
 
-    this.aiMonitorService.trackTokensUsed('translate', tokensUsed);
+    this.aiMonitoingService.trackTokensUsed('translate', tokensUsed);
 
     return new TranslateArticleEntity({
       articleId: article.id,
@@ -82,7 +82,7 @@ export class AiArticleService {
       },
     );
 
-    this.aiMonitorService.trackTokensUsed('analyze', tokensUsed);
+    this.aiMonitoingService.trackTokensUsed('analyze', tokensUsed);
 
     return new AnalyzeArticleEntity({
       articleId: article.id,

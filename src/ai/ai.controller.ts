@@ -23,9 +23,10 @@ import { AiService } from './ai.service';
 import { GenerateDto } from './models/generate.dto';
 import { GenerateEntity } from './models/generate.entity';
 import { Throttle } from '@nestjs/throttler';
-import { AiMonitoringEntity } from './models/ai-monitoring.entity';
+import { AiMonitoringEntity } from './monitoring/models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
+import { AiMonitoringService } from './monitoring/ai.monitoring.service';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
@@ -39,7 +40,10 @@ import { UserRole } from '@prisma/client';
 @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class AiController {
-  constructor(private aiService: AiService) {}
+  constructor(
+    private aiService: AiService,
+    private aiMonitoringService: AiMonitoringService,
+  ) {}
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
@@ -55,6 +59,6 @@ export class AiController {
   @ApiOkResponse({ type: AiMonitoringEntity })
   @ApiUnauthorizedResponse(GeneralExceptionResponse(403))
   getStats(): AiMonitoringEntity {
-    return this.aiService.getStats();
+    return this.aiMonitoringService.getStats();
   }
 }

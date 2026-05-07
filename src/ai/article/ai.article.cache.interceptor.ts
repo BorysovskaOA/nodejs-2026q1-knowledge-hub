@@ -9,18 +9,19 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, of, tap } from 'rxjs';
 import { Cache } from 'cache-manager';
-import { AiMonitorService } from '../ai.monitoring.service';
+import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
 
 @Injectable()
 export class AiArticleCacheInterceptor extends CacheInterceptor {
-  private readonly logger = new Logger('CACHE');
+  private readonly logger: Logger;
 
   constructor(
     @Inject(CACHE_MANAGER) cache: Cache,
     reflector: Reflector,
-    private aiMonitorService: AiMonitorService,
+    private aiMonitoingService: AiMonitoringService,
   ) {
     super(cache, reflector);
+    this.logger = new Logger('CACHE');
   }
 
   protected isRequestCacheable(context: ExecutionContext): boolean {
@@ -60,7 +61,7 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
       response.setHeader('X-Cache', 'HIT');
 
       const latency = Date.now() - start;
-      this.aiMonitorService.track(endpoint, true, latency);
+      this.aiMonitoingService.track(endpoint, true, latency);
       return of(cachedData);
     }
 
@@ -69,7 +70,7 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
     return (await super.intercept(context, next)).pipe(
       tap(() => {
         const latency = Date.now() - start;
-        this.aiMonitorService.track(endpoint, false, latency);
+        this.aiMonitoingService.track(endpoint, false, latency);
       }),
     );
   }

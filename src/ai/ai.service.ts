@@ -3,13 +3,13 @@ import { GenerateDto } from './models/generate.dto';
 import { GenerateEntity } from './models/generate.entity';
 import { GeminiService } from 'src/gemini/gemini.service';
 
-import { AiMonitorService } from './ai.monitoring.service';
+import { AiMonitoringService } from './monitoring/ai.monitoring.service';
 
 @Injectable()
 export class AiService {
   constructor(
     private geminiService: GeminiService,
-    private aiMonitorService: AiMonitorService,
+    private aiMonitorService: AiMonitoringService,
   ) {}
 
   async generate(data: GenerateDto) {
@@ -21,9 +21,5 @@ export class AiService {
     this.aiMonitorService.trackTokensUsed('generate', tokensUsed);
 
     return new GenerateEntity({ content: response });
-  }
-
-  getStats() {
-    return this.aiMonitorService.getStats();
   }
 }
