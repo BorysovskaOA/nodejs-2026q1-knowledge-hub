@@ -4,10 +4,11 @@ import { ArticleModule } from 'src/article/article.module';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
 import { AiMonitorService } from './ai.monitoring.service';
+import { AiArticleController } from './ai.article.controller';
 
 @Module({
   imports: [GeminiModule, ArticleModule],
-  controllers: [AiController],
+  controllers: [AiArticleController, AiController],
   providers: [AiService, AiMonitorService],
   exports: [AiService],
 })
