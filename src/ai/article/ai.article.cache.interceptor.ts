@@ -9,7 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, of, tap } from 'rxjs';
 import { Cache } from 'cache-manager';
-import { AiMonitorService } from './ai.monitoring.service';
+import { AiMonitorService } from '../ai.monitoring.service';
 
 @Injectable()
 export class AiArticleCacheInterceptor extends CacheInterceptor {

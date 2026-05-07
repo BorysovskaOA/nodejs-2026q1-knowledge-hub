@@ -1,4 +1,4 @@
-import { SummarizeLength } from '../models/constants';
+import { SummarizeLength } from '../article/models/constants';
 
 const getLengthInstructions = (summaryLength: SummarizeLength) => {
   switch (summaryLength) {

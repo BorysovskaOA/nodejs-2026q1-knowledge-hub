@@ -20,7 +20,6 @@ import {
   ExtendedExceptionResponse,
   GeneralExceptionResponse,
 } from 'src/core/utils/exception-responses.util';
-import { AiService } from './ai.service';
 import { SummarizeArticleDto } from './models/summarize-arcticle.dto';
 import { ArticleIdParamDto } from './models/article-id-param.dto';
 import { SummarizeArticleEntity } from './models/summarize-article.entity';
@@ -29,8 +28,9 @@ import { TranslateArticleEntity } from './models/translate-article.entity';
 import { AnalyzeArticleDto } from './models/analyze-article.dto';
 import { AnalyzeArticleEntity } from './models/analyze-article.entity';
 import { Throttle } from '@nestjs/throttler';
-import { AiArticleCacheInterceptor } from './ai-article-cache.interceptor';
+import { AiArticleCacheInterceptor } from './ai.article.cache.interceptor';
 import { CacheTTL } from '@nestjs/cache-manager';
+import { AiArticleService } from './ai.article.service';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai/article/:articleId')
@@ -48,7 +48,7 @@ import { CacheTTL } from '@nestjs/cache-manager';
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
 export class AiArticleController {
-  constructor(private aiService: AiService) {}
+  constructor(private aiArticleService: AiArticleService) {}
 
   @Post('summarize')
   @HttpCode(HttpStatus.OK)
@@ -57,7 +57,7 @@ export class AiArticleController {
     @Param() { articleId }: ArticleIdParamDto,
     @Body() summarizeArticleDto: SummarizeArticleDto,
   ): Promise<SummarizeArticleEntity> {
-    return this.aiService.summarizeArticle(articleId, summarizeArticleDto);
+    return this.aiArticleService.summarize(articleId, summarizeArticleDto);
   }
 
   @Post('translate')
@@ -67,7 +67,7 @@ export class AiArticleController {
     @Param() { articleId }: ArticleIdParamDto,
     @Body() translateArticleDto: TranslateArticleDto,
   ): Promise<TranslateArticleEntity> {
-    return this.aiService.translateArticle(articleId, translateArticleDto);
+    return this.aiArticleService.translate(articleId, translateArticleDto);
   }
 
   @Post('analyze')
@@ -77,6 +77,6 @@ export class AiArticleController {
     @Param() { articleId }: ArticleIdParamDto,
     @Body() analyzeArticleDto: AnalyzeArticleDto,
   ): Promise<AnalyzeArticleEntity> {
-    return this.aiService.analyzeArticle(articleId, analyzeArticleDto);
+    return this.aiArticleService.analyze(articleId, analyzeArticleDto);
   }
 }

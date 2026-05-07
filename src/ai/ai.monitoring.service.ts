@@ -22,8 +22,6 @@ export class AiMonitorService {
     this.totalRequests++;
     const endpointStats = this.breakdown[endpoint] || initialEndPointStats;
 
-    console.log(isCached);
-
     this.breakdown[endpoint] = isCached
       ? formatUpdatedHit(endpointStats, latency)
       : formatUpdatedMiss(endpointStats, latency);
