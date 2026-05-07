@@ -71,7 +71,13 @@ export class RagService implements OnModuleInit {
     return new RagChatEntity({});
   }
 
-  async deleteArticleFromIndex(articleId: string) {}
+  async deleteArticleIndex(articleId: string) {
+    return this.qdrantService.deleteIndexes(
+      this.collection,
+      'articleId',
+      articleId,
+    );
+  }
 
   async getChatConversationHistory(conversationId: string) {
     return new RagConversationHistoryEntity({});

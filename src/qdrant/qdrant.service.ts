@@ -34,11 +34,27 @@ export class QdrantService {
   }
 
   async searchSimilar(collection: string, vector: number[], limit: number = 3) {
-    return this.client.search(collection, {
-      vector,
-      limit,
-      with_payload: true,
-    });
+    return this.callWithErrorHandling(
+      this.client.search(collection, {
+        vector,
+        limit,
+        with_payload: true,
+      }),
+    );
+  }
+
+  async deleteIndexes(
+    collection: string,
+    metadataKey: string,
+    metadataValue: any,
+  ) {
+    return this.callWithErrorHandling(
+      this.client.delete(collection, {
+        filter: {
+          must: [{ key: metadataKey, match: { value: metadataValue } }],
+        },
+      }),
+    );
   }
 
   async callWithErrorHandling<T>(promise: Promise<T>): Promise<T> {
@@ -55,8 +71,6 @@ export class QdrantService {
           },
         );
       }
-
-      console.log(err);
 
       throw new InternalServerError('Failed to manipulate data in vector db', {
         service: QdrantService.name,

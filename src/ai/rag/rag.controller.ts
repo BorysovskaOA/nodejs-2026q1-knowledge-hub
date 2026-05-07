@@ -40,14 +40,14 @@ export class RagController {
   @Post('index')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RagIndexEntity })
-  async reindex(@Body() reindexDto: RagIndexDto): Promise<RagIndexEntity> {
-    return this.ragService.index(reindexDto);
+  async index(@Body() indexDto: RagIndexDto): Promise<RagIndexEntity> {
+    return this.ragService.index(indexDto);
   }
 
   @Delete('index/article/:articleId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteArticleFromIndex(@Param() { articleId }: ArticleIdParamDto) {
-    this.ragService.deleteArticleFromIndex(articleId);
+  async deleteArticleIndex(@Param() { articleId }: ArticleIdParamDto) {
+    this.ragService.deleteArticleIndex(articleId);
   }
 
   @Post('search')
