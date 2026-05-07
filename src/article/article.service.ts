@@ -66,6 +66,10 @@ export class ArticleService {
     return await this.articleRepository.findOne(where);
   }
 
+  async getMany(where: Prisma.ArticleWhereInput) {
+    return await this.articleRepository.findMany(where);
+  }
+
   async update(id: string, data: UpdateArticleDto) {
     const article = await this.getById(id);
 

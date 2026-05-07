@@ -1,4 +1,7 @@
 import {
+  ContentListUnion,
+  EmbedContentConfig,
+  EmbedContentResponse,
   GenerateContentConfig,
   GenerateContentResponse,
   GoogleGenAI,
@@ -21,81 +24,147 @@ import {
   isUnsupportedJsonFormat,
 } from './utils/gemini-errors.uril';
 
+class AIGenerationError extends Error {
+  public readonly parsedError: Record<string, any>;
+
+  constructor(parsedError: Record<string, any>) {
+    super('AIGenerationError');
+
+    this.parsedError = parsedError;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
 @Injectable()
 export class GeminiService {
+  private embeddingOutputDimensionality = 768;
+  private generateContentSupportJson = true;
   private genAi = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY as string,
   });
-  private readonly logger = new Logger('GEMINI');
-  constructor() {}
+  private readonly logger: Logger;
+  constructor() {
+    this.logger = new Logger('GEMINI');
+  }
+
+  getEmbeddingsModelVectorSize() {
+    return this.embeddingOutputDimensionality;
+  }
 
   async ask(question: string, config: GenerateContentConfig = {}) {
     this.logger.debug({ question, config }, 'Question');
 
-    return this.askGemini(question, config);
+    if (this.generateContentSupportJson) {
+      return this.askStringQuestion(question, config);
+    }
+
+    return this.askWithOutputFormat(question, config);
   }
 
-  private async askGemini(
-    question: string,
+  async askWithHistory(
+    contents: ContentListUnion,
     config: GenerateContentConfig = {},
   ) {
-    let response: GenerateContentResponse;
+    this.logger.debug({ contents, config }, 'Contents');
+
     try {
-      response = await this.genAi.models.generateContent({
-        model: `models/${process.env.GEMINI_MODEL as string}`,
-        contents: question,
-        config,
-      });
+      const response =
+        await this.callWithErrorHandling<GenerateContentResponse>(
+          this.askGenerativeModel(contents, config),
+        );
 
       return this.getFormattedResponse(response, config);
-    } catch (err: any) {
-      let parsedError: Record<string, any>;
-      try {
-        parsedError = JSON.parse(err.message).error;
-      } catch (error) {
-        throw new ServiceUnavailableError(
-          'Network error while generating content',
-          {
-            service: GeminiService.name,
-            error: error,
-          },
-        );
-      }
-
-      if (isUnsupportedJsonFormat(parsedError)) {
-        return await this.retryWithOutputFormat(question, config);
-      }
-
-      if (isInvalidApiKey(parsedError) || isApiKeyPermissionDenied(parsedError))
-        throw new InternalServerError(
-          'Failed to generate content, authentication errors',
-          {
-            service: GeminiService.name,
-            geminiError: parsedError,
-          },
-        );
-
-      if (
-        isTooManyRequestsToGemini(parsedError) ||
-        isTimeoutExceed(parsedError) ||
-        isUnavailable(parsedError)
-      )
-        throw new ServiceUnavailableError(
-          'Content generation service is unavailable at the moment',
-          {
-            service: GeminiService.name,
-            geminiError: parsedError,
-          },
-        );
+    } catch (err) {
+      if (!(err instanceof AIGenerationError)) throw err;
 
       throw new InternalServerError('Failed to generate content', {
         service: GeminiService.name,
-        geminiError: parsedError,
+        geminiError: err.parsedError,
       });
     }
   }
 
-  private async retryWithOutputFormat(
+  async getBatchEmbeddings(texts: string[], config: EmbedContentConfig = {}) {
+    const embeddingsContents = texts.map((t) => ({ parts: [{ text: t }] }));
+
+    this.logger.debug({ embeddingsContents, config }, 'Embeddings');
+    try {
+      const response = await this.callWithErrorHandling<EmbedContentResponse>(
+        this.askEmbeddingsModel(embeddingsContents, config),
+      );
+
+      const { embeddings } = response;
+
+      if (!embeddings || embeddings.some((e) => e.values === undefined)) {
+        throw new InternalServerError('Error while creating embeddings', {
+          service: GeminiService.name,
+          error: 'Empty embeddings',
+          response,
+        });
+      }
+
+      return embeddings.map((e) => e.values as number[]);
+    } catch (err) {
+      if (!(err instanceof AIGenerationError)) throw err;
+
+      throw new InternalServerError('Failed to create embeddings', {
+        service: GeminiService.name,
+        geminiError: err.parsedError,
+      });
+    }
+  }
+
+  private async askGenerativeModel(
+    contents: ContentListUnion,
+    config: GenerateContentConfig = {},
+  ) {
+    return this.genAi.models.generateContent({
+      model: `models/${process.env.GEMINI_MODEL as string}`,
+      contents,
+      config,
+    });
+  }
+
+  private async askEmbeddingsModel(
+    contents: ContentListUnion,
+    config: EmbedContentConfig = {},
+  ) {
+    return this.genAi.models.embedContent({
+      model: `models/${process.env.GEMINI_MODEL_EMBEDDING as string}`,
+      contents: contents,
+      config: {
+        outputDimensionality: this.embeddingOutputDimensionality,
+        ...config,
+      },
+    });
+  }
+
+  private async askStringQuestion(
+    question: string,
+    config: GenerateContentConfig = {},
+  ) {
+    try {
+      const response =
+        await this.callWithErrorHandling<GenerateContentResponse>(
+          this.askGenerativeModel(question, config),
+        );
+
+      return this.getFormattedResponse(response, config);
+    } catch (err) {
+      if (!(err instanceof AIGenerationError)) throw err;
+
+      if (isUnsupportedJsonFormat(err.parsedError)) {
+        return await this.askWithOutputFormat(question, config);
+      }
+
+      throw new InternalServerError('Failed to generate content', {
+        service: GeminiService.name,
+        geminiError: err.parsedError,
+      });
+    }
+  }
+
+  private async askWithOutputFormat(
     question: string,
     config: GenerateContentConfig = {},
   ) {
@@ -108,7 +177,7 @@ export class GeminiService {
       Object.keys(restConfig).length === 0 ? undefined : restConfig;
 
     this.logger.debug({ question, config }, 'Question reformated');
-    const { response, tokensUsed } = await this.askGemini(
+    const { response, tokensUsed } = await this.askStringQuestion(
       `${question}\n${getOutputFormatFromJsonSchema(config?.responseSchema)}`,
       newConfig,
     );
@@ -128,7 +197,7 @@ export class GeminiService {
     const tokensUsed = response.usageMetadata?.totalTokenCount;
 
     if (!response.text)
-      throw new InternalServerError('Error while generating with AI', {
+      throw new InternalServerError('Error while generating contnent with AI', {
         service: GeminiService.name,
         error: 'Empty response text',
         response,
@@ -148,4 +217,50 @@ export class GeminiService {
 
     return { response: response.text, tokensUsed };
   };
+
+  private async callWithErrorHandling<T>(
+    askModelPromise: Promise<T>,
+  ): Promise<T> {
+    try {
+      return await askModelPromise;
+    } catch (err: any) {
+      let parsedError: Record<string, any>;
+      try {
+        parsedError = JSON.parse(err.message).error;
+      } catch (error) {
+        throw new ServiceUnavailableError(
+          'Network error while processing with AI',
+          {
+            service: GeminiService.name,
+            error: error,
+            originalError: err,
+          },
+        );
+      }
+
+      if (isInvalidApiKey(parsedError) || isApiKeyPermissionDenied(parsedError))
+        throw new InternalServerError(
+          'Encontered authentication errors while processing with AI',
+          {
+            service: GeminiService.name,
+            geminiError: parsedError,
+          },
+        );
+
+      if (
+        isTooManyRequestsToGemini(parsedError) ||
+        isTimeoutExceed(parsedError) ||
+        isUnavailable(parsedError)
+      )
+        throw new ServiceUnavailableError(
+          'AI processing service is unavailable at the moment',
+          {
+            service: GeminiService.name,
+            geminiError: parsedError,
+          },
+        );
+
+      throw new AIGenerationError(parsedError);
+    }
+  }
 }

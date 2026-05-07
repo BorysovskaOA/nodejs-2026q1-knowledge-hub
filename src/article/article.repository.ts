@@ -103,6 +103,18 @@ export class ArticleRepository {
     return item ? this.map(item) : null;
   }
 
+  async findMany(
+    where: Prisma.ArticleWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ArticleEntity[]> {
+    const items = await this.db(tx).findMany({
+      where,
+      include: { tags: true },
+    });
+
+    return items.map(this.map);
+  }
+
   async create(
     data: CreateArticleDto,
     tx?: Prisma.TransactionClient,
