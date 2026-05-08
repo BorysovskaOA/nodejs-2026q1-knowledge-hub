@@ -14,6 +14,7 @@ import { ArticleStatus } from '@prisma/client';
 import { ArticleEntity } from 'src/article/models/article.entity';
 import { splitArticleIntoChunks } from './utils/split-article-into-chucks.util';
 import { InternalServerError } from 'src/core/exceptions/app-errors';
+import { ArticleVectorPayload } from './models/article-vector-payload.interface';
 
 const BATCH_SIZE = 10;
 
@@ -64,7 +65,52 @@ export class RagService implements OnModuleInit {
   }
 
   async search(searchDto: RagSearchDto) {
-    return new RagSearchEntity({});
+    const filter: Record<string, any> = {};
+
+    if (searchDto.articleStatus) {
+      if (!filter.must) filter.must = [];
+      filter.must.push({
+        key: 'status',
+        match: { value: searchDto.articleStatus },
+      });
+    }
+    if (searchDto.categoryId) {
+      if (!filter.must) filter.must = [];
+      filter.must.push({
+        key: 'categoryId',
+        match: { value: searchDto.categoryId },
+      });
+    }
+
+    if (searchDto.tags) {
+      if (!filter.must) filter.must = [];
+      filter.must.push({
+        key: 'tags',
+        match: { any: searchDto.tags },
+      });
+    }
+
+    const queryVector = await this.geminiService.getEmbedding(searchDto.query);
+
+    const results = await this.qdrantService.searchSimilar(
+      this.collection,
+      queryVector,
+      searchDto.limit,
+      filter,
+    );
+
+    return new RagSearchEntity({
+      results: results.map((r) => {
+        const payload = r.payload as unknown as ArticleVectorPayload;
+
+        return {
+          articleId: payload.articleId,
+          articleTitle: payload.title,
+          chunk: payload.content,
+          similarity: r.score,
+        };
+      }),
+    });
   }
 
   async chat(chatDto: RagChatDto) {
@@ -97,18 +143,23 @@ export class RagService implements OnModuleInit {
 
         const vectors = await this.geminiService.getBatchEmbeddings(batch);
 
-        const batchPoints = batch.map((chunk, index) => ({
-          id: randomUUID(),
-          vector: vectors[index],
-          payload: {
+        const batchPoints = batch.map((chunk, index) => {
+          const payload: ArticleVectorPayload = {
             articleId: article.id,
             title: article.title,
+            status: article.status,
             categoryId: article.categoryId,
             tags: article.tags,
             content: chunk,
             chunkIndex: index,
-          },
-        }));
+          };
+
+          return {
+            id: randomUUID(),
+            vector: vectors[index],
+            payload,
+          };
+        });
 
         points.push(...batchPoints);
 

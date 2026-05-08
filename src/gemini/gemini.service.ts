@@ -52,7 +52,7 @@ export class GeminiService {
   }
 
   async ask(question: string, config: GenerateContentConfig = {}) {
-    this.logger.debug({ question, config }, 'Question');
+    this.logger.debug({ question, config }, 'AI Question');
 
     if (this.generateContentSupportJson) {
       return this.askStringQuestion(question, config);
@@ -65,7 +65,7 @@ export class GeminiService {
     contents: ContentListUnion,
     config: GenerateContentConfig = {},
   ) {
-    this.logger.debug({ contents, config }, 'Contents');
+    this.logger.debug({ contents, config }, 'AI Question');
 
     try {
       const response =
@@ -84,10 +84,40 @@ export class GeminiService {
     }
   }
 
+  async getEmbedding(text: string, config: EmbedContentConfig = {}) {
+    const embeddingContents = { parts: [{ text }] };
+
+    this.logger.debug({ embeddingContents, config }, 'AI embeddings');
+    try {
+      const response = await this.callWithErrorHandling<EmbedContentResponse>(
+        this.askEmbeddingsModel(embeddingContents, config),
+      );
+
+      const { embeddings } = response;
+
+      if (!embeddings || embeddings[0].values === undefined) {
+        throw new InternalServerError('Error while creating embedding', {
+          service: GeminiService.name,
+          error: 'Empty embeddings',
+          response,
+        });
+      }
+
+      return embeddings[0].values;
+    } catch (err) {
+      if (!(err instanceof AIGenerationError)) throw err;
+
+      throw new InternalServerError('Failed to create embedding', {
+        service: GeminiService.name,
+        geminiError: err.parsedError,
+      });
+    }
+  }
+
   async getBatchEmbeddings(texts: string[], config: EmbedContentConfig = {}) {
     const embeddingsContents = texts.map((t) => ({ parts: [{ text: t }] }));
 
-    this.logger.debug({ embeddingsContents, config }, 'Embeddings');
+    this.logger.debug({ embeddingsContents, config }, 'AI embeddings');
     try {
       const response = await this.callWithErrorHandling<EmbedContentResponse>(
         this.askEmbeddingsModel(embeddingsContents, config),
@@ -176,7 +206,7 @@ export class GeminiService {
     const newConfig =
       Object.keys(restConfig).length === 0 ? undefined : restConfig;
 
-    this.logger.debug({ question, config }, 'Question reformated');
+    this.logger.debug({ question, config }, 'AI Reformat');
     const { response, tokensUsed } = await this.askStringQuestion(
       `${question}\n${getOutputFormatFromJsonSchema(config?.responseSchema)}`,
       newConfig,
@@ -193,7 +223,7 @@ export class GeminiService {
     response: GenerateContentResponse,
     config: GenerateContentConfig,
   ) => {
-    this.logger.debug({ response: response.text }, 'Question response');
+    this.logger.debug({ response: response.text }, 'AI Result');
     const tokensUsed = response.usageMetadata?.totalTokenCount;
 
     if (!response.text)

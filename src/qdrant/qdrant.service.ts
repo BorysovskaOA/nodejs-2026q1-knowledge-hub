@@ -1,30 +1,36 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import {
   InternalServerError,
   ServiceUnavailableError,
 } from 'src/core/exceptions/app-errors';
+import type { Schemas } from '@qdrant/js-client-rest';
 
 @Injectable()
 export class QdrantService {
   private client: QdrantClient;
+  private logger: Logger;
 
   constructor() {
     this.client = new QdrantClient({ url: process.env.RAG_VECTOR_DB_URL });
+    this.logger = new Logger('QDRANT');
   }
 
-  async ensureCollectionExists(name: string, vectorSize: number) {
+  async ensureCollectionExists(collection: string, vectorSize: number) {
     const response = await this.client.getCollections();
-    const exists = response.collections.some((c) => c.name === name);
+    const exists = response.collections.some((c) => c.name === collection);
 
     if (!exists) {
-      await this.client.createCollection(name, {
+      this.logger.debug({ collection, created: true }, 'Collection');
+      await this.client.createCollection(collection, {
         vectors: { size: vectorSize, distance: 'Cosine' },
       });
     }
+    this.logger.debug({ collection }, 'Collection');
   }
 
   async upsertPoints(collection: string, points: any[]) {
+    this.logger.debug({ collection, pointsLength: points.length }, 'Indexing');
     return this.callWithErrorHandling(
       this.client.upsert(collection, {
         wait: true,
@@ -33,11 +39,18 @@ export class QdrantService {
     );
   }
 
-  async searchSimilar(collection: string, vector: number[], limit: number = 3) {
+  async searchSimilar(
+    collection: string,
+    vector: number[],
+    limit: number = 3,
+    filter: Schemas['Filter'],
+  ) {
+    this.logger.debug({ collection, filter, limit }, 'Search');
     return this.callWithErrorHandling(
       this.client.search(collection, {
         vector,
         limit,
+        filter,
         with_payload: true,
       }),
     );
@@ -48,6 +61,10 @@ export class QdrantService {
     metadataKey: string,
     metadataValue: any,
   ) {
+    this.logger.debug(
+      { collection, metadataKey, metadataValue },
+      'Deleting index',
+    );
     return this.callWithErrorHandling(
       this.client.delete(collection, {
         filter: {
