@@ -53,18 +53,27 @@ export class AiConversationRepository {
 
   async findConversation(
     id: string,
+    aiMessagesLimit?: number,
     tx?: Prisma.TransactionClient,
   ): Promise<AiConversationEntity | null> {
     const item = await this.dbConversation(tx).findUnique({
       where: { id },
       include: {
         aiMessages: {
-          orderBy: [{ createdAt: SortOrder.ASC }, { role: SortOrder.ASC }],
+          take: aiMessagesLimit,
+          orderBy: [{ createdAt: SortOrder.DESC }, { role: SortOrder.DESC }],
         },
       },
     });
 
-    return item ? this.mapConversationWithMessages(item) : null;
+    if (!item) return null;
+
+    // To have proper history
+    if (item.aiMessages) {
+      item.aiMessages.reverse();
+    }
+
+    return this.mapConversationWithMessages(item);
   }
 
   async createConversationWithInitialMessages(
@@ -109,7 +118,6 @@ export class AiConversationRepository {
   async addMessagesToConversation(
     aiConversationId: string,
     aiMessagesData: { role: AiMessageRole; content: string }[],
-    aiMessageIdsToDelete: string[] = [],
     tx?: Prisma.TransactionClient,
   ): Promise<AiConversationEntity> {
     const item = await this.dbConversation(tx).update({
@@ -118,9 +126,6 @@ export class AiConversationRepository {
         updatedAt: new Date(),
         aiMessages: {
           create: aiMessagesData,
-          ...(aiMessageIdsToDelete.length > 0
-            ? { deleteMany: { id: { in: aiMessageIdsToDelete } } }
-            : {}),
         },
       },
       include: {

@@ -32,6 +32,9 @@ import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
 const BATCH_SIZE = 10;
 const CHAT_VECTORS_LIMIT = 5;
 const CHAT_VECTORS_SCORE_THRESHOLD = 0.75;
+const MAX_MESSAGES_IN_CHAT = Number(
+  process.env.RAG_CONVERSATION_MAX_MESSAGES as string,
+);
 
 @Injectable()
 export class RagService implements OnModuleInit {
@@ -64,21 +67,16 @@ export class RagService implements OnModuleInit {
         : {}),
     });
 
-    const results = {
-      indexedArticles: 0,
-      indexedChunks: 0,
-    };
+    const chucnks = articles
+      .map((a) => this.getArticleChunksWithVectorMetadata(a))
+      .flat();
 
-    // Work one by one to not provoke DoS on AI
-    for (const article of articles) {
-      const res = await this.indexArticle(article);
-      results.indexedArticles += 1;
-      results.indexedChunks += res.chunksCount;
-    }
+    const results = await this.batchProcessChunks(chucnks);
 
     return new RagIndexEntity({
       vectorCollection: this.collection,
-      ...results,
+      indexedArticles: results.articles.size,
+      indexedChunks: results.chunks,
     });
   }
 
@@ -157,56 +155,65 @@ export class RagService implements OnModuleInit {
     });
   }
 
-  private async indexArticle(article: ArticleEntity) {
+  private async batchProcessChunks(chunks: ArticleVectorPayload[]) {
+    const batchParts = Math.ceil(chunks.length / BATCH_SIZE);
+    const processedResults = {
+      articles: new Set(),
+      chunks: 0,
+      failedArticles: new Set(),
+    };
+
+    // Work with batches to not reduce number of requests at once
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+
+      try {
+        const vectors = await this.geminiService.getBatchEmbeddings(
+          batch.map((c) => c.content),
+        );
+
+        const batchPoints = batch.map((chunk, index) => ({
+          id: randomUUID(),
+          vector: vectors[index],
+          payload: chunk,
+        }));
+
+        await this.qdrantService.upsertPoints(this.collection, batchPoints);
+
+        processedResults.chunks += batch.length;
+        batch.forEach((c) => processedResults.articles.add(c.articleId));
+
+        this.logger.debug(
+          { batchPart: i + 1, totalBatchParts: batchParts },
+          'Embedding vector created for',
+        );
+      } catch (error) {
+        batch.forEach((c) => processedResults.failedArticles.add(c.articleId));
+        break;
+      }
+    }
+
+    return processedResults;
+  }
+
+  private getArticleChunksWithVectorMetadata(
+    article: ArticleEntity,
+  ): ArticleVectorPayload[] {
     const chunks = splitArticleIntoChunks(
       article.content,
       Number(process.env.RAG_CHUNK_SIZE as string),
       Number(process.env.RAG_CHUNK_OVERLAP as string),
     );
-    const points: any[] = [];
 
-    // Work with batches to not provoke DoS on AI
-    try {
-      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-        const batch = chunks.slice(i, i + BATCH_SIZE);
-
-        const vectors = await this.geminiService.getBatchEmbeddings(batch);
-
-        const batchPoints = batch.map((chunk, index) => {
-          const payload: ArticleVectorPayload = {
-            articleId: article.id,
-            title: article.title,
-            status: article.status,
-            categoryId: article.categoryId,
-            tags: article.tags,
-            content: chunk,
-            chunkIndex: index,
-          };
-
-          return {
-            id: randomUUID(),
-            vector: vectors[index],
-            payload,
-          };
-        });
-
-        points.push(...batchPoints);
-
-        this.logger.debug(
-          { batchPart: i / BATCH_SIZE + 1, pointsLength: points.length },
-          'Batch processed',
-        );
-      }
-    } catch (error) {
-      throw new InternalServerError(`Failed to index article ${article.id}`, {
-        service: RagService.name,
-        error: error.message,
-      });
-    }
-
-    await this.qdrantService.upsertPoints(this.collection, points);
-
-    return { success: true, chunksCount: points.length };
+    return chunks.map((chunk, index) => ({
+      articleId: article.id,
+      title: article.title,
+      status: article.status,
+      categoryId: article.categoryId,
+      tags: article.tags,
+      content: chunk,
+      chunkIndex: index,
+    }));
   }
 
   private async createNewConversation(userId: string, question: string) {
@@ -262,8 +269,10 @@ export class RagService implements OnModuleInit {
     conversationId: string,
     question: string,
   ) {
-    const conversation =
-      await this.aiConversationRepository.findConversation(conversationId);
+    const conversation = await this.aiConversationRepository.findConversation(
+      conversationId,
+      MAX_MESSAGES_IN_CHAT,
+    );
 
     if (!conversation)
       throw new NotFoundError(
@@ -276,9 +285,7 @@ export class RagService implements OnModuleInit {
       conversation,
     );
 
-    const history = conversation.messages.map((m) =>
-      this.geminiService.formatTextPart(m.content, m.role),
-    );
+    const history = this.getConversationHistoryForGeneration(conversation);
 
     const questionWithContext = generateAnswerUsingContextPrompt(
       question,
@@ -298,13 +305,6 @@ export class RagService implements OnModuleInit {
       tokensUsed,
     );
 
-    // We need that to contain just up to specific amount of messages.
-    const messagesToDelete =
-      history.length + 2 >
-      Number(process.env.RAG_CONVERSATION_MAX_MESSAGES as string)
-        ? [conversation.messages[0].id, conversation.messages[0].id]
-        : [];
-
     const updatedConversation =
       await this.aiConversationRepository.addMessagesToConversation(
         conversation.id,
@@ -312,7 +312,6 @@ export class RagService implements OnModuleInit {
           { role: AiMessageRole.user, content: question },
           { role: AiMessageRole.model, content: response },
         ],
-        messagesToDelete,
       );
 
     return new RagChatEntity({
@@ -334,9 +333,7 @@ export class RagService implements OnModuleInit {
     question: string,
     conversation: AiConversationEntity,
   ) {
-    const history = conversation.messages.map((m) =>
-      this.geminiService.formatTextPart(m.content, m.role),
-    );
+    const history = this.getConversationHistoryForGeneration(conversation);
 
     const { response: reformattedQuestionBasedOnHistory, tokensUsed } =
       await this.geminiService.askWithHistory([
@@ -363,5 +360,30 @@ export class RagService implements OnModuleInit {
       limit: CHAT_VECTORS_LIMIT,
       scoreThreshold: CHAT_VECTORS_SCORE_THRESHOLD,
     });
+  }
+
+  private getConversationHistoryForGeneration(
+    conversation: AiConversationEntity,
+  ) {
+    const history = conversation.messages.map((m) =>
+      this.geminiService.formatTextPart(m.content, m.role),
+    );
+
+    if (history[0].role === AiMessageRole.user) {
+      return history;
+    }
+
+    const firstUserMessageIndex = history.findIndex(
+      (hi) => hi.role === AiMessageRole.user,
+    );
+
+    // history should start by user message
+    if (firstUserMessageIndex === -1)
+      throw new InternalServerError(
+        { conversationId: conversation.id, updatedAt: conversation.updatedAt },
+        `Last ${MAX_MESSAGES_IN_CHAT} messages in conversation ${conversation.id} does not have user messages`,
+      );
+
+    return history.slice(firstUserMessageIndex);
   }
 }
