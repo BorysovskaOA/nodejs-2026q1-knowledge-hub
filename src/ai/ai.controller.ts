@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -27,6 +28,7 @@ import { AiMonitoringEntity } from './monitoring/models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
 import { AiMonitoringService } from './monitoring/ai.monitoring.service';
+import { LatencyInterceptor } from './ai.latency.interceptor';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
@@ -47,6 +49,7 @@ export class AiController {
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(LatencyInterceptor)
   @ApiOkResponse({ type: GenerateEntity })
   @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
   @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))

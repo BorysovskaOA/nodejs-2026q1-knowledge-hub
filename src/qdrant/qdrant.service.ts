@@ -42,16 +42,22 @@ export class QdrantService {
   async searchSimilar(
     collection: string,
     vector: number[],
-    limit: number = 3,
-    filter: Schemas['Filter'],
+    searchOptions: {
+      limit?: number;
+      filter?: Schemas['Filter'];
+      scoreThreshold?: number;
+    } = {},
   ) {
-    this.logger.debug({ collection, filter, limit }, 'Search');
+    this.logger.debug({ collection, searchOptions }, 'Search');
     return this.callWithErrorHandling(
       this.client.search(collection, {
         vector,
-        limit,
-        filter,
         with_payload: true,
+        ...{
+          limit: searchOptions.limit,
+          filter: searchOptions.filter,
+          score_threshold: searchOptions.scoreThreshold,
+        },
       }),
     );
   }

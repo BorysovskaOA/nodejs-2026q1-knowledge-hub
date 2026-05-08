@@ -35,6 +35,11 @@ class AIGenerationError extends Error {
   }
 }
 
+interface AiContentGenerationResponse<T = any> {
+  response: T;
+  tokensUsed: number | undefined;
+}
+
 @Injectable()
 export class GeminiService {
   private embeddingOutputDimensionality = 768;
@@ -51,7 +56,17 @@ export class GeminiService {
     return this.embeddingOutputDimensionality;
   }
 
-  async ask(question: string, config: GenerateContentConfig = {}) {
+  formatTextPart(text: string, role: 'user' | 'model' = 'user') {
+    return {
+      role: role,
+      parts: [{ text: text }],
+    };
+  }
+
+  async ask(
+    question: string,
+    config: GenerateContentConfig = {},
+  ): Promise<AiContentGenerationResponse> {
     this.logger.debug({ question, config }, 'AI Question');
 
     if (this.generateContentSupportJson) {
@@ -64,7 +79,7 @@ export class GeminiService {
   async askWithHistory(
     contents: ContentListUnion,
     config: GenerateContentConfig = {},
-  ) {
+  ): Promise<AiContentGenerationResponse> {
     this.logger.debug({ contents, config }, 'AI Question');
 
     try {
@@ -172,7 +187,7 @@ export class GeminiService {
   private async askStringQuestion(
     question: string,
     config: GenerateContentConfig = {},
-  ) {
+  ): Promise<AiContentGenerationResponse> {
     try {
       const response =
         await this.callWithErrorHandling<GenerateContentResponse>(
@@ -197,7 +212,7 @@ export class GeminiService {
   private async askWithOutputFormat(
     question: string,
     config: GenerateContentConfig = {},
-  ) {
+  ): Promise<AiContentGenerationResponse> {
     const exclude = ['responseMimeType', 'responseSchema'];
     const restConfig = Object.fromEntries(
       Object.entries(config).filter(([key]) => !exclude.includes(key)),
@@ -219,10 +234,10 @@ export class GeminiService {
     return { response: formattedResponse, tokensUsed };
   }
 
-  private getFormattedResponse = (
+  private getFormattedResponse(
     response: GenerateContentResponse,
     config: GenerateContentConfig,
-  ) => {
+  ): AiContentGenerationResponse {
     this.logger.debug({ response: response.text }, 'AI Result');
     const tokensUsed = response.usageMetadata?.totalTokenCount;
 
@@ -246,7 +261,7 @@ export class GeminiService {
     }
 
     return { response: response.text, tokensUsed };
-  };
+  }
 
   private async callWithErrorHandling<T>(
     askModelPromise: Promise<T>,

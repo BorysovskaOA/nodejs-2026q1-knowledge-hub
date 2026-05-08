@@ -36,7 +36,10 @@ export class AiArticleService {
       }),
     );
 
-    this.aiMonitoingService.trackTokensUsed('summarize', tokensUsed);
+    this.aiMonitoingService.trackTokensUsedForContentGeneration(
+      'ai/article/:articleId/summarize',
+      tokensUsed,
+    );
 
     return new SummarizeArticleEntity({
       articleId: article.id,
@@ -60,7 +63,10 @@ export class AiArticleService {
       },
     );
 
-    this.aiMonitoingService.trackTokensUsed('translate', tokensUsed);
+    this.aiMonitoingService.trackTokensUsedForContentGeneration(
+      'ai/article/:articleId/translate',
+      tokensUsed,
+    );
 
     return new TranslateArticleEntity({
       articleId: article.id,
@@ -82,7 +88,10 @@ export class AiArticleService {
       },
     );
 
-    this.aiMonitoingService.trackTokensUsed('analyze', tokensUsed);
+    this.aiMonitoingService.trackTokensUsedForContentGeneration(
+      'ai/article/:articleId/analyze',
+      tokensUsed,
+    );
 
     return new AnalyzeArticleEntity({
       articleId: article.id,

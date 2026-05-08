@@ -13,12 +13,12 @@ export class AiService {
   ) {}
 
   async generate(data: GenerateDto) {
-    const start = Date.now();
     const { response, tokensUsed } = await this.geminiService.ask(data.prompt);
 
-    const latency = Date.now() - start;
-    this.aiMonitorService.track('generate', false, latency);
-    this.aiMonitorService.trackTokensUsed('generate', tokensUsed);
+    this.aiMonitorService.trackTokensUsedForContentGeneration(
+      'ai/generate',
+      tokensUsed,
+    );
 
     return new GenerateEntity({ content: response });
   }

@@ -6,6 +6,8 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -28,6 +30,8 @@ import { RagChatDto } from './models/chat.dto';
 import { ArticleIdParamDto } from '../models/article-id-param.dto';
 import { ConversationIdParamDto } from './models/conversation-id-param.dto';
 import { RagConversationHistoryEntity } from './models/conversation-history.entity';
+import { AuthenticatedRequest } from 'src/core/interfaces/authenticated-request.interface';
+import { LatencyInterceptor } from '../ai.latency.interceptor';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai/rag')
@@ -39,6 +43,7 @@ export class RagController {
 
   @Post('index')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(LatencyInterceptor)
   @ApiOkResponse({ type: RagIndexEntity })
   async index(@Body() indexDto: RagIndexDto): Promise<RagIndexEntity> {
     return this.ragService.index(indexDto);
@@ -52,6 +57,7 @@ export class RagController {
 
   @Post('search')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(LatencyInterceptor)
   @ApiOkResponse({ type: RagSearchEntity })
   async search(@Body() searchDto: RagSearchDto): Promise<RagSearchEntity> {
     return this.ragService.search(searchDto);
@@ -59,9 +65,13 @@ export class RagController {
 
   @Post('chat')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(LatencyInterceptor)
   @ApiOkResponse({ type: RagChatEntity })
-  async chat(@Body() chatDto: RagChatDto): Promise<RagChatEntity> {
-    return this.ragService.chat(chatDto);
+  async chat(
+    @Req() { user }: AuthenticatedRequest,
+    @Body() chatDto: RagChatDto,
+  ): Promise<RagChatEntity> {
+    return this.ragService.chat(user, chatDto);
   }
 
   @Post('chat/:conversationId/history')

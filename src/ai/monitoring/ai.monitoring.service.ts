@@ -15,7 +15,7 @@ const initialEndPointStats: MonitoringStatsByEndpoint = {
 @Injectable()
 export class AiMonitoringService {
   private totalRequests = 0;
-  private totalTokens = 0;
+  private totalTokensForGeneration = 0;
   private breakdown: Record<string, MonitoringStatsByEndpoint> = {};
 
   track(endpoint: string, isCached: boolean, latency: number) {
@@ -27,10 +27,10 @@ export class AiMonitoringService {
       : formatUpdatedMiss(endpointStats, latency);
   }
 
-  trackTokensUsed(endpoint: string, tokens: number) {
+  trackTokensUsedForContentGeneration(endpoint: string, tokens?: number) {
     if (!tokens) return;
 
-    this.totalTokens += tokens;
+    this.totalTokensForGeneration += tokens;
 
     const endpointStats = this.breakdown[endpoint] || initialEndPointStats;
 
@@ -44,7 +44,7 @@ export class AiMonitoringService {
     return new AiMonitoringEntity({
       uptime: process.uptime(),
       totalRequests: this.totalRequests,
-      totalTokens: this.totalTokens,
+      totalTokensForGeneration: this.totalTokensForGeneration,
       breakdown: this.breakdown,
     });
   }
