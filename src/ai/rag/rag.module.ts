@@ -6,6 +6,7 @@ import { RagController } from './rag.controller';
 import { RagService } from './rag.service';
 import { ArticleModule } from 'src/article/article.module';
 import { AiMonitoringModule } from '../monitoring/ai.monitoring.module';
+import { AiConversationRepository } from './ai-conversation.repository';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { AiMonitoringModule } from '../monitoring/ai.monitoring.module';
     AiMonitoringModule,
   ],
   controllers: [RagController],
-  providers: [RagService],
+  providers: [RagService, AiConversationRepository],
   exports: [RagService],
 })
 export class RagModule {}

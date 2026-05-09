@@ -2,13 +2,8 @@ export const generateCreateConversationPrompt = (
   question: string,
   context: string[],
 ) => {
-  return `${
-    context.length > 0
-      ? `
-[CONTEXT]
-${context.map((poc) => `- ${poc}`).join('\n')}`
-      : ''
-  }
+  return `[CONTEXT]
+${context.length ? context.map((poc) => `- ${poc}`).join('\n') : 'No data'}
 [INPUT_TEXT]
 '''
 ${question};
@@ -16,7 +11,7 @@ ${question};
 [TASK]
 - Generate title (up to 10 words) of the conversation based on INPUT_TEXT and place it into 'title' field.
 - Answer question provided by INPUT_TEXT and place it into 'answer' field.
-${context.length > 0 ? '- Use the data provided in CONTEXT to answer the question.' : ''}`;
+- Use the data provided in CONTEXT to answer the question.`;
 };
 
 export const getCreateConversationResponseSchema = () => {
@@ -32,6 +27,6 @@ export const getCreateConversationResponseSchema = () => {
         description: `Generated answer`,
       },
     },
-    required: ['title', 'content'],
+    required: ['title', 'answer'],
   };
 };

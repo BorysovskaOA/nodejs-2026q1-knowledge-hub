@@ -28,6 +28,7 @@ import { generateReformatQuestionPrompt } from './prompts/reformat-question';
 import { generateAnswerUsingContextPrompt } from './prompts/answer-using-context.prompt';
 import { AiConversationEntity } from './models/ai.conversation.entity';
 import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
+import { getAnswerChatQuestionInstruction } from './prompts/answer-question.instruction';
 
 const BATCH_SIZE = 10;
 const CHAT_VECTORS_LIMIT = 5;
@@ -230,6 +231,7 @@ export class RagService implements OnModuleInit {
       {
         responseMimeType: 'application/json',
         responseSchema: getCreateConversationResponseSchema(),
+        systemInstruction: getAnswerChatQuestionInstruction(),
       },
     );
 
@@ -295,10 +297,14 @@ export class RagService implements OnModuleInit {
       }),
     );
 
-    const { response, tokensUsed } = await this.geminiService.askWithHistory([
-      ...history,
-      this.geminiService.formatTextPart(questionWithContext),
-    ]);
+    console.log(history);
+
+    const { response, tokensUsed } = await this.geminiService.askWithHistory(
+      [...history, this.geminiService.formatTextPart(questionWithContext)],
+      {
+        systemInstruction: getAnswerChatQuestionInstruction(),
+      },
+    );
 
     this.aiMonitorService.trackTokensUsedForContentGeneration(
       'ai/rag/chat',
@@ -316,7 +322,7 @@ export class RagService implements OnModuleInit {
 
     return new RagChatEntity({
       conversationId: updatedConversation.id,
-      answer: response.answer,
+      answer: response,
       sources: similarVectors.map((v) => {
         const payload = v.payload as unknown as ArticleVectorPayload;
 

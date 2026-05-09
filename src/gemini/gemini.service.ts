@@ -278,7 +278,7 @@ export class GeminiService {
           {
             service: GeminiService.name,
             error: error,
-            originalError: err,
+            originalError: err.message,
           },
         );
       }

@@ -20,7 +20,7 @@ enum ArticleStatus {
 }
 
 // Prisma uses sorted enum keys and will know how to sort by role properly
-enum AiAiMessageRole {
+enum AiMessageRole {
   user
   model
 }
@@ -97,14 +97,21 @@ model AiConversation {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt(sort: Desc)])
 }
 
 model AiMessage {
-  id        String      @id @default(uuid())
-  role      AiAiMessageRole
-  content   String      @db.Text
-  createdAt DateTime    @default(now())
+  id        String        @id @default(uuid())
+  role      AiMessageRole
+  content   String        @db.Text
+  createdAt DateTime      @default(now())
 
   aiConversationId String
   aiConversation   AiConversation @relation(fields: [aiConversationId], references: [id], onDelete: Cascade)
+
+  @@index([aiConversationId])
+  @@index([createdAt(sort: Desc)])
+  @@index([role(sort: Desc)])
 }
