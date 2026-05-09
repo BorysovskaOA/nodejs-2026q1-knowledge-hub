@@ -8,6 +8,7 @@ import { ModuleRef, Reflector } from '@nestjs/core';
 import {
   AuthBodyConstraints,
   AuthParamConstraints,
+  AuthQueryConstraints,
   AUTHZ_OPTIONS_KEY,
   AuthzOption,
 } from '../decorators/authorize.decorator';
@@ -61,6 +62,7 @@ export class AuthzGuard implements CanActivate {
 
     const ownerParam = authzOption.constraints as AuthParamConstraints;
     const ownerBody = authzOption.constraints as AuthBodyConstraints;
+    const ownerQuery = authzOption.constraints as AuthQueryConstraints;
 
     if (ownerParam.paramName) {
       const resourceId = request.params[ownerParam.paramName];
@@ -87,9 +89,25 @@ export class AuthzGuard implements CanActivate {
     }
 
     if (ownerBody.bodyPropertyName) {
-      const isOwner = !!(
-        request.body[ownerBody.bodyPropertyName] === request.user.id
-      );
+      const value = ownerBody.bodyPropertyName;
+      if (!value && !ownerBody.required) {
+        return true;
+      }
+
+      const isOwner = !!(request.body[value] === request.user.id);
+
+      if (!isOwner) {
+        return false;
+      }
+    }
+
+    if (ownerQuery.queryPropertyName) {
+      const value = ownerQuery.queryPropertyName;
+      if (!value && !ownerQuery.required) {
+        return true;
+      }
+
+      const isOwner = !!(request.query[value] === request.user.id);
 
       if (!isOwner) {
         return false;

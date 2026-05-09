@@ -5,6 +5,7 @@ export function setupProcessErrorHandler(app: INestApplication) {
   const logger = app.get(Logger);
 
   const gracefulShutdown = async (error: Error, type: string) => {
+    console.log(error);
     logger.fatal({
       msg: `Process terminated due to ${type}`,
       error: error?.message || error,

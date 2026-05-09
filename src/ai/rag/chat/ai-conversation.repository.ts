@@ -6,9 +6,13 @@ import {
   AiMessageRole,
   Prisma,
 } from '@prisma/client';
-import { AiConversationEntity } from './models/ai.conversation.entity';
+import {
+  AiConversationEntity,
+  AiConversationWithMessagesEntity,
+} from './models/ai.conversation.entity';
 import { AiMessageEntity } from './models/message.entity';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
+import { ChatListFilterDto } from './models/chat-list-filter.dto';
 
 export type AiConversationWithAiMessages = Prisma.AiConversationGetPayload<{
   include: { aiMessages: true };
@@ -28,16 +32,29 @@ export class AiConversationRepository {
 
   private mapConversationWithMessages(
     data: AiConversationWithAiMessages,
-  ): AiConversationEntity {
+  ): AiConversationWithMessagesEntity {
     const messages = data.aiMessages.map(this.mapMessage);
-    return new AiConversationEntity({
+    return new AiConversationWithMessagesEntity({
       ...data,
       messages,
     });
   }
 
+  private mapConversation(data: AiConversation): AiConversationEntity {
+    return new AiConversationEntity(data);
+  }
+
   private mapMessage(data: AiMessage): AiMessageEntity {
     return new AiMessageEntity(data);
+  }
+
+  async findAll(filter: ChatListFilterDto, tx?: Prisma.TransactionClient) {
+    const items = await this.dbConversation(tx).findMany({
+      where: filter,
+      orderBy: [{ updatedAt: SortOrder.DESC }],
+    });
+
+    return items.map(this.mapConversation);
   }
 
   async findAllConversationMessages(
@@ -51,11 +68,11 @@ export class AiConversationRepository {
     return items.map(this.mapMessage);
   }
 
-  async findConversation(
+  async findConversationWithMessages(
     id: string,
     aiMessagesLimit?: number,
     tx?: Prisma.TransactionClient,
-  ): Promise<AiConversationEntity | null> {
+  ): Promise<AiConversationWithMessagesEntity | null> {
     const item = await this.dbConversation(tx).findUnique({
       where: { id },
       include: {
@@ -80,7 +97,7 @@ export class AiConversationRepository {
     aiConversationData: { title: string; userId: string },
     aiMessagesData: { role: AiMessageRole; content: string }[],
     tx?: Prisma.TransactionClient,
-  ): Promise<AiConversationEntity> {
+  ): Promise<AiConversationWithMessagesEntity> {
     const item = await this.dbConversation(tx).create({
       data: {
         ...aiConversationData,
@@ -100,7 +117,7 @@ export class AiConversationRepository {
     aiConversationId: string,
     aiConversationData: Partial<AiConversation>,
     tx?: Prisma.TransactionClient,
-  ): Promise<AiConversationEntity> {
+  ): Promise<AiConversationWithMessagesEntity> {
     const item = await this.dbConversation(tx).update({
       where: { id: aiConversationId },
       data: {
@@ -119,7 +136,7 @@ export class AiConversationRepository {
     aiConversationId: string,
     aiMessagesData: { role: AiMessageRole; content: string }[],
     tx?: Prisma.TransactionClient,
-  ): Promise<AiConversationEntity> {
+  ): Promise<AiConversationWithMessagesEntity> {
     const item = await this.dbConversation(tx).update({
       where: { id: aiConversationId },
       data: {
@@ -139,7 +156,7 @@ export class AiConversationRepository {
   async deleteConversation(
     id: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<AiConversationEntity> {
+  ): Promise<AiConversationWithMessagesEntity> {
     const item = await this.dbConversation(tx).delete({
       where: { id },
       include: { aiMessages: true },

@@ -5,8 +5,7 @@ import {
 } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
-@ApiSchema({ name: 'Conversation' })
-export class AiConversationEntity implements PrismaConversation {
+export class AiConversationWithMessagesEntity implements PrismaConversation {
   id: string;
   title: string;
   userId: string;
@@ -20,6 +19,25 @@ export class AiConversationEntity implements PrismaConversation {
   updatedAt: Date;
 
   messages: AiMessage[];
+
+  constructor(partial: Partial<AiConversationWithMessagesEntity>) {
+    Object.assign(this, partial);
+  }
+}
+
+@ApiSchema({ name: 'Conversation' })
+export class AiConversationEntity implements PrismaConversation {
+  id: string;
+  title: string;
+  userId: string;
+
+  @ApiProperty({ type: 'number' })
+  @Transform(({ value }) => value.getTime())
+  createdAt: Date;
+
+  @ApiProperty({ type: 'number' })
+  @Transform(({ value }) => value.getTime())
+  updatedAt: Date;
 
   constructor(partial: Partial<AiConversationEntity>) {
     Object.assign(this, partial);

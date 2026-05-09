@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Param,
   Post,
-  Req,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -25,13 +24,8 @@ import { RagIndexEntity } from './models/index.entity';
 import { RagIndexDto } from './models/index.dto';
 import { RagSearchDto } from './models/search.dto';
 import { RagSearchEntity } from './models/search.entity';
-import { RagChatEntity } from './models/chat.entity';
-import { RagChatDto } from './models/chat.dto';
-import { ArticleIdParamDto } from '../models/article-id-param.dto';
-import { ConversationIdParamDto } from './models/conversation-id-param.dto';
-import { RagConversationHistoryEntity } from './models/conversation-history.entity';
-import { AuthenticatedRequest } from 'src/core/interfaces/authenticated-request.interface';
 import { LatencyInterceptor } from '../ai.latency.interceptor';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai/rag')
@@ -49,10 +43,10 @@ export class RagController {
     return this.ragService.index(indexDto);
   }
 
-  @Delete('index/article/:articleId')
+  @Delete('index/article/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteArticleIndex(@Param() { articleId }: ArticleIdParamDto) {
-    this.ragService.deleteArticleIndex(articleId);
+  async deleteArticleIndex(@Param() { id }: IdParamDto) {
+    this.ragService.deleteArticleIndex(id);
   }
 
   @Post('search')
@@ -61,25 +55,5 @@ export class RagController {
   @ApiOkResponse({ type: RagSearchEntity })
   async search(@Body() searchDto: RagSearchDto): Promise<RagSearchEntity> {
     return this.ragService.search(searchDto);
-  }
-
-  @Post('chat')
-  @HttpCode(HttpStatus.OK)
-  @UseInterceptors(LatencyInterceptor)
-  @ApiOkResponse({ type: RagChatEntity })
-  async chat(
-    @Req() { user }: AuthenticatedRequest,
-    @Body() chatDto: RagChatDto,
-  ): Promise<RagChatEntity> {
-    return this.ragService.chat(user, chatDto);
-  }
-
-  @Post('chat/:conversationId/history')
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: RagConversationHistoryEntity })
-  async getChatConversationHistory(
-    @Param() { conversationId }: ConversationIdParamDto,
-  ): Promise<RagConversationHistoryEntity> {
-    return this.ragService.getChatConversationHistory(conversationId);
   }
 }

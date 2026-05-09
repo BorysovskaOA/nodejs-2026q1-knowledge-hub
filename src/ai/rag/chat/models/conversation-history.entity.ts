@@ -1,9 +1,9 @@
 import { ApiSchema } from '@nestjs/swagger';
-import { AiMessage } from '@prisma/client';
+import { AiMessageEntity } from './message.entity';
 
 @ApiSchema({ name: 'ConversationHistory' })
 export class RagConversationHistoryEntity {
-  history: Array<AiMessage>;
+  history: AiMessageEntity[];
 
   constructor(partial: Partial<RagConversationHistoryEntity>) {
     Object.assign(this, partial);
