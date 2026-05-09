@@ -17,12 +17,14 @@ import { ForbiddenError } from '../exceptions/app-errors';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
-  private readonly logger = new Logger('AUTHZ');
+  private readonly logger: Logger;
 
   constructor(
     private reflector: Reflector,
     private moduleRef: ModuleRef,
-  ) {}
+  ) {
+    this.logger = new Logger('AUTHZ');
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const authzOptions = this.reflector.getAllAndOverride<AuthzOption[]>(

@@ -1,5 +1,5 @@
 import { AiMessageRole } from '@prisma/client';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QdrantService } from 'src/qdrant/qdrant.service';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { UserEntity } from 'src/user/models/user.entity';
@@ -32,7 +32,6 @@ const MAX_MESSAGES_IN_CHAT = Number(
 @Injectable()
 export class RagChatService implements OnModuleInit {
   private collection: string;
-  private logger: Logger;
 
   constructor(
     private geminiService: GeminiService,
@@ -41,7 +40,6 @@ export class RagChatService implements OnModuleInit {
     private aiMonitorService: AiMonitoringService,
   ) {
     this.collection = process.env.RAG_VECTOR_COLLECTION as string;
-    this.logger = new Logger('DATABASE');
   }
 
   async onModuleInit() {

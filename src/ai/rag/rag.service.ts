@@ -24,7 +24,7 @@ export class RagService implements OnModuleInit {
     private articleService: ArticleService,
   ) {
     this.collection = process.env.RAG_VECTOR_COLLECTION as string;
-    this.logger = new Logger('DATABASE');
+    this.logger = new Logger('RAG_SERVICE');
   }
 
   async onModuleInit() {

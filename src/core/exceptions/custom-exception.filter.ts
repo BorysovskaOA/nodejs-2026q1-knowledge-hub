@@ -5,7 +5,11 @@ import { StatusCodes } from 'http-status-codes';
 
 @Catch()
 export class CustomExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger('HTTP_ERROR');
+  private readonly logger: Logger;
+
+  constructor() {
+    this.logger = new Logger('HTTP_ERROR');
+  }
 
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
