@@ -4,18 +4,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ArticleStatus } from '@prisma/client';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
 import { ArticleEntity } from '../models/article.entity';
 import { ArticleService } from '../article.service';
 import { ArticleRepository } from '../article.repository';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
+import {
+  ConflictError,
+  UnprocessableEntityError,
+  NotFoundError,
+} from 'src/core/exceptions/app-errors';
 
 vi.mock('./../utils/article-workflow.util', () => ({
   ArticleWorkflow: {
@@ -49,11 +47,11 @@ describe('Article Service', () => {
   };
 
   const mockCategoryService = {
-    validateCategoryExistWithException: vi.fn(),
+    validateCategoryExistWithBadRequestError: vi.fn(),
   };
 
   const mockUserService = {
-    validateUserExistWithException: vi.fn(),
+    validateUserExistWithBadRequestError: vi.fn(),
   };
 
   beforeAll(async () => {
@@ -81,10 +79,12 @@ describe('Article Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetAllMocks();
-    mockCategoryService.validateCategoryExistWithException.mockResolvedValue(
+    mockCategoryService.validateCategoryExistWithBadRequestError.mockResolvedValue(
       undefined,
     );
-    mockUserService.validateUserExistWithException.mockResolvedValue(undefined);
+    mockUserService.validateUserExistWithBadRequestError.mockResolvedValue(
+      undefined,
+    );
     vi.mocked(ArticleWorkflow).canTransition.mockImplementation(() => true);
   });
 
@@ -113,42 +113,38 @@ describe('Article Service', () => {
       await service.create(createData);
 
       expect(
-        mockCategoryService.validateCategoryExistWithException,
+        mockCategoryService.validateCategoryExistWithBadRequestError,
       ).toHaveBeenCalledTimes(1);
       expect(
-        mockCategoryService.validateCategoryExistWithException,
+        mockCategoryService.validateCategoryExistWithBadRequestError,
       ).toHaveBeenCalledWith(createData.categoryId);
     });
 
-    it('throws BadRequestException if invalid categoryId', async () => {
-      mockCategoryService.validateCategoryExistWithException.mockRejectedValue(
-        new BadRequestException(),
+    it('throws Error if invalid categoryId', async () => {
+      mockCategoryService.validateCategoryExistWithBadRequestError.mockRejectedValue(
+        new Error(),
       );
 
-      await expect(service.create(createData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
 
     it('should check for valid authorId', async () => {
       await service.create(createData);
 
       expect(
-        mockUserService.validateUserExistWithException,
+        mockUserService.validateUserExistWithBadRequestError,
       ).toHaveBeenCalledTimes(1);
       expect(
-        mockUserService.validateUserExistWithException,
+        mockUserService.validateUserExistWithBadRequestError,
       ).toHaveBeenCalledWith(createData.authorId);
     });
 
-    it('throws BadRequestException if invalid authorId', async () => {
-      mockUserService.validateUserExistWithException.mockRejectedValue(
-        new BadRequestException(),
+    it('throws Error if invalid authorId', async () => {
+      mockUserService.validateUserExistWithBadRequestError.mockRejectedValue(
+        new Error(),
       );
 
-      await expect(service.create(createData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.create(createData)).rejects.toThrow(Error);
     });
   });
 
@@ -233,10 +229,10 @@ describe('Article Service', () => {
       expect(result).toMatchObject(article);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getById('id')).rejects.toThrow(NotFoundException);
+      await expect(service.getById('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -277,11 +273,11 @@ describe('Article Service', () => {
       expect(result).toMatchObject(article);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.update('id', updateData)).rejects.toThrow(
-        NotFoundException,
+        NotFoundError,
       );
     });
 
@@ -289,37 +285,33 @@ describe('Article Service', () => {
       await service.update('id', { categoryId: 'categoryId' });
 
       expect(
-        mockCategoryService.validateCategoryExistWithException,
+        mockCategoryService.validateCategoryExistWithBadRequestError,
       ).toHaveBeenCalledTimes(1);
       expect(
-        mockCategoryService.validateCategoryExistWithException,
+        mockCategoryService.validateCategoryExistWithBadRequestError,
       ).toHaveBeenCalledWith('categoryId');
     });
 
-    it('throws BadRequestException if invalid categoryId', async () => {
-      mockCategoryService.validateCategoryExistWithException.mockRejectedValue(
-        new BadRequestException(),
+    it('throws Error if invalid categoryId', async () => {
+      mockCategoryService.validateCategoryExistWithBadRequestError.mockRejectedValue(
+        new Error(),
       );
 
       await expect(
         service.update('id', { categoryId: 'categoryId' }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(Error);
     });
 
-    it('throws ConflictException if cannot transition', async () => {
+    it('throws ConflictError if cannot transition', async () => {
       vi.mocked(ArticleWorkflow.canTransition).mockImplementation(() => false);
 
       try {
         await service.update('id', { status: ArticleStatus.archived });
       } catch (err) {
-        expect(err).toBeInstanceOf(ConflictException);
+        expect(err).toBeInstanceOf(ConflictError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.CONFLICT,
-          error: getReasonPhrase(StatusCodes.CONFLICT),
-          message: [{ field: 'status', errors: [expect.any(String)] }],
-        });
+        expect(response.description).toEqual({ status: [expect.any(String)] });
       }
     });
   });
@@ -337,10 +329,10 @@ describe('Article Service', () => {
       expect(result).toMatchObject(article);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.delete('id')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -363,30 +355,29 @@ describe('Article Service', () => {
     });
   });
 
-  describe('validateArticleExistWithException', () => {
+  describe('validateArticleExistWithUnprocessableEntityError', () => {
     beforeEach(() => {
       mockRepository.findById.mockResolvedValue(article);
     });
 
     it('should not return anything if exist', async () => {
-      const result = await service.validateArticleExistWithException('id');
+      const result =
+        await service.validateArticleExistWithUnprocessableEntityError('id');
 
       expect(result).toBeUndefined();
     });
 
-    it('throws UnprocessableEntityException if not found', async () => {
+    it('throws UnprocessableEntityError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       try {
-        await service.validateArticleExistWithException('id');
+        await service.validateArticleExistWithUnprocessableEntityError('id');
       } catch (err) {
-        expect(err).toBeInstanceOf(UnprocessableEntityException);
+        expect(err).toBeInstanceOf(UnprocessableEntityError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.UNPROCESSABLE_ENTITY,
-          error: getReasonPhrase(StatusCodes.UNPROCESSABLE_ENTITY),
-          message: [{ field: 'articleId', errors: [expect.any(String)] }],
+        expect(response.description).toEqual({
+          articleId: [expect.any(String)],
         });
       }
     });

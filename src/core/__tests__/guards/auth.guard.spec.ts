@@ -13,11 +13,11 @@ import { AuthGuard } from 'src/core/guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { UserService } from 'src/user/user.service';
+import { ExecutionContext } from '@nestjs/common';
 import {
-  ExecutionContext,
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
+  ForbiddenError,
+  UnauthorizedError,
+} from 'src/core/exceptions/app-errors';
 
 const createMockContext = (authHeader?: string) =>
   ({
@@ -72,27 +72,23 @@ describe('AuthGuard', () => {
     );
   });
 
-  it('throws UnauthorizedException if no token', async () => {
+  it('throws UnauthorizedError if no token', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext(undefined);
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedError);
   });
 
-  it('throws UnauthorizedException if token is invalid', async () => {
+  it('throws UnauthorizedError if token is invalid', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
     mockJwtService.verifyAsync.mockRejectedValue(new Error());
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedError);
   });
 
-  it('throws UnauthorizedException if had error finding user', async () => {
+  it('throws UnauthorizedError if had error finding user', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
@@ -100,12 +96,10 @@ describe('AuthGuard', () => {
     mockJwtService.verifyAsync.mockResolvedValue(payload);
     mockUserService.getOne.mockRejectedValue(new Error());
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedError);
   });
 
-  it('throws ForbiddenException if no user found', async () => {
+  it('throws ForbiddenError if no user found', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer invalid-token');
 
@@ -113,12 +107,10 @@ describe('AuthGuard', () => {
     mockJwtService.verifyAsync.mockResolvedValue(payload);
     mockUserService.getOne.mockResolvedValue(null);
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenError);
   });
 
-  it('throws ForbiddenException if user version mismatch', async () => {
+  it('throws ForbiddenError if user version mismatch', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
     const context = createMockContext('Bearer valid-token');
 
@@ -128,9 +120,7 @@ describe('AuthGuard', () => {
     mockJwtService.verifyAsync.mockResolvedValue(payload);
     mockUserService.getOne.mockResolvedValue(user);
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenError);
   });
 
   it('allows access to authenticated route with valid token', async () => {

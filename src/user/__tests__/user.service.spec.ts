@@ -8,12 +8,11 @@ import { hash, hashCompare } from 'src/core/utils/hashing.util';
 import { SortOrder } from 'src/core/dtos/sorting.dto';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
 import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from 'src/core/exceptions/app-errors';
 
 vi.mock('src/core/utils/hashing.util', () => ({
   hash: vi.fn(),
@@ -89,7 +88,7 @@ describe('User Service', () => {
       expect(hash).toHaveBeenCalledWith(createData.password);
     });
 
-    it("throws ConflictException if 'login' already exist", async () => {
+    it("throws ConflictError if 'login' already exist", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed on the fields: (`login`)',
         {
@@ -109,14 +108,10 @@ describe('User Service', () => {
       try {
         await service.create(createData);
       } catch (err) {
-        expect(err).toBeInstanceOf(ConflictException);
+        expect(err).toBeInstanceOf(ConflictError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.CONFLICT,
-          error: getReasonPhrase(StatusCodes.CONFLICT),
-          message: [{ field: 'login', errors: [expect.any(String)] }],
-        });
+        expect(response.description).toEqual({ login: [expect.any(String)] });
       }
     });
 
@@ -181,10 +176,10 @@ describe('User Service', () => {
       expect(result).toMatchObject(user);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getById('id')).rejects.toThrow(NotFoundException);
+      await expect(service.getById('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -228,12 +223,12 @@ describe('User Service', () => {
       expect(result).toMatchObject(user);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(
         service.updatePassword('id', updatePasswordData),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it('should verify old password hash', async () => {
@@ -246,12 +241,12 @@ describe('User Service', () => {
       );
     });
 
-    it('throws ForbiddenException if old password id not correct', async () => {
+    it('throws ForbiddenError if old password id not correct', async () => {
       vi.mocked(hashCompare).mockResolvedValue(false);
 
       await expect(
         service.updatePassword('id', updatePasswordData),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(ForbiddenError);
     });
 
     it('should hash new password', async () => {
@@ -277,11 +272,11 @@ describe('User Service', () => {
       expect(result).toMatchObject(user);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.update('id', updateData)).rejects.toThrow(
-        NotFoundException,
+        NotFoundError,
       );
     });
   });
@@ -299,10 +294,10 @@ describe('User Service', () => {
       expect(result).toMatchObject(user);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.delete('id')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -325,31 +320,27 @@ describe('User Service', () => {
     });
   });
 
-  describe('validateUserExistWithException', () => {
+  describe('validateUserExistWithBadRequestError', () => {
     beforeEach(() => {
       mockRepository.findById.mockResolvedValue(user);
     });
 
     it('should not return anything if exist', async () => {
-      const result = await service.validateUserExistWithException('id');
+      const result = await service.validateUserExistWithBadRequestError('id');
 
       expect(result).toBeUndefined();
     });
 
-    it('throws BadRequestException if not found', async () => {
+    it('throws BadRequestError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       try {
-        await service.validateUserExistWithException('id');
+        await service.validateUserExistWithBadRequestError('id');
       } catch (err) {
-        expect(err).toBeInstanceOf(BadRequestException);
+        expect(err).toBeInstanceOf(BadRequestError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.BAD_REQUEST,
-          error: getReasonPhrase(StatusCodes.BAD_REQUEST),
-          message: [{ field: 'login', errors: [expect.any(String)] }],
-        });
+        expect(response.description).toEqual({ login: [expect.any(String)] });
       }
     });
   });

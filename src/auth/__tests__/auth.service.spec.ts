@@ -15,7 +15,7 @@ import { UserRole } from '@prisma/client';
 import { hashCompare } from 'src/core/utils/hashing.util';
 import { AuthService } from '../auth.service';
 import { AuthEntity, AuthUserEntity } from '../models/auth.entity';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenError } from 'src/core/exceptions/app-errors';
 
 vi.mock('src/core/utils/hashing.util', () => ({
   hashCompare: vi.fn(),
@@ -154,15 +154,15 @@ describe('Auth Service', () => {
       expect(result).toMatchObject(tokens);
     });
 
-    it('throws ForbiddenException if no user found', async () => {
+    it('throws ForbiddenError if no user found', async () => {
       mockUserService.getOne.mockResolvedValue(null);
 
-      await expect(service.login(data)).rejects.toThrow(ForbiddenException);
+      await expect(service.login(data)).rejects.toThrow(ForbiddenError);
     });
 
-    it('throws ForbiddenException if password is invalid', async () => {
+    it('throws ForbiddenError if password is invalid', async () => {
       vi.mocked(hashCompare).mockResolvedValue(false);
-      await expect(service.login(data)).rejects.toThrow(ForbiddenException);
+      await expect(service.login(data)).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -197,16 +197,16 @@ describe('Auth Service', () => {
       });
     });
 
-    it('throws ForbiddenException if token is not valid', async () => {
+    it('throws ForbiddenError if token is not valid', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error());
 
-      await expect(service.refresh(data)).rejects.toThrow(ForbiddenException);
+      await expect(service.refresh(data)).rejects.toThrow(ForbiddenError);
     });
 
-    it('throws ForbiddenException if user id not found', async () => {
+    it('throws ForbiddenError if user id not found', async () => {
       mockUserService.getOne.mockResolvedValue(null);
 
-      await expect(service.refresh(data)).rejects.toThrow(ForbiddenException);
+      await expect(service.refresh(data)).rejects.toThrow(ForbiddenError);
     });
   });
 

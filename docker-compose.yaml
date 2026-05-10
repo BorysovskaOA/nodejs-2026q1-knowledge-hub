@@ -55,8 +55,12 @@ services:
       - TOKEN_REFRESH_EXPIRE_TIME=${TOKEN_REFRESH_EXPIRE_TIME}
       - RATE_LIMIT_TTL=${RATE_LIMIT_TTL}
       - RATE_LIMIT=${RATE_LIMIT}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_MAX_FILE_SIZE=${LOG_MAX_FILE_SIZE}
     ports:
       - '${PORT}:4000'
+    volumes:
+      - ./logs:/app/logs
     command: >
       sh -c "npx prisma migrate dev && npm run start:prod"
     healthcheck:

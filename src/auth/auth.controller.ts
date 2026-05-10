@@ -6,7 +6,6 @@ import {
   Post,
   Request,
   UseGuards,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -31,8 +30,9 @@ import {
   ExtendedExceptionResponse,
   GeneralExceptionResponse,
 } from 'src/core/utils/exception-responses.util';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
+import { UnauthorizedError } from 'src/core/exceptions/app-errors';
+import { CustomThrottlerGuard } from 'src/core/guards/custom-throttler.guard';
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
@@ -41,7 +41,7 @@ export class AuthController {
 
   @Post('signup')
   @PublicRote()
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @ApiCreatedResponse({ type: AuthUserEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiConflictResponse(ExtendedExceptionResponse(409))
@@ -53,7 +53,7 @@ export class AuthController {
   @Post('login')
   @PublicRote()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(CustomThrottlerGuard)
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
@@ -72,7 +72,11 @@ export class AuthController {
   async refresh(
     @Body(
       new GlobalValidationPipe({
-        exceptionFactory: () => new UnauthorizedException(),
+        exceptionFactory: () =>
+          new UnauthorizedError(
+            AuthController.name,
+            'Credentials are not valid',
+          ),
         expectedType: RefreshDto,
       }),
     )

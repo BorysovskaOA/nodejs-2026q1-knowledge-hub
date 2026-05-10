@@ -21,6 +21,7 @@ vi.mock('@prisma/client', () => ({
   PrismaClient: class {
     $connect = vi.fn();
     $disconnect = vi.fn();
+    $on = vi.fn();
   },
 }));
 
@@ -45,6 +46,17 @@ describe('PrismaService', () => {
     const connectSpy = vi.spyOn(service, '$connect');
     await service.onModuleInit();
     expect(connectSpy).toHaveBeenCalled();
+  });
+
+  it('should register event listeners on onModuleInit', async () => {
+    const onSpy = vi.spyOn(service, '$on');
+
+    await service.onModuleInit();
+
+    expect(onSpy).toHaveBeenCalledWith('query', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('error', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('warn', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('info', expect.any(Function));
   });
 
   it('should call $disconnect on onModuleDestroy', async () => {

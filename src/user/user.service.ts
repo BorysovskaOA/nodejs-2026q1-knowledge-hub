@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './models/create-user.dto';
 import { hash, hashCompare } from 'src/core/utils/hashing.util';
@@ -14,7 +8,13 @@ import { UserEntity } from './models/user.entity';
 import { Prisma } from '@prisma/client';
 import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
 import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from 'src/core/exceptions/app-errors';
+import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()
 export class UserService {
@@ -35,8 +35,9 @@ export class UserService {
       return await this.userRepository.create(userData, tx);
     } catch (err) {
       if (isUniqueConstraint(err))
-        throw new ConflictException(
-          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        throw new ConflictError(
+          UserService.name,
+          formatUniqueConstraintError(err),
         );
 
       throw err;
@@ -57,7 +58,8 @@ export class UserService {
   async getById(id: string, tx?: Prisma.TransactionClient) {
     const user = await this.userRepository.findById(id, tx);
 
-    if (!user) throw new NotFoundException();
+    if (!user)
+      throw new NotFoundError(CommentService.name, `User ${id} is not found`);
 
     return user;
   }
@@ -78,9 +80,11 @@ export class UserService {
       user.passwordHash,
     );
 
-    if (!oldPasswordValid) {
-      throw new ForbiddenException();
-    }
+    if (!oldPasswordValid)
+      throw new ForbiddenError(
+        CommentService.name,
+        'Credentials are not valid',
+      );
 
     const newHashedPassword = await hash(data.newPassword);
 
@@ -113,7 +117,7 @@ export class UserService {
     return !!user;
   }
 
-  async validateUserExistWithException(
+  async validateUserExistWithBadRequestError(
     id: string,
     fieldName: string = 'login',
     tx?: Prisma.TransactionClient,
@@ -121,12 +125,8 @@ export class UserService {
     const exist = await this.validateUserExist(id, tx);
 
     if (!exist) {
-      throw new BadRequestException({
-        statusCode: StatusCodes.BAD_REQUEST,
-        error: getReasonPhrase(StatusCodes.BAD_REQUEST),
-        message: [
-          { field: fieldName, errors: [`${fieldName} is already taken`] },
-        ],
+      throw new BadRequestError(UserService.name, {
+        [fieldName]: [`${fieldName} is already taken`],
       });
     }
   }

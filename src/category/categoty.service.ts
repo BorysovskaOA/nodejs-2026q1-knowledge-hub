@@ -1,15 +1,14 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './models/create-category.dto';
 import { Prisma } from '@prisma/client';
 import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
 import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from 'src/core/exceptions/app-errors';
 
 @Injectable()
 export class CategoryService {
@@ -20,8 +19,9 @@ export class CategoryService {
       return await this.categoryRepository.create(data);
     } catch (err) {
       if (isUniqueConstraint(err))
-        throw new ConflictException(
-          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        throw new ConflictError(
+          CategoryService.name,
+          formatUniqueConstraintError(err),
         );
 
       throw err;
@@ -35,7 +35,11 @@ export class CategoryService {
   async getById(id: string) {
     const category = await this.categoryRepository.findById(id);
 
-    if (!category) throw new NotFoundException();
+    if (!category)
+      throw new NotFoundError(
+        CategoryService.name,
+        `Category ${id} is not found`,
+      );
 
     return category;
   }
@@ -51,8 +55,9 @@ export class CategoryService {
       return await this.categoryRepository.update(category.id, data);
     } catch (err) {
       if (isUniqueConstraint(err))
-        throw new ConflictException(
-          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        throw new ConflictError(
+          CategoryService.name,
+          formatUniqueConstraintError(err),
         );
 
       throw err;
@@ -71,22 +76,15 @@ export class CategoryService {
     return !!user;
   }
 
-  async validateCategoryExistWithException(
+  async validateCategoryExistWithBadRequestError(
     id: string,
     fieldName: string = 'categoryId',
   ) {
     const exist = await this.validateCategoryExist(id);
 
     if (!exist)
-      throw new BadRequestException({
-        statusCode: StatusCodes.BAD_REQUEST,
-        error: getReasonPhrase(StatusCodes.BAD_REQUEST),
-        message: [
-          {
-            field: fieldName,
-            errors: [`${fieldName} does not exist`],
-          },
-        ],
+      throw new BadRequestError(CategoryService.name, {
+        [fieldName]: [`${fieldName} does not exist`],
       });
   }
 }

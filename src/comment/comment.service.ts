@@ -1,10 +1,5 @@
 import { CommentRepository } from './comment.repository';
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
 import { CreateCommentDto } from './models/create-comment.dto';
@@ -14,6 +9,7 @@ import {
 } from './models/comment-list-filter.dto';
 import { Prisma } from '@prisma/client';
 import { UpdateCommentDto } from './models/update-comment.dto';
+import { NotFoundError } from 'src/core/exceptions/app-errors';
 
 @Injectable()
 export class CommentService {
@@ -26,9 +22,13 @@ export class CommentService {
   ) {}
 
   async create(data: CreateCommentDto) {
-    await this.articleService.validateArticleExistWithException(data.articleId);
+    await this.articleService.validateArticleExistWithUnprocessableEntityError(
+      data.articleId,
+    );
     if (data.authorId)
-      await this.userService.validateUserExistWithException(data.authorId);
+      await this.userService.validateUserExistWithBadRequestError(
+        data.authorId,
+      );
 
     return this.commentRepository.create(data);
   }
@@ -44,7 +44,11 @@ export class CommentService {
   async getById(id: string) {
     const comment = await this.commentRepository.findById(id);
 
-    if (!comment) throw new NotFoundException();
+    if (!comment)
+      throw new NotFoundError(
+        CommentService.name,
+        `Comment ${id} is not found`,
+      );
 
     return comment;
   }

@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
 import { AuthzGuard } from 'src/core/guards/authz.guard';
 import { Reflector, ModuleRef } from '@nestjs/core';
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { ExecutionContext } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { ForbiddenError } from 'src/core/exceptions/app-errors';
 
 describe('Authz Guard', () => {
   let guard: AuthzGuard;
@@ -55,7 +56,7 @@ describe('Authz Guard', () => {
     expect(result).toBe(true);
   });
 
-  it('throws ForbiddenException if roles do not match', async () => {
+  it('throws ForbiddenError if roles do not match', async () => {
     vi.mocked(reflector.getAllAndOverride).mockReturnValue([
       { roles: [UserRole.admin] },
     ]);
@@ -63,9 +64,7 @@ describe('Authz Guard', () => {
       user: { role: UserRole.editor, id: '1' },
     });
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenError);
   });
 
   it('validates ownership via params constraints', async () => {
@@ -123,7 +122,7 @@ describe('Authz Guard', () => {
     expect(result).toBe(true);
   });
 
-  it('throws ForbiddenException if ownership check fails', async () => {
+  it('throws ForbiddenError if ownership check fails', async () => {
     const authOptions = [
       {
         roles: [UserRole.editor],
@@ -139,7 +138,7 @@ describe('Authz Guard', () => {
     };
 
     await expect(guard.canActivate(createMockContext(request))).rejects.toThrow(
-      ForbiddenException,
+      ForbiddenError,
     );
   });
 });

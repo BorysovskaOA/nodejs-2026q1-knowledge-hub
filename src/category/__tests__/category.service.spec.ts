@@ -1,15 +1,14 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from '../../core/exceptions/app-errors';
 import { CategoryEntity } from '../models/category.entity';
 import { CategoryService } from '../categoty.service';
 import { CategoryRepository } from '../category.repository';
 import { Prisma } from '@prisma/client';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 const category = new CategoryEntity({
   id: 'id',
@@ -66,7 +65,7 @@ describe('Category Service', () => {
       expect(result).toMatchObject(category);
     });
 
-    it("throws ConflictException if 'name' already exist", async () => {
+    it("throws ConflictError if 'name' already exist", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed on the fields: (`name`)',
         {
@@ -86,14 +85,10 @@ describe('Category Service', () => {
       try {
         await service.create(createData);
       } catch (err) {
-        expect(err).toBeInstanceOf(ConflictException);
+        expect(err).toBeInstanceOf(ConflictError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.CONFLICT,
-          error: getReasonPhrase(StatusCodes.CONFLICT),
-          message: [{ field: 'name', errors: [expect.any(String)] }],
-        });
+        expect(response.description).toEqual({ name: [expect.any(String)] });
       }
     });
 
@@ -130,10 +125,10 @@ describe('Category Service', () => {
       expect(result).toMatchObject(category);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getById('id')).rejects.toThrow(NotFoundException);
+      await expect(service.getById('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -174,15 +169,15 @@ describe('Category Service', () => {
       expect(result).toMatchObject(category);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.update('id', updateData)).rejects.toThrow(
-        NotFoundException,
+        NotFoundError,
       );
     });
 
-    it("throws ConflictException if 'name' already exist", async () => {
+    it("throws ConflictError if 'name' already exist", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed on the fields: (`name`)',
         {
@@ -202,14 +197,10 @@ describe('Category Service', () => {
       try {
         await service.update('id', updateData);
       } catch (err) {
-        expect(err).toBeInstanceOf(ConflictException);
+        expect(err).toBeInstanceOf(ConflictError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.CONFLICT,
-          error: getReasonPhrase(StatusCodes.CONFLICT),
-          message: [{ field: 'name', errors: [expect.any(String)] }],
-        });
+        expect(response.description).toEqual({ name: [expect.any(String)] });
       }
     });
 
@@ -233,10 +224,10 @@ describe('Category Service', () => {
       expect(result).toMatchObject(category);
     });
 
-    it('throws NotFoundException if not found', async () => {
+    it('throws NotFoundError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.delete('id')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('id')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -259,30 +250,29 @@ describe('Category Service', () => {
     });
   });
 
-  describe('validateUserExistWithException', () => {
+  describe('validateCategoryExistWithBadRequestError', () => {
     beforeEach(() => {
       mockRepository.findById.mockResolvedValue(category);
     });
 
     it('should not return anything if exist', async () => {
-      const result = await service.validateCategoryExistWithException('id');
+      const result =
+        await service.validateCategoryExistWithBadRequestError('id');
 
       expect(result).toBeUndefined();
     });
 
-    it('throws BadRequestException if not found', async () => {
+    it('throws BadRequestError if not found', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       try {
-        await service.validateCategoryExistWithException('id');
+        await service.validateCategoryExistWithBadRequestError('id');
       } catch (err) {
-        expect(err).toBeInstanceOf(BadRequestException);
+        expect(err).toBeInstanceOf(BadRequestError);
         const response = err.getResponse();
 
-        expect(response).toEqual({
-          statusCode: StatusCodes.BAD_REQUEST,
-          error: getReasonPhrase(StatusCodes.BAD_REQUEST),
-          message: [{ field: 'categoryId', errors: [expect.any(String)] }],
+        expect(response.description).toEqual({
+          categoryId: [expect.any(String)],
         });
       }
     });

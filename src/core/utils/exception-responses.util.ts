@@ -8,6 +8,7 @@ export function GeneralExceptionResponse(status: number): ApiResponseOptions {
       properties: {
         statusCode: { type: 'number', example: status },
         message: { type: 'string', example: STATUS_CODES[status] || 'Error' },
+        description: { type: 'string' },
       },
     },
     description: STATUS_CODES[status],
@@ -20,18 +21,12 @@ export function ExtendedExceptionResponse(status: number): ApiResponseOptions {
       type: 'object',
       properties: {
         statusCode: { type: 'number', example: status },
-        error: { type: 'string', example: STATUS_CODES[status] || 'Error' },
-        message: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              field: { type: 'string' },
-              errors: {
-                type: 'array',
-                items: { type: 'string' },
-              },
-            },
+        message: { type: 'string', example: STATUS_CODES[status] || 'Error' },
+        description: {
+          type: 'object',
+          additionalProperties: {
+            type: 'array',
+            items: { type: 'string' },
           },
         },
       },
