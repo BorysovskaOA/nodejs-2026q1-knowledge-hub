@@ -103,12 +103,23 @@ export class ArticleRepository {
     return item ? this.map(item) : null;
   }
 
-  async findMany(
+  async count(
     where: Prisma.ArticleWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    return this.db(tx).count({ where });
+  }
+
+  async findMany(
+    params: {
+      where: Prisma.ArticleWhereInput;
+      take?: number | undefined;
+      skip?: number | undefined;
+    },
     tx?: Prisma.TransactionClient,
   ): Promise<ArticleEntity[]> {
     const items = await this.db(tx).findMany({
-      where,
+      ...params,
       include: { tags: true },
     });
 
@@ -160,6 +171,24 @@ export class ArticleRepository {
     });
 
     return this.map(item);
+  }
+
+  async updateMany(
+    ids: string[],
+    data: Prisma.ArticleUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    await this.db(tx).updateMany({
+      where: { id: { in: ids } },
+      data,
+    });
+
+    const items = await this.db(tx).findMany({
+      where: { id: { in: ids } },
+      include: { tags: true },
+    });
+
+    return items.map(this.map);
   }
 
   async delete(

@@ -90,7 +90,7 @@ export class CommentController {
       constraints: {
         service: CommentService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
@@ -111,7 +111,7 @@ export class CommentController {
       constraints: {
         service: CommentService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])

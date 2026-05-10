@@ -8,11 +8,14 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiUnauthorizedResponse,
@@ -42,14 +45,27 @@ export class RagChatController {
   constructor(private ragChatService: RagChatService) {}
 
   @Post()
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor, UserRole.viewer],
+      constraints: {
+        bodyPropertyName: 'conversationId',
+        service: RagChatService,
+        userPropertyName: 'userId',
+      },
+    },
+  ])
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(LatencyInterceptor)
   @ApiOkResponse({ type: RagChatEntity })
+  @ApiConflictResponse(GeneralExceptionResponse(409))
   async chat(
     @Req() { user }: AuthenticatedRequest,
     @Body() chatDto: RagChatDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<RagChatEntity> {
-    return this.ragChatService.chat(user, chatDto);
+    return this.ragChatService.chat(user, chatDto, res);
   }
 
   @Get()
@@ -71,12 +87,24 @@ export class RagChatController {
     });
   }
 
-  @Post(':conversationId/history')
+  @Get(':id/history')
+  @Authorize([
+    { roles: [UserRole.admin] },
+    {
+      roles: [UserRole.editor, UserRole.viewer],
+      constraints: {
+        paramName: 'id',
+        service: RagChatService,
+        userPropertyName: 'userId',
+      },
+    },
+  ])
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RagConversationHistoryEntity })
   async getChatHistory(
     @Param() { id }: IdParamDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<RagConversationHistoryEntity> {
-    return this.ragChatService.getChatHistory(id);
+    return this.ragChatService.getChatHistory(id, res);
   }
 }

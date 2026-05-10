@@ -74,6 +74,7 @@ model Article {
   status    ArticleStatus @default(draft)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  isIndexed Boolean       @default(false)
   comments  Comment[]
   tags      Tag[]
 

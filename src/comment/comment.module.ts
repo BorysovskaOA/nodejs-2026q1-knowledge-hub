@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ArticleModule } from 'src/article/article.module';
 import { UserModule } from 'src/user/user.module';
@@ -7,11 +7,7 @@ import { CommentService } from './comment.service';
 import { CommentRepository } from './comment.repository';
 
 @Module({
-  imports: [
-    PrismaModule,
-    forwardRef(() => ArticleModule),
-    forwardRef(() => UserModule),
-  ],
+  imports: [PrismaModule, ArticleModule, UserModule],
   controllers: [CommentController],
   providers: [CommentService, CommentRepository],
   exports: [CommentService],

@@ -1,9 +1,11 @@
-import { AiMessageRole } from '@prisma/client';
+import { AiMessageRole, Prisma } from '@prisma/client';
+import { Response } from 'express';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QdrantService } from 'src/qdrant/qdrant.service';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { UserEntity } from 'src/user/models/user.entity';
 import {
+  ConflictError,
   InternalServerError,
   NotFoundError,
 } from 'src/core/exceptions/app-errors';
@@ -50,30 +52,55 @@ export class RagChatService implements OnModuleInit {
     );
   }
 
+  async getOne(where: Prisma.AiConversationWhereInput) {
+    await this.aiConversationRepository.getOne(where);
+  }
+
   async getAllChats(filter: ChatListFilterDto) {
     return await this.aiConversationRepository.findAll(filter);
   }
 
-  async chat(user: UserEntity, chatDto: RagChatDto) {
+  async chat(user: UserEntity, chatDto: RagChatDto, res: Response) {
     if (!chatDto.conversationId)
-      return this.createNewConversation(user.id, chatDto.question);
+      return this.createNewConversation(user.id, chatDto.question, res);
     return this.addNewQuestionToConversation(
       chatDto.conversationId,
       chatDto.question,
+      res,
     );
   }
 
-  async getChatHistory(conversationId: string) {
-    const messages =
-      await this.aiConversationRepository.findAllConversationMessages(
-        conversationId,
+  async getConversationWithMessages(id: string) {
+    const conversation =
+      await this.aiConversationRepository.findConversationWithMessages(id);
+
+    if (!conversation)
+      throw new NotFoundError(
+        `Conversation ${id} is not found`,
+        RagChatService.name,
       );
+
+    return conversation;
+  }
+
+  async getChatHistory(conversationId: string, res: Response) {
+    const conversation = await this.getConversationWithMessages(conversationId);
+    const remaining = Math.max(
+      0,
+      (MAX_MESSAGES_IN_CHAT - conversation.messages.length) / 2,
+    );
+
+    res.setHeader('X-Questions-Remaining', remaining.toString());
     return new RagConversationHistoryEntity({
-      history: messages,
+      history: conversation.messages,
     });
   }
 
-  private async createNewConversation(userId: string, question: string) {
+  private async createNewConversation(
+    userId: string,
+    question: string,
+    res: Response,
+  ) {
     const similarVectors = await this.getSimilarVectorsForChat(question);
 
     const { response, tokensUsed } = await this.geminiService.ask(
@@ -108,6 +135,13 @@ export class RagChatService implements OnModuleInit {
         ],
       );
 
+    const remaining = Math.max(
+      0,
+      (MAX_MESSAGES_IN_CHAT - conversation.messages.length) / 2,
+    );
+
+    res.setHeader('X-Questions-Remaining', remaining.toString());
+
     return new RagChatEntity({
       conversationId: conversation.id,
       answer: response.answer,
@@ -126,16 +160,14 @@ export class RagChatService implements OnModuleInit {
   private async addNewQuestionToConversation(
     conversationId: string,
     question: string,
+    res: Response,
   ) {
-    const conversation =
-      await this.aiConversationRepository.findConversationWithMessages(
-        conversationId,
-        MAX_MESSAGES_IN_CHAT,
-      );
+    const conversation = await this.getConversationWithMessages(conversationId);
 
-    if (!conversation)
-      throw new NotFoundError(
-        `Conversation ${conversationId} is not found`,
+    // Means that if we process this question it will go over limit
+    if (conversation.messages.length + 2 > MAX_MESSAGES_IN_CHAT)
+      throw new ConflictError(
+        `Cannot add more messages to conversation ${conversationId}`,
         RagChatService.name,
       );
 
@@ -174,6 +206,13 @@ export class RagChatService implements OnModuleInit {
           { role: AiMessageRole.model, content: response },
         ],
       );
+
+    const remaining = Math.max(
+      0,
+      (MAX_MESSAGES_IN_CHAT - updatedConversation.messages.length) / 2,
+    );
+
+    res.setHeader('X-Questions-Remaining', remaining.toString());
 
     return new RagChatEntity({
       conversationId: updatedConversation.id,

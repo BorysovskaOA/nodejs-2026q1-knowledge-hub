@@ -68,29 +68,29 @@ export class AiConversationRepository {
     return items.map(this.mapMessage);
   }
 
+  async getOne(
+    where: Prisma.AiConversationWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AiConversation | null> {
+    const item = await this.dbConversation(tx).findFirst({ where });
+
+    return item ? this.mapConversation(item) : null;
+  }
+
   async findConversationWithMessages(
     id: string,
-    aiMessagesLimit?: number,
     tx?: Prisma.TransactionClient,
   ): Promise<AiConversationWithMessagesEntity | null> {
     const item = await this.dbConversation(tx).findUnique({
       where: { id },
       include: {
         aiMessages: {
-          take: aiMessagesLimit,
-          orderBy: [{ createdAt: SortOrder.DESC }, { role: SortOrder.DESC }],
+          orderBy: [{ createdAt: SortOrder.ASC }, { role: SortOrder.ASC }],
         },
       },
     });
 
-    if (!item) return null;
-
-    // To have proper history
-    if (item.aiMessages) {
-      item.aiMessages.reverse();
-    }
-
-    return this.mapConversationWithMessages(item);
+    return item ? this.mapConversationWithMessages(item) : null;
   }
 
   async createConversationWithInitialMessages(

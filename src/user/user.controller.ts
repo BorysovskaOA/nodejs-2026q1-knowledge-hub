@@ -80,7 +80,7 @@ export class UserController {
       constraints: {
         service: UserService,
         paramName: 'id',
-        propertyName: 'id',
+        userPropertyName: 'id',
       },
     },
   ])
@@ -101,7 +101,7 @@ export class UserController {
       constraints: {
         service: UserService,
         paramName: 'id',
-        propertyName: 'id',
+        userPropertyName: 'id',
       },
     },
   ])

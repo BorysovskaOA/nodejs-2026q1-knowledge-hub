@@ -1,8 +1,9 @@
+import { RagService } from 'src/ai/rag/rag.service';
 import { ArticleRepository } from './article.repository';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateArticleDto } from './models/create-article.dto';
 import { CategoryService } from 'src/category/categoty.service';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 import { UpdateArticleDto } from './models/update-article.dto';
 import {
   ArticleListFiltersDto,
@@ -17,16 +18,18 @@ import {
 } from 'src/core/exceptions/app-errors';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ArticleService {
   constructor(
     private articleRepository: ArticleRepository,
-    @Inject(forwardRef(() => CategoryService))
     private categoryService: CategoryService,
-    @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    @Inject(forwardRef(() => RagService))
+    private ragService: RagService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly prisma: PrismaService,
   ) {}
 
   async create(data: CreateArticleDto) {
@@ -66,8 +69,27 @@ export class ArticleService {
     return await this.articleRepository.findOne(where);
   }
 
-  async getMany(where: Prisma.ArticleWhereInput) {
-    return await this.articleRepository.findMany(where);
+  async count(where: Prisma.ArticleWhereInput) {
+    return await this.articleRepository.count(where);
+  }
+
+  async getMany(
+    params: {
+      where: Prisma.ArticleWhereInput;
+      take?: number | undefined;
+      skip?: number | undefined;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    return await this.articleRepository.findMany(params, tx);
+  }
+
+  async updateMany(
+    ids: string[],
+    data: Prisma.ArticleUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    return await this.articleRepository.updateMany(ids, data, tx);
   }
 
   async update(id: string, data: UpdateArticleDto) {
@@ -91,23 +113,35 @@ export class ArticleService {
         ArticleService.name,
       );
 
-    const updatedArticle = await this.articleRepository.update(
-      article.id,
-      data,
-    );
+    return this.prisma.$transaction(async (tx) => {
+      const updatedArticle = await this.articleRepository.update(
+        article.id,
+        {
+          ...data,
+          isIndexed: false,
+        },
+        tx,
+      );
 
-    this.cacheManager.set(
-      `article:${id}:lastUpdated`,
-      updatedArticle.updatedAt.toString(),
-      0,
-    );
-    return updatedArticle;
+      this.cacheManager.set(
+        `article:${id}:lastUpdated`,
+        updatedArticle.updatedAt.toString(),
+        0,
+      );
+      await this.ragService.reindexArticle(article.id, tx);
+
+      return updatedArticle;
+    });
   }
 
   async delete(id: string) {
     const article = await this.getById(id);
 
-    return this.articleRepository.delete(article.id);
+    const response = await this.articleRepository.delete(article.id);
+
+    await this.ragService.deleteArticleIndex(id, true);
+
+    return response;
   }
 
   async validateArticleExist(id: string) {

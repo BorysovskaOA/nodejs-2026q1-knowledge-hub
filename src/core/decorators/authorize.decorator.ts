@@ -3,17 +3,21 @@ import { UserRole } from '@prisma/client';
 export interface AuthParamConstraints {
   service: any;
   paramName: string;
-  propertyName: string;
+  userPropertyName: string;
 }
 
 export interface AuthBodyConstraints {
   bodyPropertyName: string;
   required?: boolean;
+  service?: any;
+  userPropertyName?: string;
 }
 
 export interface AuthQueryConstraints {
   queryPropertyName: string;
   required?: boolean;
+  service?: any;
+  userPropertyName?: string;
 }
 
 export interface AuthzOption {

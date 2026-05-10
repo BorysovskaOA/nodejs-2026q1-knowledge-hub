@@ -1,29 +1,7 @@
 import { ApiProperty, ApiSchema } from '@nestjs/swagger';
-import {
-  AiMessage,
-  AiConversation as PrismaConversation,
-} from '@prisma/client';
+import { AiConversation as PrismaConversation } from '@prisma/client';
 import { Transform } from 'class-transformer';
-
-export class AiConversationWithMessagesEntity implements PrismaConversation {
-  id: string;
-  title: string;
-  userId: string;
-
-  @ApiProperty({ type: 'number' })
-  @Transform(({ value }) => value.getTime())
-  createdAt: Date;
-
-  @ApiProperty({ type: 'number' })
-  @Transform(({ value }) => value.getTime())
-  updatedAt: Date;
-
-  messages: AiMessage[];
-
-  constructor(partial: Partial<AiConversationWithMessagesEntity>) {
-    Object.assign(this, partial);
-  }
-}
+import { AiMessageEntity } from './message.entity';
 
 @ApiSchema({ name: 'Conversation' })
 export class AiConversationEntity implements PrismaConversation {
@@ -41,5 +19,14 @@ export class AiConversationEntity implements PrismaConversation {
 
   constructor(partial: Partial<AiConversationEntity>) {
     Object.assign(this, partial);
+  }
+}
+
+export class AiConversationWithMessagesEntity extends AiConversationEntity {
+  messages: AiMessageEntity[];
+
+  constructor({ messages, ...other }: AiConversationWithMessagesEntity) {
+    super(other);
+    this.messages = messages || [];
   }
 }

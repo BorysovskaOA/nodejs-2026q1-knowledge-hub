@@ -49,7 +49,7 @@ export class QdrantService {
     } = {},
   ) {
     this.logger.debug({ collection, searchOptions }, 'Search');
-    return this.callWithErrorHandling(
+    const result = await this.callWithErrorHandling(
       this.client.search(collection, {
         vector,
         with_payload: true,
@@ -60,6 +60,39 @@ export class QdrantService {
         },
       }),
     );
+
+    return result;
+  }
+
+  async countVectors(
+    collection: string,
+    metadataKey: string,
+    metadataValue: any,
+  ) {
+    this.logger.debug(
+      { collection, metadataKey, metadataValue },
+      'Count vectors',
+    );
+    const result = await this.callWithErrorHandling(
+      this.client.count(collection, {
+        filter: {
+          must: [{ key: metadataKey, match: { value: metadataValue } }],
+        },
+      }),
+    );
+    return result.count;
+  }
+
+  async scanVectors(collection: string, filter: Schemas['Filter']) {
+    this.logger.debug({ collection, filter }, 'Scan');
+    const result = await this.callWithErrorHandling(
+      this.client.scroll(collection, {
+        filter,
+        with_payload: true,
+        with_vector: false,
+      }),
+    );
+    return result.points;
   }
 
   async deleteIndexes(
@@ -76,6 +109,15 @@ export class QdrantService {
         filter: {
           must: [{ key: metadataKey, match: { value: metadataValue } }],
         },
+      }),
+    );
+  }
+
+  async deletePoints(collection: string, pointsToDelete: string[]) {
+    this.logger.debug({ collection, pointsToDelete }, 'Deleting points');
+    return this.callWithErrorHandling(
+      this.client.delete(collection, {
+        points: pointsToDelete,
       }),
     );
   }

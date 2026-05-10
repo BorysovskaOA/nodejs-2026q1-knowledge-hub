@@ -1,4 +1,6 @@
-export const splitArticleIntoChunks = (
+import { ArticleEntity } from 'src/article/models/article.entity';
+
+const splitIntoChunks = (
   content: string,
   size: number,
   overlap: number,
@@ -19,4 +21,22 @@ export const splitArticleIntoChunks = (
   }
 
   return chunks.filter((c) => c.trim().length > 0);
+};
+
+export const splitArticleInChunksWithPayload = (article: ArticleEntity) => {
+  const chunks = splitIntoChunks(
+    article.content,
+    Number(process.env.RAG_CHUNK_SIZE as string),
+    Number(process.env.RAG_CHUNK_OVERLAP as string),
+  );
+
+  return chunks.map((chunk, index) => ({
+    articleId: article.id,
+    title: article.title,
+    status: article.status,
+    categoryId: article.categoryId,
+    tags: article.tags,
+    content: chunk,
+    chunkIndex: index,
+  }));
 };

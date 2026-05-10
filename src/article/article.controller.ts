@@ -89,7 +89,7 @@ export class ArticleController {
       constraints: {
         service: ArticleService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
@@ -111,7 +111,7 @@ export class ArticleController {
       constraints: {
         service: ArticleService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
