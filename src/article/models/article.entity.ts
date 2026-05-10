@@ -1,4 +1,4 @@
-import { ApiSchema } from '@nestjs/swagger';
+import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import { ArticleStatus, Article as PrismaArticle } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
@@ -12,9 +12,11 @@ export class ArticleEntity implements PrismaArticle {
   categoryId: string | null;
   tags: string[];
 
+  @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())
   createdAt: Date;
 
+  @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())
   updatedAt: Date;
 

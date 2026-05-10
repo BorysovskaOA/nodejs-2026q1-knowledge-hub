@@ -13,6 +13,7 @@ import {
   CommentListFiltersDto,
   CommentListFiltersPaginatedDto,
 } from './models/comment-list-filter.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CommentService {
@@ -41,15 +42,19 @@ export class CommentService {
   }
 
   async getById(id: string) {
-    const comment = await this.commentRepository.findOne(id);
+    const comment = await this.commentRepository.findById(id);
 
     if (!comment) throw new NotFoundException();
 
     return comment;
   }
 
+  async getOne(where: Prisma.CommentWhereUniqueInput) {
+    return await this.commentRepository.findUnique(where);
+  }
+
   async update(id: string, data: UpdateArticleDto) {
-    const comment = this.commentRepository.findOne(id);
+    const comment = this.commentRepository.findById(id);
 
     if (!comment) throw new NotFoundException();
 
@@ -57,7 +62,7 @@ export class CommentService {
   }
 
   async delete(id: string) {
-    const comment = await this.commentRepository.findOne(id);
+    const comment = await this.commentRepository.findById(id);
 
     if (!comment) throw new NotFoundException();
 

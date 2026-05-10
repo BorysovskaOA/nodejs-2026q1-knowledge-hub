@@ -75,11 +75,19 @@ export class ArticleRepository {
     return new PaginatedResponseDto(items.map(this.map), total, page, limit);
   }
 
-  async findOne(id: string): Promise<ArticleEntity | null> {
+  async findById(id: string): Promise<ArticleEntity | null> {
     const item = await this.db.findUnique({
       where: { id },
       include: { tags: true },
     });
+
+    return item ? this.map(item) : null;
+  }
+
+  async findUnique(
+    where: Prisma.ArticleWhereUniqueInput,
+  ): Promise<ArticleEntity | null> {
+    const item = await this.db.findUnique({ where, include: { tags: true } });
 
     return item ? this.map(item) : null;
   }

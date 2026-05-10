@@ -7,5 +7,16 @@ export const generateSwaggerDocumentConfig = () => {
       'Knowledge hub service for managing articles, categories, and comments',
     )
     .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'accessToken',
+    )
     .build();
 };

@@ -1,20 +1,28 @@
-import { ApiSchema } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiSchema } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
 import { UserRole, User as PrismaUser } from '@prisma/client';
 
 @ApiSchema({ name: 'User' })
 export class UserEntity implements PrismaUser {
   id: string;
+  login: string;
 
+  @ApiHideProperty()
   @Exclude()
   passwordHash: string;
 
-  login: string;
+  @ApiHideProperty()
+  @Exclude()
+  tokenVersion: number;
+
+  @ApiProperty({ enum: UserRole })
   role: UserRole;
 
+  @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())
   createdAt: Date;
 
+  @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())
   updatedAt: Date;
 

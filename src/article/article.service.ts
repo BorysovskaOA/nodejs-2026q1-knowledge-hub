@@ -14,6 +14,7 @@ import {
   ArticleListFiltersDto,
   ArticleListFiltersPaginatdDto,
 } from './models/article-list-filter.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArticleService {
@@ -45,15 +46,19 @@ export class ArticleService {
   }
 
   async getById(id: string) {
-    const article = await this.articleRepository.findOne(id);
+    const article = await this.articleRepository.findById(id);
 
     if (!article) throw new NotFoundException();
 
     return article;
   }
 
+  async getOne(where: Prisma.ArticleWhereUniqueInput) {
+    return await this.articleRepository.findUnique(where);
+  }
+
   async update(id: string, data: UpdateArticleDto) {
-    const article = await this.articleRepository.findOne(id);
+    const article = await this.articleRepository.findById(id);
 
     if (!article) throw new NotFoundException();
 
@@ -66,7 +71,7 @@ export class ArticleService {
   }
 
   async delete(id: string) {
-    const article = await this.articleRepository.findOne(id);
+    const article = await this.articleRepository.findById(id);
 
     if (!article) throw new NotFoundException();
 
@@ -74,7 +79,7 @@ export class ArticleService {
   }
 
   async validateArticleExist(id: string) {
-    const user = await this.articleRepository.findOne(id);
+    const user = await this.articleRepository.findById(id);
 
     return !!user;
   }

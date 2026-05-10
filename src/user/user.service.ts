@@ -6,22 +6,24 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './models/create-user.dto';
-import { hashPassword, verifyPassword } from './utils/password-hashing.util';
+import { hash, hashCompare } from '../core/utils/hashing.util';
 import { UpdatePasswordDto } from './models/update-password.dto';
 import { UserListFiltersPaginatedDto } from './models/user-list-filter.dto';
+import { UserEntity } from './models/user.entity';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
-  async create(data: CreateUserDto) {
+  async create(data: CreateUserDto, tx?: Prisma.TransactionClient) {
     const { password, ...restData } = data;
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hash(password);
     const userData = {
       ...restData,
       passwordHash: hashedPassword,
     };
-    return this.userRepository.create(userData);
+    return this.userRepository.create(userData, tx);
   }
 
   async getAll() {
@@ -33,19 +35,23 @@ export class UserService {
   }
 
   async getById(id: string) {
-    const user = await this.userRepository.findOne(id);
+    const user = await this.userRepository.findById(id);
 
     if (!user) throw new NotFoundException();
 
     return user;
   }
 
-  async update(id: string, data: UpdatePasswordDto) {
-    const user = await this.userRepository.findOne(id);
+  async getOne(where: Prisma.UserWhereUniqueInput) {
+    return await this.userRepository.findUnique(where);
+  }
+
+  async updatePassword(id: string, data: UpdatePasswordDto) {
+    const user = await this.userRepository.findById(id);
 
     if (!user) throw new NotFoundException();
 
-    const oldPasswordValid = await verifyPassword(
+    const oldPasswordValid = await hashCompare(
       data.oldPassword,
       user.passwordHash,
     );
@@ -54,15 +60,27 @@ export class UserService {
       throw new ForbiddenException();
     }
 
-    const newHashedPassword = await hashPassword(data.newPassword);
+    const newHashedPassword = await hash(data.newPassword);
 
     return this.userRepository.update(id, {
       passwordHash: newHashedPassword,
     });
   }
 
+  async update(
+    id: string,
+    data: Partial<UserEntity>,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const user = await this.userRepository.findById(id, tx);
+
+    if (!user) throw new NotFoundException();
+
+    return this.userRepository.update(id, data, tx);
+  }
+
   async delete(id: string) {
-    const user = await this.userRepository.findOne(id);
+    const user = await this.userRepository.findById(id);
 
     if (!user) throw new NotFoundException();
 
@@ -70,7 +88,7 @@ export class UserService {
   }
 
   async validateUserExist(id: string) {
-    const user = await this.userRepository.findOne(id);
+    const user = await this.userRepository.findById(id);
 
     return !!user;
   }

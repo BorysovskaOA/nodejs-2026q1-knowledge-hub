@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './models/create-category.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
@@ -19,15 +20,19 @@ export class CategoryService {
   }
 
   async getById(id: string) {
-    const category = await this.categoryRepository.findOne(id);
+    const category = await this.categoryRepository.findById(id);
 
     if (!category) throw new NotFoundException();
 
     return category;
   }
 
+  async getOne(where: Prisma.CategoryWhereUniqueInput) {
+    return await this.categoryRepository.findUnique(where);
+  }
+
   async update(id: string, data: CreateCategoryDto) {
-    const category = await this.categoryRepository.findOne(id);
+    const category = await this.categoryRepository.findById(id);
 
     if (!category) throw new NotFoundException();
 
@@ -35,7 +40,7 @@ export class CategoryService {
   }
 
   async delete(id: string) {
-    const category = await this.categoryRepository.findOne(id);
+    const category = await this.categoryRepository.findById(id);
 
     if (!category) throw new NotFoundException();
 
@@ -43,7 +48,7 @@ export class CategoryService {
   }
 
   async validateCategoryExist(id: string) {
-    const user = await this.categoryRepository.findOne(id);
+    const user = await this.categoryRepository.findById(id);
 
     return !!user;
   }
