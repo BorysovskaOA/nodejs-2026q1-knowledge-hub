@@ -16,8 +16,12 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
@@ -58,8 +62,16 @@ export class RagChatController {
   ])
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(LatencyInterceptor)
+  @ApiOperation({
+    summary:
+      'Creates a new conversation based on internal data or allows to add messages to existing conversation',
+    description: `Allows to provide up to ${process.env.RAG_CONVERSATION_MAX_MESSAGES} messages in one conversation.`,
+  })
   @ApiOkResponse({ type: RagChatEntity })
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   @ApiConflictResponse(GeneralExceptionResponse(409))
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
+  @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
   async chat(
     @Req() { user }: AuthenticatedRequest,
     @Body() chatDto: RagChatDto,
@@ -76,7 +88,11 @@ export class RagChatController {
       constraints: { queryPropertyName: 'userId' },
     },
   ])
+  @ApiOperation({
+    summary: 'Provides a list of all the conversations of the user',
+  })
   @ApiOkResponse({ type: AiConversationEntity })
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async getAllChats(
     @Req() { user }: AuthenticatedRequest,
     @Query() filter: ChatListFilterDto,
@@ -100,7 +116,11 @@ export class RagChatController {
     },
   ])
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Provides a list of all the messages in conversation',
+  })
   @ApiOkResponse({ type: RagConversationHistoryEntity })
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async getChatHistory(
     @Param() { id }: IdParamDto,
     @Res({ passthrough: true }) res: Response,

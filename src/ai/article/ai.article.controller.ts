@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
@@ -52,6 +53,7 @@ export class AiArticleController {
 
   @Post('summarize')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Creates a summary of the article' })
   @ApiOkResponse({ type: SummarizeArticleEntity })
   async summarizeArticle(
     @Param() { id }: IdParamDto,
@@ -62,6 +64,7 @@ export class AiArticleController {
 
   @Post('translate')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Translates an article' })
   @ApiOkResponse({ type: TranslateArticleEntity })
   async translateArticle(
     @Param() { id }: IdParamDto,
@@ -72,6 +75,7 @@ export class AiArticleController {
 
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Creates an analysis of an article' })
   @ApiOkResponse({ type: AnalyzeArticleEntity })
   async analyzeArticle(
     @Param() { id }: IdParamDto,

@@ -52,6 +52,10 @@ export class GeminiService {
     this.logger = new Logger('GEMINI');
   }
 
+  async getAvailableModelsList() {
+    return this.callWithErrorHandling(this.genAi.models.list());
+  }
+
   getEmbeddingsModelVectorSize() {
     return this.embeddingOutputDimensionality;
   }

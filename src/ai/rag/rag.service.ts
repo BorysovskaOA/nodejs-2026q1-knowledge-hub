@@ -22,9 +22,10 @@ import {
 } from 'src/core/exceptions/app-errors';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ArticleVectorPointData } from './models/article-vector-point-data.interface';
-
-const ARTICLE_BATCH_SIZE = 5;
-const MAX_ARTICLES_TO_INDEX_ONCE = 100;
+import {
+  ARTICLE_BATCH_SIZE,
+  MAX_ARTICLES_TO_INDEX_ONCE,
+} from './models/constants';
 
 @Injectable()
 export class RagService implements OnModuleInit {

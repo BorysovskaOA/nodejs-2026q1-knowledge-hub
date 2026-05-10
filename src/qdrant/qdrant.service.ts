@@ -16,15 +16,21 @@ export class QdrantService {
     this.logger = new Logger('QDRANT');
   }
 
+  async getCollections() {
+    return this.callWithErrorHandling(this.client.getCollections());
+  }
+
   async ensureCollectionExists(collection: string, vectorSize: number) {
     const response = await this.client.getCollections();
     const exists = response.collections.some((c) => c.name === collection);
 
     if (!exists) {
       this.logger.debug({ collection, created: true }, 'Collection');
-      await this.client.createCollection(collection, {
-        vectors: { size: vectorSize, distance: 'Cosine' },
-      });
+      await this.callWithErrorHandling(
+        this.client.createCollection(collection, {
+          vectors: { size: vectorSize, distance: 'Cosine' },
+        }),
+      );
     }
     this.logger.debug({ collection }, 'Collection');
   }

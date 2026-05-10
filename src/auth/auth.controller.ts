@@ -15,6 +15,7 @@ import {
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -46,6 +47,7 @@ export class AuthController {
       ttl: Number(process.env.RATE_LIMIT_TTL),
     },
   })
+  @ApiOperation({ summary: 'Allows user to signup in application' })
   @ApiCreatedResponse({ type: AuthUserEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiConflictResponse(ExtendedExceptionResponse(409))
@@ -63,6 +65,7 @@ export class AuthController {
       ttl: Number(process.env.RATE_LIMIT_TTL),
     },
   })
+  @ApiOperation({ summary: 'Allows user to login in application' })
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
@@ -75,6 +78,9 @@ export class AuthController {
   @PublicRote()
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RefreshDto })
+  @ApiOperation({
+    summary: 'Allows user refresh accessToken based on refreshToken',
+  })
   @ApiOkResponse({ type: AuthEntity })
   @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
@@ -97,6 +103,7 @@ export class AuthController {
   @Post('logout')
   @ApiBearerAuth('accessToken')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Allows user to logout of applicattion' })
   @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
   async logout(@Request() req: AuthenticatedRequest) {
     this.authService.logout(req.user);
