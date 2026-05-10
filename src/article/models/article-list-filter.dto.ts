@@ -27,7 +27,7 @@ export class ArticleListFiltersDto {
   tag?: string;
 }
 
-export class ArticleListFiltersPaginatdDto extends IntersectionType(
+export class ArticleListFiltersPaginatedDto extends IntersectionType(
   ArticleListFiltersDto,
   PaginationDto,
   WithSortingDto<ArticleEntity>(

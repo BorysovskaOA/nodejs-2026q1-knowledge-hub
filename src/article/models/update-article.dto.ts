@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  ValidateIf,
 } from 'class-validator';
 import { ArticleStatus } from '@prisma/client';
 import { ApiSchema } from '@nestjs/swagger';
@@ -27,7 +26,6 @@ export class UpdateArticleDto {
   status?: ArticleStatus;
 
   @IsOptional()
-  @ValidateIf((_, value) => value !== null)
   @IsUUID()
   categoryId?: string | null;
 

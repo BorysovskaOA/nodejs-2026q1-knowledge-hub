@@ -1,6 +1,7 @@
-import { IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class IdParamDto {
+  @IsNotEmpty()
   @IsUUID()
   id: string;
 }

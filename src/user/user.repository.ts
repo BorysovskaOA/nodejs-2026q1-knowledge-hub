@@ -11,34 +11,32 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   private db(tx?: Prisma.TransactionClient) {
-    return tx ? tx.user : this.prisma.user;
+    return (tx || this.prisma).user;
   }
 
   private map(data: User): UserEntity {
     return new UserEntity(data);
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    const items = await this.db().findMany();
+  async findAll(tx?: Prisma.TransactionClient): Promise<UserEntity[]> {
+    const items = await this.db(tx).findMany();
 
     return items.map(this.map);
   }
 
-  async findAllPaginated({
-    page,
-    limit,
-    sortKey,
-    sortOrder,
-  }: UserListFiltersPaginatedDto): Promise<PaginatedResponseDto<UserEntity>> {
+  async findAllPaginated(
+    { page, limit, sortKey, sortOrder }: UserListFiltersPaginatedDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaginatedResponseDto<UserEntity>> {
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      this.db().findMany({
+      this.db(tx).findMany({
         take: limit,
         skip: skip,
         orderBy: sortKey ? { [sortKey]: sortOrder.toLowerCase() } : undefined,
       }),
-      this.db().count(),
+      this.db(tx).count(),
     ]);
 
     return new PaginatedResponseDto(items.map(this.map), total, page, limit);
@@ -53,10 +51,11 @@ export class UserRepository {
     return item ? this.map(item) : null;
   }
 
-  async findUnique(
-    where: Prisma.UserWhereUniqueInput,
+  async findOne(
+    where: Prisma.UserWhereInput,
+    tx?: Prisma.TransactionClient,
   ): Promise<UserEntity | null> {
-    const item = await this.db().findUnique({ where });
+    const item = await this.db(tx).findFirst({ where });
 
     return item ? this.map(item) : null;
   }
@@ -83,8 +82,8 @@ export class UserRepository {
     return this.map(item);
   }
 
-  async delete(id: string): Promise<UserEntity> {
-    const item = await this.db().delete({
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<UserEntity> {
+    const item = await this.db(tx).delete({
       where: { id },
     });
 

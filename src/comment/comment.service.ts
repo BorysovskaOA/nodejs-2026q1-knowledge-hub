@@ -8,12 +8,12 @@ import {
 import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
 import { CreateCommentDto } from './models/create-comment.dto';
-import { UpdateArticleDto } from 'src/article/models/update-article.dto';
 import {
   CommentListFiltersDto,
   CommentListFiltersPaginatedDto,
 } from './models/comment-list-filter.dto';
 import { Prisma } from '@prisma/client';
+import { UpdateCommentDto } from './models/update-comment.dto';
 
 @Injectable()
 export class CommentService {
@@ -49,23 +49,19 @@ export class CommentService {
     return comment;
   }
 
-  async getOne(where: Prisma.CommentWhereUniqueInput) {
-    return await this.commentRepository.findUnique(where);
+  async getOne(where: Prisma.CommentWhereInput) {
+    return await this.commentRepository.findOne(where);
   }
 
-  async update(id: string, data: UpdateArticleDto) {
-    const comment = this.commentRepository.findById(id);
+  async update(id: string, data: UpdateCommentDto) {
+    const comment = await this.getById(id);
 
-    if (!comment) throw new NotFoundException();
-
-    return this.commentRepository.update(id, data);
+    return this.commentRepository.update(comment.id, data);
   }
 
   async delete(id: string) {
-    const comment = await this.commentRepository.findById(id);
+    const comment = await this.getById(id);
 
-    if (!comment) throw new NotFoundException();
-
-    return this.commentRepository.delete(id);
+    return this.commentRepository.delete(comment.id);
   }
 }

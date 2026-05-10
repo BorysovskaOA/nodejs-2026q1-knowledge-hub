@@ -1,11 +1,11 @@
 import { IntersectionType } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 import { PaginationDto } from 'src/core/dtos/pagination.dto';
 import { WithSortingDto } from 'src/core/dtos/sorting.dto';
 import { CommentEntity } from './comment.entity';
 
 export class CommentListFiltersDto {
-  @IsOptional()
+  @IsNotEmpty()
   @IsUUID()
   articleId?: string;
 }

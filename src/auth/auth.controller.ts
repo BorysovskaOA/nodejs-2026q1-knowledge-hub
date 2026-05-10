@@ -6,32 +6,36 @@ import {
   Post,
   Request,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ValidationResponseDto } from 'src/core/dtos/validation-response.dto';
 import { AuthService } from './auth.service';
 import { SignupDto } from './models/signup.dto';
 import { LoginDto } from './models/login.dto';
 import { RefreshDto } from './models/refresh.dto';
 import { AuthEntity, AuthUserEntity } from './models/auth.entity';
 import { PublicRote } from '../core/decorators/public-route.decorator';
-import { AuthenticatedRequest } from '../core/interfaces/authenticated_request.interface';
-import { ExceptionResponse } from 'src/core/utils/exception-response.util';
+import { AuthenticatedRequest } from '../core/interfaces/authenticated-request.interface';
+import {
+  ExtendedExceptionResponse,
+  GeneralExceptionResponse,
+} from 'src/core/utils/exception-responses.util';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { UnauthorizedValidationPipe } from './unauthorized-validation.pipe';
-import { RawBody } from 'src/core/decorators/raw-body-decorator';
+import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
 
 @Controller('auth')
-@ApiInternalServerErrorResponse(ExceptionResponse(500))
+@ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -39,7 +43,9 @@ export class AuthController {
   @PublicRote()
   @UseGuards(ThrottlerGuard)
   @ApiCreatedResponse({ type: AuthUserEntity })
-  @ApiBadRequestResponse({ type: ValidationResponseDto })
+  @ApiBadRequestResponse(ExtendedExceptionResponse(400))
+  @ApiConflictResponse(ExtendedExceptionResponse(409))
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
   async signup(@Body() signupDto: SignupDto): Promise<AuthUserEntity> {
     return this.authService.signup(signupDto);
   }
@@ -49,8 +55,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(ThrottlerGuard)
   @ApiOkResponse({ type: AuthEntity })
-  @ApiBadRequestResponse({ type: ValidationResponseDto })
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiBadRequestResponse(ExtendedExceptionResponse(400))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
+  @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
   async login(@Body() loginDto: LoginDto): Promise<AuthEntity> {
     return this.authService.login(loginDto);
   }
@@ -60,10 +67,16 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ type: AuthEntity })
-  @ApiUnauthorizedResponse(ExceptionResponse(401))
-  @ApiForbiddenResponse(ExceptionResponse(403))
+  @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
+  @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async refresh(
-    @RawBody(UnauthorizedValidationPipe) refreshDto: RefreshDto,
+    @Body(
+      new GlobalValidationPipe({
+        exceptionFactory: () => new UnauthorizedException(),
+        expectedType: RefreshDto,
+      }),
+    )
+    refreshDto,
   ): Promise<AuthEntity> {
     return this.authService.refresh(refreshDto);
   }
@@ -71,7 +84,7 @@ export class AuthController {
   @Post('logout')
   @ApiBearerAuth('accessToken')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiUnauthorizedResponse(ExceptionResponse(401))
+  @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
   async logout(@Request() req: AuthenticatedRequest) {
     this.authService.logout(req.user);
   }

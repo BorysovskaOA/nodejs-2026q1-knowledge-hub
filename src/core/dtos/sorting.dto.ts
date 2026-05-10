@@ -5,12 +5,6 @@ export enum SortOrder {
   DESC = 'desc',
 }
 
-// Need to duplicated for Base repository
-export type SortType<T> = {
-  sortKey?: keyof T;
-  sortOrder: SortOrder;
-};
-
 export function WithSortingDto<T>(
   allowedFields: (keyof T)[],
   defaultSortKey?: keyof T,

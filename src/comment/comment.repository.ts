@@ -13,8 +13,8 @@ import { CreateCommentDto } from './models/create-comment.dto';
 export class CommentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private get db() {
-    return this.prisma.comment;
+  private db(tx?: Prisma.TransactionClient) {
+    return (tx || this.prisma).comment;
   }
 
   private map(data: Comment): CommentEntity {
@@ -27,55 +27,66 @@ export class CommentRepository {
     };
   }
 
-  async findAll(filter: CommentListFiltersDto): Promise<CommentEntity[]> {
-    const items = await this.db.findMany({
+  async findAll(
+    filter: CommentListFiltersDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CommentEntity[]> {
+    const items = await this.db(tx).findMany({
       where: this.formatFindAllWhereFilter(filter),
     });
 
     return items.map(this.map);
   }
 
-  async findAllPaginated({
-    page,
-    limit,
-    sortKey,
-    sortOrder,
-    ...restFilter
-  }: CommentListFiltersPaginatedDto): Promise<
-    PaginatedResponseDto<CommentEntity>
-  > {
+  async findAllPaginated(
+    {
+      page,
+      limit,
+      sortKey,
+      sortOrder,
+      ...restFilter
+    }: CommentListFiltersPaginatedDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaginatedResponseDto<CommentEntity>> {
     const whereFilter = this.formatFindAllWhereFilter(restFilter);
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      this.db.findMany({
+      this.db(tx).findMany({
         where: whereFilter,
         take: limit,
         skip: skip,
         orderBy: sortKey ? { [sortKey]: sortOrder.toLowerCase() } : undefined,
       }),
-      this.db.count({ where: whereFilter }),
+      this.db(tx).count({ where: whereFilter }),
     ]);
 
     return new PaginatedResponseDto(items.map(this.map), total, page, limit);
   }
 
-  async findById(id: string): Promise<CommentEntity | null> {
-    const item = await this.db.findUnique({ where: { id } });
-
-    return item ? this.map(item) : null;
-  }
-
-  async findUnique(
-    where: Prisma.CommentWhereUniqueInput,
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<CommentEntity | null> {
-    const item = await this.db.findUnique({ where });
+    const item = await this.db(tx).findUnique({ where: { id } });
 
     return item ? this.map(item) : null;
   }
 
-  async create(data: CreateCommentDto): Promise<CommentEntity> {
-    const item = await this.db.create({ data });
+  async findOne(
+    where: Prisma.CommentWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CommentEntity | null> {
+    const item = await this.db(tx).findFirst({ where });
+
+    return item ? this.map(item) : null;
+  }
+
+  async create(
+    data: CreateCommentDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CommentEntity> {
+    const item = await this.db(tx).create({ data });
 
     return this.map(item);
   }
@@ -83,8 +94,9 @@ export class CommentRepository {
   async update(
     id: string,
     data: Partial<CommentEntity>,
+    tx?: Prisma.TransactionClient,
   ): Promise<CommentEntity> {
-    const item = await this.db.update({
+    const item = await this.db(tx).update({
       where: { id },
       data,
     });
@@ -92,8 +104,11 @@ export class CommentRepository {
     return this.map(item);
   }
 
-  async delete(id: string): Promise<CommentEntity> {
-    const item = await this.db.delete({
+  async delete(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CommentEntity> {
+    const item = await this.db(tx).delete({
       where: { id },
     });
 

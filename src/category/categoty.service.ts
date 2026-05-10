@@ -1,18 +1,31 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './models/create-category.dto';
 import { Prisma } from '@prisma/client';
+import { isUniqueConstraint } from 'src/core/utils/is-prisma-error.util';
+import { formatUniqueConstraintError } from 'src/core/utils/format-prisma-errors.util';
+import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class CategoryService {
   constructor(private categoryRepository: CategoryRepository) {}
 
   async create(data: CreateCategoryDto) {
-    return this.categoryRepository.create(data);
+    try {
+      return await this.categoryRepository.create(data);
+    } catch (err) {
+      if (isUniqueConstraint(err))
+        throw new ConflictException(
+          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        );
+
+      throw err;
+    }
   }
 
   async getAll() {
@@ -28,23 +41,28 @@ export class CategoryService {
   }
 
   async getOne(where: Prisma.CategoryWhereUniqueInput) {
-    return await this.categoryRepository.findUnique(where);
+    return await this.categoryRepository.findOne(where);
   }
 
   async update(id: string, data: CreateCategoryDto) {
-    const category = await this.categoryRepository.findById(id);
+    const category = await this.getById(id);
 
-    if (!category) throw new NotFoundException();
+    try {
+      return await this.categoryRepository.update(category.id, data);
+    } catch (err) {
+      if (isUniqueConstraint(err))
+        throw new ConflictException(
+          formatUniqueConstraintError(err, StatusCodes.CONFLICT),
+        );
 
-    return this.categoryRepository.update(id, data);
+      throw err;
+    }
   }
 
   async delete(id: string) {
-    const category = await this.categoryRepository.findById(id);
+    const category = await this.getById(id);
 
-    if (!category) throw new NotFoundException();
-
-    return this.categoryRepository.delete(id);
+    return this.categoryRepository.delete(category.id);
   }
 
   async validateCategoryExist(id: string) {
@@ -53,9 +71,22 @@ export class CategoryService {
     return !!user;
   }
 
-  async validateCategoryExistWithException(id: string) {
+  async validateCategoryExistWithException(
+    id: string,
+    fieldName: string = 'categoryId',
+  ) {
     const exist = await this.validateCategoryExist(id);
 
-    if (!exist) throw new BadRequestException();
+    if (!exist)
+      throw new BadRequestException({
+        statusCode: StatusCodes.BAD_REQUEST,
+        error: getReasonPhrase(StatusCodes.BAD_REQUEST),
+        message: [
+          {
+            field: fieldName,
+            errors: [`${fieldName} does not exist`],
+          },
+        ],
+      });
   }
 }

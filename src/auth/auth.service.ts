@@ -65,7 +65,6 @@ export class AuthService {
 
   async refresh(data: RefreshDto) {
     let payload: AuthPayloadUser;
-
     try {
       payload = await this.jwtService.verifyAsync(data.refreshToken, {
         secret: process.env.JWT_SECRET_REFRESH_KEY,
@@ -77,7 +76,6 @@ export class AuthService {
     const user = await this.userService.getOne({
       id: payload.userId,
     });
-
     if (!user) throw new ForbiddenException();
 
     return this.generateTokens(user);

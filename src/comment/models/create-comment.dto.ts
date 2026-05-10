@@ -13,6 +13,7 @@ export class CreateCommentDto {
   @IsNotEmpty()
   content: string;
 
+  @IsNotEmpty()
   @IsUUID()
   articleId: string;
 
