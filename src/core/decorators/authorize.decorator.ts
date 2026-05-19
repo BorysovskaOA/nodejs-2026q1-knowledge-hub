@@ -2,17 +2,30 @@ import { SetMetadata } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 export interface AuthParamConstraints {
   service: any;
-  paramName?: string;
-  propertyName: string;
+  paramName: string;
+  userPropertyName: string;
 }
 
 export interface AuthBodyConstraints {
-  bodyPropertyName?: string;
+  bodyPropertyName: string;
+  required?: boolean;
+  service?: any;
+  userPropertyName?: string;
+}
+
+export interface AuthQueryConstraints {
+  queryPropertyName: string;
+  required?: boolean;
+  service?: any;
+  userPropertyName?: string;
 }
 
 export interface AuthzOption {
   roles: UserRole[];
-  constraints?: AuthParamConstraints | AuthBodyConstraints;
+  constraints?:
+    | AuthParamConstraints
+    | AuthBodyConstraints
+    | AuthQueryConstraints;
 }
 
 export const AUTHZ_OPTIONS_KEY = 'authz_options';

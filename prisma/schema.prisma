@@ -19,16 +19,23 @@ enum ArticleStatus {
   published
 }
 
+// Prisma uses sorted enum keys and will know how to sort by role properly
+enum AiMessageRole {
+  user
+  model
+}
+
 model User {
-  id           String    @id @default(uuid())
-  login        String    @unique
-  passwordHash String
-  tokenVersion Int       @default(1)
-  role         UserRole  @default(viewer)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  comments     Comment[]
-  articles     Article[]
+  id              String           @id @default(uuid())
+  login           String           @unique
+  passwordHash    String
+  tokenVersion    Int              @default(1)
+  role            UserRole         @default(viewer)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  comments        Comment[]
+  articles        Article[]
+  aiConversations AiConversation[]
 }
 
 model Tag {
@@ -63,10 +70,11 @@ model Category {
 model Article {
   id        String        @id @default(uuid())
   title     String
-  content   String
+  content   String        @db.Text
   status    ArticleStatus @default(draft)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  isIndexed Boolean       @default(false)
   comments  Comment[]
   tags      Tag[]
 
@@ -79,4 +87,32 @@ model Article {
   @@index([status])
   @@index([categoryId])
   @@index([createdAt(sort: Desc)])
+}
+
+model AiConversation {
+  id         String      @id @default(uuid())
+  title      String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  aiMessages AiMessage[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt(sort: Desc)])
+}
+
+model AiMessage {
+  id        String        @id @default(uuid())
+  role      AiMessageRole
+  content   String        @db.Text
+  createdAt DateTime      @default(now())
+
+  aiConversationId String
+  aiConversation   AiConversation @relation(fields: [aiConversationId], references: [id], onDelete: Cascade)
+
+  @@index([aiConversationId])
+  @@index([createdAt(sort: Desc)])
+  @@index([role(sort: Desc)])
 }

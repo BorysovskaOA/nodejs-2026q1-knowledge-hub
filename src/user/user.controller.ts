@@ -23,6 +23,7 @@ import {
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UserEntity } from './models/user.entity';
@@ -44,12 +45,14 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Provides a list of users' })
   @ApiOkResponse({ type: [UserEntity] })
   async getAll(): Promise<UserEntity[]> {
     return this.userService.getAll();
   }
 
   @Get('paginated')
+  @ApiOperation({ summary: 'Provides a list of users with pagination' })
   @ApiPaginatedResponse(UserEntity)
   async getAllPaginated(
     @Query() filter: UserListFiltersPaginatedDto,
@@ -60,6 +63,7 @@ export class UserController {
   @Post()
   @Authorize([{ roles: [UserRole.admin] }])
   @ApiCreatedResponse({ type: UserEntity })
+  @ApiOperation({ summary: 'Creates user' })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   @ApiConflictResponse(ExtendedExceptionResponse(409))
   async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -67,6 +71,7 @@ export class UserController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Retrieves user' })
   @ApiOkResponse({ type: UserEntity })
   async getById(@Param() { id }: IdParamDto): Promise<UserEntity> {
     return this.userService.getById(id);
@@ -80,10 +85,11 @@ export class UserController {
       constraints: {
         service: UserService,
         paramName: 'id',
-        propertyName: 'id',
+        userPropertyName: 'id',
       },
     },
   ])
+  @ApiOperation({ summary: 'Updates user' })
   @ApiOkResponse({ type: UserEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async updatePassword(
@@ -101,11 +107,12 @@ export class UserController {
       constraints: {
         service: UserService,
         paramName: 'id',
-        propertyName: 'id',
+        userPropertyName: 'id',
       },
     },
   ])
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deletes user' })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.userService.delete(id);

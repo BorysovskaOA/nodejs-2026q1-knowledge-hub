@@ -14,7 +14,6 @@ import {
   ForbiddenError,
   NotFoundError,
 } from 'src/core/exceptions/app-errors';
-import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()
 export class UserService {
@@ -59,7 +58,7 @@ export class UserService {
     const user = await this.userRepository.findById(id, tx);
 
     if (!user)
-      throw new NotFoundError(`User ${id} is not found`, CommentService.name);
+      throw new NotFoundError(`User ${id} is not found`, UserService.name);
 
     return user;
   }
@@ -81,10 +80,7 @@ export class UserService {
     );
 
     if (!oldPasswordValid)
-      throw new ForbiddenError(
-        'Credentials are not valid',
-        CommentService.name,
-      );
+      throw new ForbiddenError('Credentials are not valid', UserService.name);
 
     const newHashedPassword = await hash(data.newPassword);
 

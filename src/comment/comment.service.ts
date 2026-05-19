@@ -1,5 +1,5 @@
 import { CommentRepository } from './comment.repository';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ArticleService } from 'src/article/article.service';
 import { CreateCommentDto } from './models/create-comment.dto';
@@ -15,9 +15,7 @@ import { NotFoundError } from 'src/core/exceptions/app-errors';
 export class CommentService {
   constructor(
     private commentRepository: CommentRepository,
-    @Inject(forwardRef(() => ArticleService))
     private articleService: ArticleService,
-    @Inject(forwardRef(() => UserService))
     private userService: UserService,
   ) {}
 

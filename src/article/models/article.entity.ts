@@ -1,6 +1,6 @@
-import { ApiProperty, ApiSchema } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiSchema } from '@nestjs/swagger';
 import { ArticleStatus, Article as PrismaArticle } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 
 @ApiSchema({ name: 'Article' })
 export class ArticleEntity implements PrismaArticle {
@@ -11,6 +11,10 @@ export class ArticleEntity implements PrismaArticle {
   authorId: string | null;
   categoryId: string | null;
   tags: string[];
+
+  @ApiHideProperty()
+  @Exclude()
+  isIndexed: boolean;
 
   @ApiProperty({ type: 'number' })
   @Transform(({ value }) => value.getTime())

@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, of, tap, catchError, throwError } from 'rxjs';
 import { Cache } from 'cache-manager';
 import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
 
@@ -18,7 +18,7 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
   constructor(
     @Inject(CACHE_MANAGER) cache: Cache,
     reflector: Reflector,
-    private aiMonitoingService: AiMonitoringService,
+    private aiMonitoringService: AiMonitoringService,
   ) {
     super(cache, reflector);
     this.logger = new Logger('CACHE');
@@ -53,24 +53,28 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
     const cachedData = await this.cacheManager.get(key);
     const response = context.switchToHttp().getResponse();
 
-    const routePath = request.route.path;
-    const endpoint = routePath.split('/').pop();
+    const endpoint = request.route.path;
 
     if (cachedData) {
       this.logger.debug({ key }, 'Cached');
       response.setHeader('X-Cache', 'HIT');
 
       const latency = Date.now() - start;
-      this.aiMonitoingService.track(endpoint, true, latency);
+      this.aiMonitoringService.track(endpoint, true, latency);
       return of(cachedData);
     }
 
     response.setHeader('X-Cache', 'MISS');
 
-    return (await super.intercept(context, next)).pipe(
+    return next.handle().pipe(
       tap(() => {
         const latency = Date.now() - start;
-        this.aiMonitoingService.track(endpoint, false, latency);
+        this.aiMonitoringService.track(endpoint, false, latency);
+      }),
+      catchError((err) => {
+        const latency = Date.now() - start;
+        this.aiMonitoringService.track(`${endpoint} [ERROR]`, false, latency);
+        return throwError(() => err);
       }),
     );
   }

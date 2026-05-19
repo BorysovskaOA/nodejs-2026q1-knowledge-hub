@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
@@ -21,7 +22,6 @@ import {
   GeneralExceptionResponse,
 } from 'src/core/utils/exception-responses.util';
 import { SummarizeArticleDto } from './models/summarize-arcticle.dto';
-import { ArticleIdParamDto } from '../models/article-id-param.dto';
 import { SummarizeArticleEntity } from './models/summarize-article.entity';
 import { TranslateArticleDto } from './models/translate-article.dto';
 import { TranslateArticleEntity } from './models/translate-article.entity';
@@ -31,9 +31,10 @@ import { Throttle } from '@nestjs/throttler';
 import { AiArticleCacheInterceptor } from './ai.article.cache.interceptor';
 import { CacheTTL } from '@nestjs/cache-manager';
 import { AiArticleService } from './ai.article.service';
+import { IdParamDto } from 'src/core/dtos/id-param.dto';
 
 @ApiBearerAuth('accessToken')
-@Controller('ai/article/:articleId')
+@Controller('ai/article/:id')
 @Throttle({
   default: {
     limit: Number(process.env.RATE_LIMIT_AI),
@@ -52,31 +53,34 @@ export class AiArticleController {
 
   @Post('summarize')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Creates a summary of the article' })
   @ApiOkResponse({ type: SummarizeArticleEntity })
   async summarizeArticle(
-    @Param() { articleId }: ArticleIdParamDto,
+    @Param() { id }: IdParamDto,
     @Body() summarizeArticleDto: SummarizeArticleDto,
   ): Promise<SummarizeArticleEntity> {
-    return this.aiArticleService.summarize(articleId, summarizeArticleDto);
+    return this.aiArticleService.summarize(id, summarizeArticleDto);
   }
 
   @Post('translate')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Translates an article' })
   @ApiOkResponse({ type: TranslateArticleEntity })
   async translateArticle(
-    @Param() { articleId }: ArticleIdParamDto,
+    @Param() { id }: IdParamDto,
     @Body() translateArticleDto: TranslateArticleDto,
   ): Promise<TranslateArticleEntity> {
-    return this.aiArticleService.translate(articleId, translateArticleDto);
+    return this.aiArticleService.translate(id, translateArticleDto);
   }
 
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Creates an analysis of an article' })
   @ApiOkResponse({ type: AnalyzeArticleEntity })
   async analyzeArticle(
-    @Param() { articleId }: ArticleIdParamDto,
+    @Param() { id }: IdParamDto,
     @Body() analyzeArticleDto: AnalyzeArticleDto,
   ): Promise<AnalyzeArticleEntity> {
-    return this.aiArticleService.analyze(articleId, analyzeArticleDto);
+    return this.aiArticleService.analyze(id, analyzeArticleDto);
   }
 }

@@ -5,7 +5,8 @@ import { MonitoringStatsByEndpoint } from './index.interface';
 export class AiMonitoringEntity {
   uptime: number;
   totalRequests: number;
-  totalTokens: number;
+  totalTokensForGeneration: number;
+  totalTokensForEmbeddings: number;
   breakdown: Record<string, MonitoringStatsByEndpoint>;
 
   constructor(partial: Partial<AiMonitoringEntity>) {

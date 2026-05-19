@@ -5,12 +5,14 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { ArticleController } from './article.controller';
 import { ArticleService } from './article.service';
 import { ArticleRepository } from './article.repository';
+import { RagModule } from 'src/ai/rag/rag.module';
 
 @Module({
   imports: [
     PrismaModule,
-    forwardRef(() => CategoryModule),
-    forwardRef(() => UserModule),
+    CategoryModule,
+    UserModule,
+    forwardRef(() => RagModule),
   ],
   controllers: [ArticleController],
   providers: [ArticleService, ArticleRepository],

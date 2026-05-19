@@ -72,6 +72,6 @@ export const getAnalyzeArticleResponseSchema = () => {
         description: 'General severity level',
       },
     },
-    required: ['analysis', 'suggestions'],
+    required: ['analysis', 'suggestions', 'severity'],
   };
 };

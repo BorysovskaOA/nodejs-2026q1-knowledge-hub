@@ -18,6 +18,7 @@ import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter
 import { AiModule } from './ai/ai.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { CustomThrottlerGuard } from './core/guards/custom-throttler.guard';
+import { QdrantModule } from './qdrant/qdrant.module';
 
 @Module({
   imports: [
@@ -27,13 +28,14 @@ import { CustomThrottlerGuard } from './core/guards/custom-throttler.guard';
       isGlobal: true,
       ttl: Number(process.env.CACHE_TTL),
     }),
-    HealthModule,
-    ArticleModule,
-    CategoryModule,
-    CommentModule,
-    UserModule,
-    AuthModule,
     GeminiModule,
+    QdrantModule,
+    HealthModule,
+    UserModule,
+    CategoryModule,
+    ArticleModule,
+    CommentModule,
+    AuthModule,
     AiModule,
   ],
   providers: [

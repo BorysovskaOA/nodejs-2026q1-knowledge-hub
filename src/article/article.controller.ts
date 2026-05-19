@@ -26,6 +26,7 @@ import {
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PaginatedResponseDto } from 'src/core/dtos/paginated-response.dto';
@@ -47,6 +48,7 @@ export class ArticleController {
   constructor(private articleService: ArticleService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Provides a list of all articles' })
   @ApiOkResponse({ type: [ArticleEntity] })
   async getAll(
     @Query() filter: ArticleListFiltersDto,
@@ -55,6 +57,7 @@ export class ArticleController {
   }
 
   @Get('paginated')
+  @ApiOperation({ summary: 'Provides a list of articles with pagination' })
   @ApiPaginatedResponse(ArticleEntity)
   async getAllPaginated(
     @Query() filter: ArticleListFiltersPaginatedDto,
@@ -67,6 +70,7 @@ export class ArticleController {
     { roles: [UserRole.admin] },
     { roles: [UserRole.editor], constraints: { bodyPropertyName: 'authorId' } },
   ])
+  @ApiOperation({ summary: 'Creates article' })
   @ApiCreatedResponse({ type: ArticleEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async create(
@@ -76,6 +80,7 @@ export class ArticleController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Retrieves article' })
   @ApiOkResponse({ type: ArticleEntity })
   async getById(@Param() { id }: IdParamDto): Promise<ArticleEntity> {
     return this.articleService.getById(id);
@@ -89,10 +94,11 @@ export class ArticleController {
       constraints: {
         service: ArticleService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
+  @ApiOperation({ summary: 'Updates article' })
   @ApiOkResponse({ type: ArticleEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   @ApiConflictResponse(ExtendedExceptionResponse(409))
@@ -111,11 +117,12 @@ export class ArticleController {
       constraints: {
         service: ArticleService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deletes article' })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.articleService.delete(id);

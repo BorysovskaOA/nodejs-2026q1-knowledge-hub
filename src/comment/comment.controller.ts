@@ -28,6 +28,7 @@ import {
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
@@ -47,6 +48,7 @@ export class CommentController {
   constructor(private commentService: CommentService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Provides a list of all comments for article' })
   @ApiOkResponse({ type: [CommentEntity] })
   async getAll(
     @Query() filter: CommentListFiltersDto,
@@ -55,6 +57,9 @@ export class CommentController {
   }
 
   @Get('paginated')
+  @ApiOperation({
+    summary: 'Provides a list of all comments for article with pagination',
+  })
   @ApiPaginatedResponse(CommentEntity)
   async getAllPaginated(
     @Query() filter: CommentListFiltersPaginatedDto,
@@ -67,6 +72,7 @@ export class CommentController {
     { roles: [UserRole.admin] },
     { roles: [UserRole.editor], constraints: { bodyPropertyName: 'authorId' } },
   ])
+  @ApiOperation({ summary: 'Creates comment' })
   @ApiCreatedResponse({ type: CommentEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   @ApiUnprocessableEntityResponse(ExtendedExceptionResponse(422))
@@ -77,6 +83,7 @@ export class CommentController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Retrieves comment' })
   @ApiOkResponse({ type: CommentEntity })
   async getById(@Param() { id }: IdParamDto): Promise<CommentEntity> {
     return this.commentService.getById(id);
@@ -90,10 +97,11 @@ export class CommentController {
       constraints: {
         service: CommentService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
+  @ApiOperation({ summary: 'Updates comment' })
   @ApiOkResponse({ type: CommentEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async update(
@@ -111,11 +119,12 @@ export class CommentController {
       constraints: {
         service: CommentService,
         paramName: 'id',
-        propertyName: 'authorId',
+        userPropertyName: 'authorId',
       },
     },
   ])
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deletes comment' })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))
   async delete(@Param() { id }: IdParamDto) {
     await this.commentService.delete(id);

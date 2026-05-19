@@ -5,12 +5,14 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
@@ -27,6 +29,7 @@ import { AiMonitoringEntity } from './monitoring/models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
 import { AiMonitoringService } from './monitoring/ai.monitoring.service';
+import { LatencyInterceptor } from './ai.latency.interceptor';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
@@ -47,6 +50,8 @@ export class AiController {
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(LatencyInterceptor)
+  @ApiOperation({ summary: 'General endpoint to ask AI' })
   @ApiOkResponse({ type: GenerateEntity })
   @ApiTooManyRequestsResponse(GeneralExceptionResponse(429))
   @ApiServiceUnavailableResponse(GeneralExceptionResponse(503))
@@ -56,6 +61,9 @@ export class AiController {
 
   @Get('stats')
   @Authorize([{ roles: [UserRole.admin] }])
+  @ApiOperation({
+    summary: 'Provides statistic of caching, latency and usage of AI APIs',
+  })
   @ApiOkResponse({ type: AiMonitoringEntity })
   @ApiUnauthorizedResponse(GeneralExceptionResponse(403))
   getStats(): AiMonitoringEntity {

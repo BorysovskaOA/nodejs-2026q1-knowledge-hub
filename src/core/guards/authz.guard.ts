@@ -8,6 +8,7 @@ import { ModuleRef, Reflector } from '@nestjs/core';
 import {
   AuthBodyConstraints,
   AuthParamConstraints,
+  AuthQueryConstraints,
   AUTHZ_OPTIONS_KEY,
   AuthzOption,
 } from '../decorators/authorize.decorator';
@@ -16,12 +17,14 @@ import { ForbiddenError } from '../exceptions/app-errors';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
-  private readonly logger = new Logger('AUTHZ');
+  private readonly logger: Logger;
 
   constructor(
     private reflector: Reflector,
     private moduleRef: ModuleRef,
-  ) {}
+  ) {
+    this.logger = new Logger('AUTHZ');
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const authzOptions = this.reflector.getAllAndOverride<AuthzOption[]>(
@@ -61,41 +64,64 @@ export class AuthzGuard implements CanActivate {
 
     const ownerParam = authzOption.constraints as AuthParamConstraints;
     const ownerBody = authzOption.constraints as AuthBodyConstraints;
+    const ownerQuery = authzOption.constraints as AuthQueryConstraints;
 
-    if (ownerParam.paramName) {
-      const resourceId = request.params[ownerParam.paramName];
+    const resourceId = this.getResourceId(authzOption, request);
 
-      if (!resourceId) return false;
+    const isRequired =
+      !!ownerParam.paramName || !!ownerBody.required || !!ownerQuery.required;
 
+    if (!resourceId && isRequired) {
+      return false;
+    }
+
+    if (
+      authzOption.constraints.service &&
+      authzOption.constraints.userPropertyName
+    ) {
       const service = this.moduleRef.get(ownerParam.service, {
         strict: false,
       });
 
-      try {
-        const resource = await service.getOne({ id: resourceId });
+      const resource = await service.getOne({ id: resourceId });
 
-        const isOwner = !!(
-          resource?.[ownerParam.propertyName] === request.user.id
-        );
-
-        if (!isOwner) {
-          return false;
-        }
-      } catch (err) {
-        return false;
-      }
-    }
-
-    if (ownerBody.bodyPropertyName) {
       const isOwner = !!(
-        request.body[ownerBody.bodyPropertyName] === request.user.id
+        resource?.[ownerParam.userPropertyName] === request.user.id
       );
 
       if (!isOwner) {
         return false;
       }
+    } else {
+      if (ownerBody.bodyPropertyName || ownerQuery.queryPropertyName) {
+        const isOwner = !!(resourceId === request.user.id);
+
+        if (!isOwner) {
+          return false;
+        }
+      }
     }
 
     return true;
+  }
+
+  getResourceId(authzOption: AuthzOption, request: AuthenticatedRequest) {
+    const ownerParam = authzOption.constraints as AuthParamConstraints;
+    const ownerBody = authzOption.constraints as AuthBodyConstraints;
+    const ownerQuery = authzOption.constraints as AuthQueryConstraints;
+
+    if (ownerParam) {
+      return request.params[ownerParam.paramName] as string;
+    }
+
+    if (ownerBody) {
+      return request.body[ownerBody.bodyPropertyName] as string;
+    }
+
+    if (ownerQuery) {
+      return request.query[ownerQuery.queryPropertyName] as string;
+    }
+
+    return undefined;
   }
 }
