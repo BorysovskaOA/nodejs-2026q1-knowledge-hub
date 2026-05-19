@@ -46,8 +46,8 @@ export class CommentService {
 
     if (!comment)
       throw new NotFoundError(
-        CommentService.name,
         `Comment ${id} is not found`,
+        CommentService.name,
       );
 
     return comment;

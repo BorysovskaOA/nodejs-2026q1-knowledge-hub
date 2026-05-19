@@ -15,6 +15,8 @@ import {
   NotFoundError,
   UnprocessableEntityError,
 } from 'src/core/exceptions/app-errors';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ArticleService {
@@ -24,6 +26,7 @@ export class ArticleService {
     private categoryService: CategoryService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(data: CreateArticleDto) {
@@ -52,8 +55,8 @@ export class ArticleService {
 
     if (!article)
       throw new NotFoundError(
-        ArticleService.name,
         `Article ${id} is not found`,
+        ArticleService.name,
       );
 
     return article;
@@ -75,13 +78,26 @@ export class ArticleService {
       data.status &&
       !ArticleWorkflow.canTransition(article.status, data.status)
     )
-      throw new ConflictError(ArticleService.name, {
-        status: [
-          `Cannot transition from '${article.status}' to '${data.status}'`,
-        ],
-      });
+      throw new ConflictError(
+        {
+          status: [
+            `Cannot transition from '${article.status}' to '${data.status}'`,
+          ],
+        },
+        ArticleService.name,
+      );
 
-    return this.articleRepository.update(article.id, data);
+    const updatedArticle = await this.articleRepository.update(
+      article.id,
+      data,
+    );
+
+    this.cacheManager.set(
+      `article:${id}:lastUpdated`,
+      updatedArticle.updatedAt.toString(),
+      0,
+    );
+    return updatedArticle;
   }
 
   async delete(id: string) {
@@ -103,8 +119,9 @@ export class ArticleService {
     const exist = await this.validateArticleExist(id);
 
     if (!exist)
-      throw new UnprocessableEntityError(ArticleService.name, {
-        [fieldName]: [`${fieldName} does not exist`],
-      });
+      throw new UnprocessableEntityError(
+        { [fieldName]: [`${fieldName} does not exist`] },
+        ArticleService.name,
+      );
   }
 }

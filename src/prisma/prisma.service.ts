@@ -16,7 +16,7 @@ export class PrismaService
   >
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger('DATABASE');
+  private readonly logger: Logger;
 
   constructor() {
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -31,6 +31,7 @@ export class PrismaService
         { emit: 'event', level: 'error' },
       ],
     });
+    this.logger = new Logger('DATABASE');
   }
 
   async onModuleInit() {

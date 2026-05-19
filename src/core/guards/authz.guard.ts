@@ -39,14 +39,11 @@ export class AuthzGuard implements CanActivate {
     );
 
     if (!validationResults.includes(true))
-      throw new ForbiddenError(
-        {
-          service: AuthzGuard.name,
-          authzOptions,
-          user: request.user,
-        },
-        'Access denied',
-      );
+      throw new ForbiddenError('Access denied', {
+        service: AuthzGuard.name,
+        authzOptions,
+        user: request.user,
+      });
 
     this.logger.verbose({ authzOptions, user: request.user }, 'Access alloed:');
     return true;

@@ -16,6 +16,16 @@ LOW 1
 
 Define env variables in .env based on .env.example
 
+## AI generation:
+
+Go to https://aistudio.google.com/app/api-keys and create a new key:
+
+1. Click `Create API key` button
+2. Provide a name for your key and select a project to which this API key will be assigned. You can create new project or assign to other project.
+3. Click `Create key` button.
+4. Once created, copy this API key cna place it for GEMINI_API_KEY variable
+5. Select model from the list of available models: Best way is to go to https://aistudio.google.com/app/rate-limit and selest model that has more than 0/0 (those are unsupported/unavailable).
+
 ## Run in docker
 
 ### Production

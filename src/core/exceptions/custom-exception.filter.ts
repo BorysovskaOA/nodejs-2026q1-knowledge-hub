@@ -34,6 +34,12 @@ export class CustomExceptionFilter implements ExceptionFilter {
       this.logger.log(logPayload, message);
     }
 
+    if (isAppError && exception.headers) {
+      Object.entries(exception.headers).forEach(([key, value]) => {
+        response.header(key, value);
+      });
+    }
+
     response.status(status).json(
       exception.getResponse
         ? exception.getResponse()

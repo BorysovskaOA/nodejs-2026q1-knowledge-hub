@@ -57,11 +57,11 @@ export class AuthService {
   async login(data: LoginDto) {
     const user = await this.userService.getOne({ login: data.login });
     if (!user)
-      throw new ForbiddenError(AuthService.name, 'Credential are invalid');
+      throw new ForbiddenError('Credential are invalid', AuthService.name);
 
     const isValid = await hashCompare(data.password, user.passwordHash);
     if (!isValid)
-      throw new ForbiddenError(AuthService.name, 'Credential are invalid');
+      throw new ForbiddenError('Credential are invalid', AuthService.name);
 
     return this.generateTokens(user);
   }
@@ -73,13 +73,13 @@ export class AuthService {
         secret: process.env.JWT_SECRET_REFRESH_KEY,
       });
     } catch {
-      throw new ForbiddenError(AuthService.name, 'Access Denied');
+      throw new ForbiddenError('Access Denied', AuthService.name);
     }
 
     const user = await this.userService.getOne({
       id: payload.userId,
     });
-    if (!user) throw new ForbiddenError(AuthService.name, 'Access Denied');
+    if (!user) throw new ForbiddenError('Access Denied', AuthService.name);
 
     return this.generateTokens(user);
   }
