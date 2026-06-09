@@ -276,7 +276,7 @@ describe('Comment Controller', () => {
             constraints: {
               service: CommentService,
               paramName: 'id',
-              propertyName: 'authorId',
+              userPropertyName: 'authorId',
             },
           },
         ]),
@@ -343,7 +343,7 @@ describe('Comment Controller', () => {
             constraints: {
               service: CommentService,
               paramName: 'id',
-              propertyName: 'authorId',
+              userPropertyName: 'authorId',
             },
           },
         ]),

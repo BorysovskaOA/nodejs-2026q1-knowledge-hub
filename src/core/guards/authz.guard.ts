@@ -110,16 +110,16 @@ export class AuthzGuard implements CanActivate {
     const ownerBody = authzOption.constraints as AuthBodyConstraints;
     const ownerQuery = authzOption.constraints as AuthQueryConstraints;
 
-    if (ownerParam) {
-      return request.params[ownerParam.paramName] as string;
+    if (ownerParam.paramName) {
+      return request.params?.[ownerParam.paramName] as string;
     }
 
-    if (ownerBody) {
-      return request.body[ownerBody.bodyPropertyName] as string;
+    if (ownerBody.bodyPropertyName) {
+      return request.body?.[ownerBody.bodyPropertyName] as string;
     }
 
-    if (ownerQuery) {
-      return request.query[ownerQuery.queryPropertyName] as string;
+    if (ownerQuery.queryPropertyName) {
+      return request.query?.[ownerQuery.queryPropertyName] as string;
     }
 
     return undefined;

@@ -36,9 +36,21 @@ describe('CustomThrottlerGuard', () => {
     guard = module.get<CustomThrottlerGuard>(CustomThrottlerGuard);
   });
 
+  const throttlerLimitDetail = {
+    timeToExpire: 30,
+    limit: 10,
+    timeToBlockExpire: 60,
+    totalHits: 11,
+    key: 'test-key',
+    isBlocked: true,
+  };
+
   it('should throw TooManyRequestsError with correct payload', async () => {
     try {
-      await (guard as any).throwThrottlingException(mockExecutionContext);
+      await (guard as any).throwThrottlingException(
+        mockExecutionContext,
+        throttlerLimitDetail,
+      );
     } catch (error) {
       expect(error).toBeInstanceOf(TooManyRequestsError);
       expect(error.logContext).toMatchObject({
