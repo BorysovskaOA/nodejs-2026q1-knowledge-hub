@@ -3,6 +3,8 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { HealthService } from '../health.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { QdrantService } from 'src/qdrant/qdrant.service';
+import { GeminiService } from 'src/gemini/gemini.service';
 
 describe('Health Service', () => {
   let service: HealthService;
@@ -15,6 +17,12 @@ describe('Health Service', () => {
   const mockPrismaIndicator = {
     pingCheck: vi.fn(),
   };
+  const mockQdrantService = {
+    getCollections: vi.fn(),
+  };
+  const mockGeminiService = {
+    getAvailableModelsList: vi.fn(),
+  };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,6 +31,8 @@ describe('Health Service', () => {
         { provide: HealthCheckService, useValue: mockHealthCheckService },
         { provide: PrismaHealthIndicator, useValue: mockPrismaIndicator },
         { provide: PrismaService, useValue: { $queryRaw: vi.fn() } },
+        { provide: QdrantService, useValue: mockQdrantService },
+        { provide: GeminiService, useValue: mockGeminiService },
       ],
     }).compile();
 
@@ -41,6 +51,8 @@ describe('Health Service', () => {
     await service.check();
 
     expect(healthCheckService.check).toHaveBeenCalledWith([
+      expect.any(Function),
+      expect.any(Function),
       expect.any(Function),
     ]);
 

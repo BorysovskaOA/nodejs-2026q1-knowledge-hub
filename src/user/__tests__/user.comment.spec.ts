@@ -256,7 +256,7 @@ describe('User Controller', () => {
             constraints: {
               service: UserService,
               paramName: 'id',
-              propertyName: 'id',
+              userPropertyName: 'id',
             },
           },
         ]),
@@ -323,7 +323,7 @@ describe('User Controller', () => {
             constraints: {
               service: UserService,
               paramName: 'id',
-              propertyName: 'id',
+              userPropertyName: 'id',
             },
           },
         ]),

@@ -281,7 +281,7 @@ describe('Article Controller', () => {
             constraints: {
               service: ArticleService,
               paramName: 'id',
-              propertyName: 'authorId',
+              userPropertyName: 'authorId',
             },
           },
         ]),
@@ -348,7 +348,7 @@ describe('Article Controller', () => {
             constraints: {
               service: ArticleService,
               paramName: 'id',
-              propertyName: 'authorId',
+              userPropertyName: 'authorId',
             },
           },
         ]),

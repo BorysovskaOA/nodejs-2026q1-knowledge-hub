@@ -9,6 +9,9 @@ import { ArticleService } from '../article.service';
 import { ArticleRepository } from '../article.repository';
 import { CategoryService } from 'src/category/categoty.service';
 import { UserService } from 'src/user/user.service';
+import { RagService } from 'src/ai/rag/rag.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   ConflictError,
   UnprocessableEntityError,
@@ -54,6 +57,21 @@ describe('Article Service', () => {
     validateUserExistWithBadRequestError: vi.fn(),
   };
 
+  const mockRagService = {
+    reindexArticle: vi.fn(),
+    deleteArticleIndex: vi.fn(),
+  };
+
+  const mockCacheManager = {
+    set: vi.fn(),
+    get: vi.fn(),
+    del: vi.fn(),
+  };
+
+  const mockPrisma = {
+    $transaction: vi.fn(),
+  };
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +88,18 @@ describe('Article Service', () => {
           provide: UserService,
           useValue: mockUserService,
         },
+        {
+          provide: RagService,
+          useValue: mockRagService,
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
       ],
     }).compile();
 
@@ -85,6 +115,7 @@ describe('Article Service', () => {
     mockUserService.validateUserExistWithBadRequestError.mockResolvedValue(
       undefined,
     );
+    mockPrisma.$transaction.mockImplementation(async (cb: any) => cb({}));
     vi.mocked(ArticleWorkflow).canTransition.mockImplementation(() => true);
   });
 

@@ -74,7 +74,7 @@ describe('Authz Guard', () => {
         constraints: {
           service: 'SomeService',
           paramName: 'id',
-          propertyName: 'authorId',
+          userPropertyName: 'authorId',
         },
       },
     ];
