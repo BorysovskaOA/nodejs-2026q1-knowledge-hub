@@ -46,7 +46,7 @@ import { IdParamDto } from 'src/core/dtos/id-param.dto';
 @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class RagChatController {
-  constructor(private ragChatService: RagChatService) {}
+  constructor(private ragChatService: RagChatService) { }
 
   @Post()
   @Authorize([
@@ -65,7 +65,7 @@ export class RagChatController {
   @ApiOperation({
     summary:
       'Creates a new conversation based on internal data or allows to add messages to existing conversation',
-    description: `Allows to provide up to ${process.env.RAG_CONVERSATION_MAX_MESSAGES} messages in one conversation.`,
+    description: `Allows to provide up to {RAG_CONVERSATION_MAX_MESSAGES} messages in one conversation.`,
   })
   @ApiOkResponse({ type: RagChatEntity })
   @ApiForbiddenResponse(GeneralExceptionResponse(403))

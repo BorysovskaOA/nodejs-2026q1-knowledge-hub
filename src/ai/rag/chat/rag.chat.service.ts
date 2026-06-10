@@ -24,12 +24,16 @@ import {
 import { generateReformatQuestionPrompt } from './prompts/reformat-question';
 import { generateAnswerUsingContextPrompt } from './prompts/answer-using-context.prompt';
 import { getAnswerChatQuestionInstruction } from './prompts/answer-question.instruction';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 const CHAT_VECTORS_LIMIT = 5;
 const CHAT_VECTORS_SCORE_THRESHOLD = 0.75;
-const MAX_MESSAGES_IN_CHAT = Number(
-  process.env.RAG_CONVERSATION_MAX_MESSAGES as string,
-);
+export const getMaxMessagesInChat = (
+  config: ConfigService<EnvironmentVariables, true>
+): number => {
+  return config.get('RAG_CONVERSATION_MAX_MESSAGES', { infer: true });
+};
 
 @Injectable()
 export class RagChatService implements OnModuleInit {
@@ -40,8 +44,9 @@ export class RagChatService implements OnModuleInit {
     private qdrantService: QdrantService,
     private aiConversationRepository: AiConversationRepository,
     private aiMonitorService: AiMonitoringService,
+    private configService: ConfigService<EnvironmentVariables, true>,
   ) {
-    this.collection = process.env.RAG_VECTOR_COLLECTION as string;
+    this.collection = this.configService.get('RAG_VECTOR_COLLECTION');
   }
 
   async onModuleInit() {
@@ -87,7 +92,7 @@ export class RagChatService implements OnModuleInit {
     const conversation = await this.getConversationWithMessages(conversationId);
     const remaining = Math.max(
       0,
-      (MAX_MESSAGES_IN_CHAT - conversation.messages.length) / 2,
+      (getMaxMessagesInChat(this.configService) - conversation.messages.length) / 2,
     );
 
     res.setHeader('X-Questions-Remaining', remaining.toString());
@@ -137,7 +142,7 @@ export class RagChatService implements OnModuleInit {
 
     const remaining = Math.max(
       0,
-      (MAX_MESSAGES_IN_CHAT - conversation.messages.length) / 2,
+      (getMaxMessagesInChat(this.configService) - conversation.messages.length) / 2,
     );
 
     res.setHeader('X-Questions-Remaining', remaining.toString());
@@ -165,7 +170,7 @@ export class RagChatService implements OnModuleInit {
     const conversation = await this.getConversationWithMessages(conversationId);
 
     // Means that if we process this question it will go over limit
-    if (conversation.messages.length + 2 > MAX_MESSAGES_IN_CHAT)
+    if (conversation.messages.length + 2 > getMaxMessagesInChat(this.configService))
       throw new ConflictError(
         `Cannot add more messages to conversation ${conversationId}`,
         RagChatService.name,
@@ -209,7 +214,7 @@ export class RagChatService implements OnModuleInit {
 
     const remaining = Math.max(
       0,
-      (MAX_MESSAGES_IN_CHAT - updatedConversation.messages.length) / 2,
+      (getMaxMessagesInChat(this.configService) - updatedConversation.messages.length) / 2,
     );
 
     res.setHeader('X-Questions-Remaining', remaining.toString());
@@ -281,7 +286,7 @@ export class RagChatService implements OnModuleInit {
     if (firstUserMessageIndex === -1)
       throw new InternalServerError(
         { conversationId: conversation.id, updatedAt: conversation.updatedAt },
-        `Last ${MAX_MESSAGES_IN_CHAT} messages in conversation ${conversation.id} does not have user messages`,
+        `Last ${getMaxMessagesInChat(this.configService)} messages in conversation ${conversation.id} does not have user messages`,
       );
 
     return history.slice(firstUserMessageIndex);

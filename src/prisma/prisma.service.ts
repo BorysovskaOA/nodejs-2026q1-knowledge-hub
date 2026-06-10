@@ -14,12 +14,12 @@ export class PrismaService
     Prisma.PrismaClientOptions,
     'query' | 'info' | 'warn' | 'error'
   >
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly logger: Logger;
 
-  constructor() {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  constructor(connectionString: string) {
+
+    const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);
 
     super({

@@ -23,11 +23,11 @@ const splitIntoChunks = (
   return chunks.filter((c) => c.trim().length > 0);
 };
 
-export const splitArticleInChunksWithPayload = (article: ArticleEntity) => {
+export const splitArticleInChunksWithPayload = (article: ArticleEntity, size: number, overlap: number) => {
   const chunks = splitIntoChunks(
     article.content,
-    Number(process.env.RAG_CHUNK_SIZE as string),
-    Number(process.env.RAG_CHUNK_OVERLAP as string),
+    size,
+    overlap,
   );
 
   return chunks.map((chunk, index) => ({

@@ -18,6 +18,7 @@ import {
   ForbiddenError,
   UnauthorizedError,
 } from 'src/core/exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
 
 const createMockContext = (authHeader?: string) =>
   ({
@@ -37,6 +38,13 @@ describe('AuthGuard', () => {
   const mockReflector = { getAllAndOverride: vi.fn() };
   const mockUserService = { getOne: vi.fn() };
 
+  const mockConfigService = {
+    get: vi.fn((v) => {
+      if (v === 'JWT_SECRET_KEY') return 'test_secret';
+      return undefined;
+    }),
+  };
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,6 +52,7 @@ describe('AuthGuard', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: Reflector, useValue: mockReflector },
         { provide: UserService, useValue: mockUserService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -52,11 +61,6 @@ describe('AuthGuard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('JWT_SECRET_KEY', 'test_secret');
-  });
-
-  afterAll(() => {
-    vi.unstubAllEnvs();
   });
 
   it('allows access for public routes', async () => {

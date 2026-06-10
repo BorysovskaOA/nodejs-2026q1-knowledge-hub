@@ -14,13 +14,16 @@ import {
 import { UserEntity } from 'src/user/models/user.entity';
 import { RefreshDto } from './models/refresh.dto';
 import { ForbiddenError } from 'src/core/exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) {}
+    private configService: ConfigService<EnvironmentVariables, true>,
+  ) { }
 
   private async generateTokens(user: UserEntity) {
     const payload = {
@@ -30,13 +33,12 @@ export class AuthService {
       version: user.tokenVersion,
     };
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET_KEY,
-      expiresIn: process.env.TOKEN_EXPIRE_TIME as SignOptions['expiresIn'],
+      secret: this.configService.get('JWT_SECRET_KEY'),
+      expiresIn: this.configService.get('TOKEN_EXPIRE_TIME'),
     });
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET_REFRESH_KEY,
-      expiresIn: process.env
-        .TOKEN_REFRESH_EXPIRE_TIME as SignOptions['expiresIn'],
+      secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
+      expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
     });
 
     return new AuthEntity({ accessToken, refreshToken });
@@ -70,7 +72,7 @@ export class AuthService {
     let payload: AuthPayloadUser;
     try {
       payload = await this.jwtService.verifyAsync(data.refreshToken, {
-        secret: process.env.JWT_SECRET_REFRESH_KEY,
+        secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
       });
     } catch {
       throw new ForbiddenError('Access Denied', AuthService.name);

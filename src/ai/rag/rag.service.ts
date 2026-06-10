@@ -26,6 +26,8 @@ import {
   ARTICLE_BATCH_SIZE,
   MAX_ARTICLES_TO_INDEX_ONCE,
 } from './models/constants';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 @Injectable()
 export class RagService implements OnModuleInit {
@@ -37,8 +39,9 @@ export class RagService implements OnModuleInit {
     @Inject(forwardRef(() => ArticleService))
     private articleService: ArticleService,
     private readonly prisma: PrismaService,
+    private configService: ConfigService<EnvironmentVariables, true>,
   ) {
-    this.collection = process.env.RAG_VECTOR_COLLECTION as string;
+    this.collection = this.configService.get('RAG_VECTOR_COLLECTION');
     this.logger = new Logger('RAG_SERVICE');
   }
 
@@ -139,6 +142,8 @@ export class RagService implements OnModuleInit {
     points: ArticleVectorPointData[],
     tx: Prisma.TransactionClient,
   ) {
+    const size = this.configService.get('RAG_CHUNK_SIZE');
+    const overlap = this.configService.get('RAG_CHUNK_OVERLAP');
     const articles = await this.articleService.getMany(
       {
         where: where,
@@ -151,7 +156,7 @@ export class RagService implements OnModuleInit {
     if (!articles.length) return;
 
     const chunks = articles
-      .map((a) => splitArticleInChunksWithPayload(a))
+      .map((a) => splitArticleInChunksWithPayload(a, size, overlap))
       .flat();
     const vectors = await this.geminiService.getBatchEmbeddings(
       chunks.map((c) => c.content),

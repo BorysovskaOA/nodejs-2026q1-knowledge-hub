@@ -12,21 +12,59 @@ import { GlobalValidationPipe } from './core/pipes/global-validation.pipe';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { AuthzGuard } from './core/guards/authz.guard';
-import { pinoConfig } from './core/configs/logger.config';
-import { throttlerConfig } from './core/configs/throttler.config';
+import { getPinoConfig } from './core/configs/logger.config';
 import { CustomExceptionFilter } from './core/exceptions/custom-exception.filter';
 import { AiModule } from './ai/ai.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { CustomThrottlerGuard } from './core/guards/custom-throttler.guard';
 import { QdrantModule } from './qdrant/qdrant.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EnvironmentVariables, envSchema } from './core/configs/env.config';
 
 @Module({
   imports: [
-    LoggerModule.forRoot(pinoConfig),
-    ThrottlerModule.forRoot(throttlerConfig),
-    CacheModule.register({
+    ConfigModule.forRoot({
       isGlobal: true,
-      ttl: Number(process.env.CACHE_TTL),
+      validate: (config) => envSchema.parse(config)
+    }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => {
+        return getPinoConfig(configService);
+      },
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService<EnvironmentVariables, true>) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: configService.get('RATE_LIMIT_TTL'),
+            limit: configService.get('RATE_LIMIT'),
+          },
+          {
+            name: 'auth',
+            ttl: configService.get('RATE_LIMIT_TTL'),
+            limit: configService.get('RATE_LIMIT_AUTH'),
+          },
+          {
+            name: 'ai',
+            ttl: configService.get('RATE_LIMIT_TTL'),
+            limit: configService.get('RATE_LIMIT_AI'),
+          },
+        ],
+        default: 'default',
+      }),
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService<EnvironmentVariables, true>) => ({
+        ttl: configService.get('CACHE_TTL'),
+      })
     }),
     GeminiModule,
     QdrantModule,
@@ -46,4 +84,4 @@ import { QdrantModule } from './qdrant/qdrant.module';
     { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule { }

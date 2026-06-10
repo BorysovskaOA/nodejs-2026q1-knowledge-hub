@@ -10,6 +10,8 @@ import { Reflector } from '@nestjs/core';
 import { Observable, of, tap, catchError, throwError } from 'rxjs';
 import { Cache } from 'cache-manager';
 import { AiMonitoringService } from '../monitoring/ai.monitoring.service';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AiArticleCacheInterceptor extends CacheInterceptor {
@@ -19,6 +21,7 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
     @Inject(CACHE_MANAGER) cache: Cache,
     reflector: Reflector,
     private aiMonitoringService: AiMonitoringService,
+    private configService: ConfigService<EnvironmentVariables, true>,
   ) {
     super(cache, reflector);
     this.logger = new Logger('CACHE');
@@ -46,6 +49,10 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<any>> {
+    if (!this.isRequestCacheable(context)) {
+      return next.handle();
+    }
+
     const start = Date.now();
     const request = context.switchToHttp().getRequest();
     const key = await this.trackBy(context);
@@ -66,10 +73,17 @@ export class AiArticleCacheInterceptor extends CacheInterceptor {
 
     response.setHeader('X-Cache', 'MISS');
 
+    const ttlInSeconds = this.configService.get('CACHE_TTL_AI');
+    const ttlInMilliseconds = ttlInSeconds * 1000;
+
     return next.handle().pipe(
-      tap(() => {
+      tap(async (responseData) => {
         const latency = Date.now() - start;
         this.aiMonitoringService.track(endpoint, false, latency);
+
+        if (responseData !== undefined) {
+          await this.cacheManager.set(key, responseData, ttlInMilliseconds);
+        }
       }),
       catchError((err) => {
         const latency = Date.now() - start;

@@ -6,6 +6,8 @@ import { Logger } from 'nestjs-pino';
 import { generateSwaggerDocumentConfig } from './core/utils/generate-swagger-document-config.util';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { setupProcessErrorHandler } from './core/exceptions/process-error-handler';
+import helmet from 'helmet';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,15 +16,18 @@ async function bootstrap() {
   });
   app.useLogger(app.get(Logger));
 
+  app.enableShutdownHooks();
   setupProcessErrorHandler(app);
 
+  app.use(helmet());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  const config = generateSwaggerDocumentConfig();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  const swaggerConfig = generateSwaggerDocumentConfig();
+  const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('doc', app, documentFactory);
 
-  const port = process.env.PORT || 4000;
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('PORT', {infer: true});
   await app.listen(port);
 }
 bootstrap();

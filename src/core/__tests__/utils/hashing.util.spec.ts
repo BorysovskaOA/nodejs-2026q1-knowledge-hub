@@ -10,7 +10,6 @@ vi.mock('bcrypt', () => ({
 describe('Bcrypt Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.SALT_ROUNDS = '10';
   });
 
   describe('hash', () => {
@@ -20,7 +19,7 @@ describe('Bcrypt Utils', () => {
 
       vi.mocked(bcrypt.hash).mockResolvedValue(mockHashed as never);
 
-      const result = await hash(password);
+      const result = await hash(password, 10);
 
       expect(bcrypt.hash).toHaveBeenCalledWith(password, 10);
       expect(result).toBe(mockHashed);

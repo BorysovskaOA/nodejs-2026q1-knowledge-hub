@@ -13,6 +13,7 @@ import {
   ForbiddenError,
   NotFoundError,
 } from 'src/core/exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
 
 vi.mock('src/core/utils/hashing.util', () => ({
   hash: vi.fn(),
@@ -42,6 +43,13 @@ describe('User Service', () => {
     delete: vi.fn(),
   };
 
+  const mockConfigService = {
+    get: vi.fn((v) => {
+      if (v === 'SALT_ROUNDS') return 10;
+      return undefined;
+    }),
+  };
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -49,6 +57,10 @@ describe('User Service', () => {
         {
           provide: UserRepository,
           useValue: mockRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -85,7 +97,7 @@ describe('User Service', () => {
       await service.create(createData);
 
       expect(hash).toHaveBeenCalledTimes(1);
-      expect(hash).toHaveBeenCalledWith(createData.password);
+      expect(hash).toHaveBeenCalledWith(createData.password, 10);
     });
 
     it("throws ConflictError if 'login' already exist", async () => {
@@ -253,7 +265,7 @@ describe('User Service', () => {
       await service.updatePassword('id', updatePasswordData);
 
       expect(hash).toHaveBeenCalledTimes(1);
-      expect(hash).toHaveBeenCalledWith(updatePasswordData.newPassword);
+      expect(hash).toHaveBeenCalledWith(updatePasswordData.newPassword, 10);
     });
   });
 

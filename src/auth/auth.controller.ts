@@ -32,21 +32,17 @@ import {
 } from 'src/core/utils/exception-responses.util';
 import { GlobalValidationPipe } from 'src/core/pipes/global-validation.pipe';
 import { UnauthorizedError } from 'src/core/exceptions/app-errors';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('signup')
   @PublicRote()
-  @Throttle({
-    default: {
-      limit: Number(process.env.RATE_LIMIT_AUTH),
-      ttl: Number(process.env.RATE_LIMIT_TTL),
-    },
-  })
+  @SkipThrottle({ default: true })
+  @Throttle({ auth: {} })
   @ApiOperation({ summary: 'Allows user to signup in application' })
   @ApiCreatedResponse({ type: AuthUserEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
@@ -59,12 +55,8 @@ export class AuthController {
   @Post('login')
   @PublicRote()
   @HttpCode(HttpStatus.OK)
-  @Throttle({
-    default: {
-      limit: Number(process.env.RATE_LIMIT_AUTH),
-      ttl: Number(process.env.RATE_LIMIT_TTL),
-    },
-  })
+  @SkipThrottle({ default: true })
+  @Throttle({ auth: {} })
   @ApiOperation({ summary: 'Allows user to login in application' })
   @ApiOkResponse({ type: AuthEntity })
   @ApiBadRequestResponse(ExtendedExceptionResponse(400))
