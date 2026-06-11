@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger';
@@ -27,7 +26,7 @@ async function bootstrap() {
   SwaggerModule.setup('doc', app, documentFactory);
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT', {infer: true});
+  const port = configService.get<number>('PORT', { infer: true });
   await app.listen(port);
 }
 bootstrap();

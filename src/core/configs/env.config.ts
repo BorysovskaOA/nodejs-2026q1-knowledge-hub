@@ -6,11 +6,6 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test', 'local']).default('development'),
   PORT: z.coerce.number().default(4000),
 
-  POSTGRES_USER: z.string(),
-  POSTGRES_PASSWORD: z.string(),
-  POSTGRES_DB: z.string().default('knowledge_hub'),
-  POSTGRES_HOST: z.string(),
-  POSTGRES_PORT: z.coerce.number(),
   DATABASE_URL: z.string(),
 
   SALT_ROUNDS: z.coerce.number(),
