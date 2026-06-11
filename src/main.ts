@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { generateSwaggerDocumentConfig } from './core/utils/generate-swagger-document-config.util';
-import { ClassSerializerInterceptor } from '@nestjs/common';
+import { ClassSerializerInterceptor, VersioningType } from '@nestjs/common';
 import { setupProcessErrorHandler } from './core/exceptions/process-error-handler';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
@@ -19,7 +19,13 @@ async function bootstrap() {
   setupProcessErrorHandler(app);
 
   app.use(helmet());
+  app.enableCors();
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.setGlobalPrefix('api', { exclude: ['/health'] });
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
 
   const swaggerConfig = generateSwaggerDocumentConfig();
   const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);

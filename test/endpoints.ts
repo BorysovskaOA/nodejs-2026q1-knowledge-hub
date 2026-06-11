@@ -1,40 +1,40 @@
 export const usersRoutes = {
-  getAll: '/user',
-  getAllPaginated: '/user/paginated',
-  getById: (userId) => `/user/${userId}`,
-  create: '/user',
-  update: (userId) => `/user/${userId}`,
-  delete: (userId) => `/user/${userId}`,
+  getAll: '/api/v1/user',
+  getAllPaginated: '/api/v1/user/paginated',
+  getById: (userId) => `/api/v1/user/${userId}`,
+  create: '/api/v1/user',
+  update: (userId) => `/api/v1/user/${userId}`,
+  delete: (userId) => `/api/v1/user/${userId}`,
 };
 
 export const categoriesRoutes = {
-  getAll: '/category',
-  getById: (categoryId) => `/category/${categoryId}`,
-  create: '/category',
-  update: (categoryId) => `/category/${categoryId}`,
-  delete: (categoryId) => `/category/${categoryId}`,
+  getAll: '/api/v1/category',
+  getById: (categoryId) => `/api/v1/category/${categoryId}`,
+  create: '/api/v1/category',
+  update: (categoryId) => `/api/v1/category/${categoryId}`,
+  delete: (categoryId) => `/api/v1/category/${categoryId}`,
 };
 
 export const articlesRoutes = {
-  getAll: '/article',
-  getAllPaginated: '/article/paginated',
-  getById: (articleId) => `/article/${articleId}`,
-  create: '/article',
-  update: (articleId) => `/article/${articleId}`,
-  delete: (articleId) => `/article/${articleId}`,
+  getAll: '/api/v1/article',
+  getAllPaginated: '/api/v1/article/paginated',
+  getById: (articleId) => `/api/v1/article/${articleId}`,
+  create: '/api/v1/article',
+  update: (articleId) => `/api/v1/article/${articleId}`,
+  delete: (articleId) => `/api/v1/article/${articleId}`,
 };
 
 export const commentsRoutes = {
-  getByArticle: (articleId) => `/comment?articleId=${articleId}`,
+  getByArticle: (articleId) => `/api/v1/comment?articleId=${articleId}`,
   getAllPaginatedByArticle: (articleId) =>
-    `/comment/paginated?articleId=${articleId}`,
-  getById: (commentId) => `/comment/${commentId}`,
-  create: '/comment',
-  delete: (commentId) => `/comment/${commentId}`,
+    `/api/v1/comment/paginated?articleId=${articleId}`,
+  getById: (commentId) => `/api/v1/comment/${commentId}`,
+  create: '/api/v1/comment',
+  delete: (commentId) => `/api/v1/comment/${commentId}`,
 };
 
 export const authRoutes = {
-  signup: '/auth/signup',
-  login: '/auth/login',
-  refresh: '/auth/refresh',
+  signup: '/api/v1/auth/signup',
+  login: '/api/v1/auth/login',
+  refresh: '/api/v1/auth/refresh',
 };

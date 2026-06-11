@@ -1,12 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import { HealthCheck } from '@nestjs/terminus';
 import { PublicRote } from 'src/core/decorators/public-route.decorator';
 import { HealthService } from './health.service';
 import { ApiOperation } from '@nestjs/swagger';
 
-@Controller('health')
+@Controller({
+  path: 'health',
+  version: VERSION_NEUTRAL
+})
 export class HealthController {
-  constructor(private healthService: HealthService) {}
+  constructor(private healthService: HealthService) { }
 
   @Get()
   @HealthCheck()
