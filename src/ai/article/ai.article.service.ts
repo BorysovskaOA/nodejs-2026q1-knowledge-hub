@@ -24,7 +24,7 @@ export class AiArticleService {
     private geminiService: GeminiService,
     private articleService: ArticleService,
     private aiMonitoingService: AiMonitoringService,
-  ) {}
+  ) { }
 
   async summarize(articleId: string, data: SummarizeArticleDto) {
     const article = await this.articleService.getById(articleId);

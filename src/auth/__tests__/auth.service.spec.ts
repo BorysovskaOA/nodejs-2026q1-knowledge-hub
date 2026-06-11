@@ -16,6 +16,7 @@ import { hashCompare } from 'src/core/utils/hashing.util';
 import { AuthService } from '../auth.service';
 import { AuthEntity, AuthUserEntity } from '../models/auth.entity';
 import { ForbiddenError } from 'src/core/exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
 
 vi.mock('src/core/utils/hashing.util', () => ({
   hashCompare: vi.fn(),
@@ -62,11 +63,17 @@ describe('Auth Service', () => {
     verifyAsync: vi.fn(),
   };
 
+  const mockConfigService = {
+    get: vi.fn((v) => {
+      if (v === 'JWT_SECRET_KEY') return 'test_secret';
+      if (v === 'TOKEN_EXPIRE_TIME') return '15m';
+      if (v === 'JWT_SECRET_REFRESH_KEY') return 'test_secret_refresh';
+      if (v === 'TOKEN_REFRESH_EXPIRE_TIME') return '1d';
+      return undefined;
+    }),
+  };
+
   beforeAll(async () => {
-    vi.stubEnv('JWT_SECRET_KEY', 'test_secret');
-    vi.stubEnv('TOKEN_EXPIRE_TIME', '15m');
-    vi.stubEnv('JWT_SECRET_REFRESH_KEY', 'test_secret_refresh');
-    vi.stubEnv('TOKEN_REFRESH_EXPIRE_TIME', '1d');
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -77,6 +84,10 @@ describe('Auth Service', () => {
         {
           provide: UserService,
           useValue: mockUserService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -91,10 +102,6 @@ describe('Auth Service', () => {
     mockJwtService.signAsync
       .mockResolvedValueOnce('accessToken')
       .mockResolvedValueOnce('refreshToken');
-  });
-
-  afterAll(() => {
-    vi.unstubAllEnvs();
   });
 
   describe('signup', () => {

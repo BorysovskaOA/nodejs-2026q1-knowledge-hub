@@ -12,6 +12,8 @@ import { AuthPayloadUser } from '../../auth/models/auth.entity';
 import { UserService } from 'src/user/user.service';
 import { UserEntity } from 'src/user/models/user.entity';
 import { ForbiddenError, UnauthorizedError } from '../exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from '../configs/env.config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -21,6 +23,7 @@ export class AuthGuard implements CanActivate {
     private jwtService: JwtService,
     private reflector: Reflector,
     private userService: UserService,
+    private configService: ConfigService<EnvironmentVariables, true>,
   ) {
     this.logger = new Logger('AUTH');
   }
@@ -44,7 +47,7 @@ export class AuthGuard implements CanActivate {
     let payload: AuthPayloadUser;
     try {
       payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET_KEY,
+        secret: this.configService.get('JWT_SECRET_KEY'),
       });
     } catch (err) {
       throw new UnauthorizedError('Credentials are invalid', {

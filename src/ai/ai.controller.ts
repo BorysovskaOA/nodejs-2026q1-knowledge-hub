@@ -24,7 +24,7 @@ import {
 import { AiService } from './ai.service';
 import { GenerateDto } from './models/generate.dto';
 import { GenerateEntity } from './models/generate.entity';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AiMonitoringEntity } from './monitoring/models/ai-monitoring.entity';
 import { Authorize } from 'src/core/decorators/authorize.decorator';
 import { UserRole } from '@prisma/client';
@@ -33,12 +33,8 @@ import { LatencyInterceptor } from './ai.latency.interceptor';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai')
-@Throttle({
-  default: {
-    limit: Number(process.env.RATE_LIMIT_AI),
-    ttl: Number(process.env.RATE_LIMIT_TTL),
-  },
-})
+@SkipThrottle({ default: true })
+@Throttle({ ai: {} })
 @ApiBadRequestResponse(ExtendedExceptionResponse(400))
 @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
@@ -46,7 +42,7 @@ export class AiController {
   constructor(
     private aiService: AiService,
     private aiMonitoringService: AiMonitoringService,
-  ) {}
+  ) { }
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)

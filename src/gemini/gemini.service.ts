@@ -23,6 +23,8 @@ import {
   isUnavailable,
   isUnsupportedJsonFormat,
 } from './utils/gemini-errors.uril';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 class AIGenerationError extends Error {
   public readonly parsedError: Record<string, any>;
@@ -45,10 +47,12 @@ export class GeminiService {
   private embeddingOutputDimensionality = 768;
   private generateContentSupportJson = true;
   private genAi = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY as string,
+    apiKey: this.configService.get('GEMINI_API_KEY'),
   });
   private readonly logger: Logger;
-  constructor() {
+  constructor(
+    private configService: ConfigService<EnvironmentVariables, true>,
+  ) {
     this.logger = new Logger('GEMINI');
   }
 
@@ -168,7 +172,7 @@ export class GeminiService {
     config: GenerateContentConfig = {},
   ) {
     return this.genAi.models.generateContent({
-      model: `models/${process.env.GEMINI_MODEL as string}`,
+      model: `models/${this.configService.get('GEMINI_MODEL')}`,
       contents,
       config,
     });
@@ -179,7 +183,7 @@ export class GeminiService {
     config: EmbedContentConfig = {},
   ) {
     return this.genAi.models.embedContent({
-      model: `models/${process.env.GEMINI_MODEL_EMBEDDING as string}`,
+      model: `models/${this.configService.get('GEMINI_MODEL_EMBEDDING')}`,
       contents: contents,
       config: {
         outputDimensionality: this.embeddingOutputDimensionality,

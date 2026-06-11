@@ -33,14 +33,17 @@ import {
   MAX_ARTICLES_TO_INDEX_ONCE,
   ARTICLE_BATCH_SIZE,
 } from './models/constants';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @ApiBearerAuth('accessToken')
 @Controller('ai/rag')
+@SkipThrottle({ default: true })
+@Throttle({ ai: {} })
 @ApiBadRequestResponse(ExtendedExceptionResponse(400))
 @ApiUnauthorizedResponse(GeneralExceptionResponse(401))
 @ApiInternalServerErrorResponse(GeneralExceptionResponse(500))
 export class RagController {
-  constructor(private ragService: RagService) {}
+  constructor(private ragService: RagService) { }
 
   @Post('index')
   @HttpCode(HttpStatus.OK)

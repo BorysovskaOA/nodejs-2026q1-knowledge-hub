@@ -1,18 +1,11 @@
 import { Params } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from './env.config';
 
-const nestToPinoLevel = (level: string) => {
-  const map = {
-    log: 'info',
-    debug: 'debug',
-    warn: 'warn',
-    error: 'error',
-    verbose: 'trace',
-  };
-  return map[level] || 'info';
-};
-
-export const pinoConfig: Params = {
+export const getPinoConfig = (
+  configService: ConfigService<EnvironmentVariables, true>
+): Params => ({
   pinoHttp: {
     redact: {
       paths: [
@@ -50,31 +43,31 @@ export const pinoConfig: Params = {
       }),
     },
     genReqId: (req) => req.headers['x-request-id'] || randomUUID(),
-    level: nestToPinoLevel(process.env.LOG_LEVEL as string),
+    level: configService.get('LOG_LEVEL'),
     transport: {
       targets: [
         {
           target:
-            process.env.NODE_ENV !== 'production' ? 'pino-pretty' : 'pino/file',
-          level: nestToPinoLevel(process.env.LOG_LEVEL as string),
+            configService.get('NODE_ENV') !== 'production' ? 'pino-pretty' : 'pino/file',
+          level: configService.get('LOG_LEVEL'),
           options:
-            process.env.NODE_ENV !== 'production'
+            configService.get('NODE_ENV') !== 'production'
               ? {
-                  colorize: true,
-                  singleLine: true,
-                  translateTime: 'SYS:standard',
-                }
+                colorize: true,
+                singleLine: true,
+                translateTime: 'SYS:standard',
+              }
               : undefined,
         },
         {
           target: 'pino-roll',
-          level: nestToPinoLevel(process.env.LOG_LEVEL as string),
+          level: configService.get('LOG_LEVEL'),
           options: {
             file: 'logs/app',
             extension: '.log',
             dateFormat: "yyyy-MM-dd'T'HH-mm-ss",
             frequency: 'daily',
-            size: `${process.env.LOG_MAX_FILE_SIZE}k`,
+            size: `${configService.get('LOG_MAX_FILE_SIZE')}k`,
             mkdir: true,
             rollOnStart: false,
             limit: {
@@ -98,4 +91,4 @@ export const pinoConfig: Params = {
       return 'info';
     },
   },
-};
+});;

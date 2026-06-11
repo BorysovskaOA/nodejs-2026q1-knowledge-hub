@@ -14,17 +14,21 @@ import {
   ForbiddenError,
   NotFoundError,
 } from 'src/core/exceptions/app-errors';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepository,
+    private configService: ConfigService<EnvironmentVariables, true>,
+  ) { }
 
   async create(
     data: CreateUserDto,
     tx?: Prisma.TransactionClient,
   ): Promise<UserEntity> {
     const { password, ...restData } = data;
-    const hashedPassword = await hash(password);
+    const hashedPassword = await hash(password, this.configService.get('SALT_ROUNDS'));
     const userData = {
       ...restData,
       passwordHash: hashedPassword,
@@ -82,7 +86,7 @@ export class UserService {
     if (!oldPasswordValid)
       throw new ForbiddenError('Credentials are not valid', UserService.name);
 
-    const newHashedPassword = await hash(data.newPassword);
+    const newHashedPassword = await hash(data.newPassword, this.configService.get('SALT_ROUNDS'));
 
     return this.userRepository.update(
       id,

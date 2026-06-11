@@ -5,14 +5,20 @@ import {
   ServiceUnavailableError,
 } from 'src/core/exceptions/app-errors';
 import type { Schemas } from '@qdrant/js-client-rest';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/core/configs/env.config';
 
 @Injectable()
 export class QdrantService {
   private client: QdrantClient;
   private logger: Logger;
 
-  constructor() {
-    this.client = new QdrantClient({ url: process.env.RAG_VECTOR_DB_URL });
+  constructor(
+    private configService: ConfigService<EnvironmentVariables, true>,
+  ) {
+    this.client = new QdrantClient({
+      url: this.configService.get('RAG_VECTOR_DB_URL')
+    });
     this.logger = new Logger('QDRANT');
   }
 

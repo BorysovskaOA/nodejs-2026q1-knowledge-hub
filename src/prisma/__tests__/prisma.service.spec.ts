@@ -3,6 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma.service';
 import { Pool } from 'pg';
 
+const MOCK_DB_URL = 'postgresql://user:pass@localhost:5432/db'
+
 vi.mock('pg', () => ({
   Pool: vi.fn().mockImplementation(function () {
     return {
@@ -29,9 +31,11 @@ describe('PrismaService', () => {
   let service: PrismaService;
 
   beforeEach(async () => {
-    vi.stubEnv('DATABASE_URL', 'database_url');
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PrismaService],
+      providers: [{
+        provide: PrismaService,
+        useFactory: () => new PrismaService(MOCK_DB_URL)
+      }],
     }).compile();
 
     service = module.get<PrismaService>(PrismaService);
@@ -39,7 +43,6 @@ describe('PrismaService', () => {
 
   afterAll(() => {
     vi.clearAllMocks();
-    vi.unstubAllEnvs();
   });
 
   it('should call $connect on onModuleInit', async () => {
@@ -67,7 +70,7 @@ describe('PrismaService', () => {
 
   it('should initialize Pool with DATABASE_URL', () => {
     expect(vi.mocked(Pool)).toHaveBeenCalledWith({
-      connectionString: 'database_url',
+      connectionString: MOCK_DB_URL,
     });
   });
 });
