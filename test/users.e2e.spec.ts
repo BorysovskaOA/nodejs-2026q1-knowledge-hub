@@ -10,7 +10,7 @@ import { usersRoutes, articlesRoutes, commentsRoutes } from './endpoints';
 
 const createUserDto = {
   login: 'TEST_LOGIN',
-  password: 'TEST_PASSWORD',
+  password: 'Password123!',
 };
 
 // Probability of collisions for UUID is almost zero
@@ -129,11 +129,15 @@ describe('Users (e2e)', () => {
         unauthorizedRequest
           .post(usersRoutes.create)
           .set(commonHeaders)
-          .send({ password: 'TEST_PASSWORD' }),
+          .send({ password: 'Password123!' }),
         unauthorizedRequest
           .post(usersRoutes.create)
           .set(commonHeaders)
           .send({ login: null, password: 12345 }),
+        unauthorizedRequest
+          .post(usersRoutes.create)
+          .set(commonHeaders)
+          .send({ login: null, password: 'password' }),
       ]);
 
       expect(
@@ -148,7 +152,7 @@ describe('Users (e2e)', () => {
     it('should correctly get paginated response', async () => {
       const users = Array.from({ length: 25 }, (_, i) => ({
         login: `TEST_LOGIN_${i}`,
-        password: 'TEST_PASSWORD',
+        password: 'Password123!',
       }));
 
       const createdUserResponses = await Promise.all(
@@ -186,7 +190,7 @@ describe('Users (e2e)', () => {
     it('should correctly sort response', async () => {
       const users = Array.from({ length: 25 }, (_, i) => ({
         login: `TEST_LOGIN_${i}`,
-        password: 'TEST_PASSWORD',
+        password: 'Password123!',
         role: i % 2 ? 'admin' : 'viewer',
       }));
 
@@ -245,7 +249,7 @@ describe('Users (e2e)', () => {
         .set(commonHeaders)
         .send({
           oldPassword: createUserDto.password,
-          newPassword: 'NEW_PASSWORD',
+          newPassword: 'Password12333!',
         });
 
       expect(updateResponse.statusCode).toBe(StatusCodes.OK);
@@ -275,7 +279,7 @@ describe('Users (e2e)', () => {
         .set(commonHeaders)
         .send({
           oldPassword: createUserDto.password,
-          newPassword: 'NEW_PASSWORD',
+          newPassword: 'Password12333!',
         });
 
       expect(updateResponse2.statusCode).toBe(StatusCodes.FORBIDDEN);
@@ -292,8 +296,8 @@ describe('Users (e2e)', () => {
         .put(usersRoutes.update('some-invalid-id'))
         .set(commonHeaders)
         .send({
-          oldPassword: 'test',
-          newPassword: 'fake',
+          oldPassword: 'Password123!',
+          newPassword: 'Password123333!',
         });
 
       expect(response.status).toBe(StatusCodes.BAD_REQUEST);
@@ -313,8 +317,8 @@ describe('Users (e2e)', () => {
         .put(usersRoutes.update(randomUUID))
         .set(commonHeaders)
         .send({
-          oldPassword: 'test',
-          newPassword: 'fake',
+          oldPassword: 'Password123!',
+          newPassword: 'Password12333!',
         });
 
       expect(response.status).toBe(StatusCodes.NOT_FOUND);
