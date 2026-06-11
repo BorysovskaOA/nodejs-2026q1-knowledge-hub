@@ -5,12 +5,20 @@ import { describe, it, expect } from 'vitest';
 
 const objWithRequiredFields = {
   login: 'login',
-  password: 'password',
+  password: 'Password123!',
 };
 const wrongFormatTests = [
   { property: 'login', value: 2, constraint: 'isString' },
   { property: 'password', value: 2, constraint: 'isString' },
   { property: 'role', value: 'new', constraint: 'isEnum' },
+];
+
+const weakPasswordTests = [
+  { value: 'short', reason: 'too short' },
+  { value: 'nouppercase1!', reason: 'missing uppercase' },
+  { value: 'NOLOWERCASE1!', reason: 'missing lowercase' },
+  { value: 'NoNumbers!', reason: 'missing numbers' },
+  { value: 'NoSymbols1', reason: 'missing special characters' },
 ];
 
 describe('Create User DTO', () => {
@@ -56,6 +64,25 @@ describe('Create User DTO', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].property).toBe(property);
       expect(errors[0].constraints).toHaveProperty(constraint);
+    },
+  );
+
+  it.each(weakPasswordTests)(
+    'should fail validation when password is $reason',
+    async ({ value }) => {
+      const dto = new CreateUserDto();
+
+      Object.keys(objWithRequiredFields).forEach((f) => {
+        dto[f] = objWithRequiredFields[f];
+      });
+
+      dto.password = value;
+
+      const errors = await validate(dto);
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('password');
+      expect(errors[0].constraints).toHaveProperty('isStrongPassword');
     },
   );
 });

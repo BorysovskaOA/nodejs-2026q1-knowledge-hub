@@ -10,7 +10,7 @@ import { usersRoutes } from '../endpoints';
 
 const createUserDto = {
   login: 'TEST_RBAC_NEW_USER',
-  password: 'TEST_PASSWORD',
+  password: 'Password123!',
 };
 
 describe('RBAC - Users (e2e)', () => {
